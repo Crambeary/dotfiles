@@ -76,4 +76,21 @@ return require('packer').startup(function(use)
   use {"xero/miasma.nvim"}
   vim.cmd("colorscheme miasma")
   use {'habamax/vim-asciidoctor'}
+  use {'mg979/vim-visual-multi'}
+  use {'stevearc/dressing.nvim'}
+  use {'MunifTanjim/nui.nvim'}
+  use {"folke/noice.nvim"}
+  use {'rcarriga/nvim-notify'}
+  use {
+      "folke/which-key.nvim",
+      config = function()
+          vim.o.timeout = true
+          vim.o.timeoutlen = 300
+          require("which-key").setup {
+              -- your configuration comes here
+              -- or leave it empty to use the default settings
+              -- refer to the configuration section below
+          }
+      end
+}
 end)
