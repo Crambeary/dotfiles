@@ -305,6 +305,16 @@
 
 #: Scrollback {{{
 
+# kitty-scrollback.nvim Kitten alias
+action_alias kitty_scrollback_nvim kitten /Users/marc/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py
+
+# Browse scrollback buffer in nvim
+map kitty_mod+h kitty_scrollback_nvim
+# Browse output of the last shell command in nvim
+map kitty_mod+g kitty_scrollback_nvim --config ksb_builtin_last_cmd_output
+# Show clicked command output in nvim
+mouse_map ctrl+shift+right press ungrabbed combine : mouse_select_command_output : kitty_scrollback_nvim --config ksb_builtin_last_visited_cmd_output
+
 # scrollback_lines 2000
 
 #: Number of lines of history to keep in memory for scrolling back.
@@ -1360,7 +1370,7 @@
 #: See rc_custom_auth <https://sw.kovidgoyal.net/kitty/remote-
 #: control/#rc-custom-auth> for details.
 
-# allow_remote_control no
+allow_remote_control socket-only
 
 #: Allow other programs to control kitty. If you turn this on, other
 #: programs can control all aspects of kitty, including sending text
@@ -1389,7 +1399,7 @@
 #: yes
 #:     Remote control requests are always accepted.
 
-# listen_on none
+listen_on unix:/tmp/kitty
 
 #: Listen to the specified socket for remote control connections. Note
 #: that this will apply to all kitty instances. It can be overridden
@@ -1507,7 +1517,7 @@
 #: special value of ask means that kitty will ask before opening the
 #: link when clicked.
 
-# shell_integration enabled
+shell_integration enabled
 
 #: Enable shell integration on supported shells. This enables features
 #: such as jumping to previous prompts, browsing the output of the
@@ -1647,6 +1657,7 @@
 #: finally you can use an arbitrary color, such as #12af59 or red.
 
 # macos_titlebar_color system
+macos_titlebar_color #242235
 
 #: The color of the kitty window's titlebar on macOS. A value of
 #: system means to use the default system color, light or dark can
@@ -2475,3 +2486,17 @@
 #: }}}
 
 #: }}}
+
+
+# BEGIN_KITTY_THEME
+# Tokyo Night
+include current-theme.conf
+# END_KITTY_THEME
+
+# Window Resizing
+map ctrl+left resize_window narrower
+map ctrl+right resize_window wider
+map ctrl+up resize_window taller
+map ctrl+down resize_window shorter 
+# reset all windows in the tab to default sizes
+map ctrl+home resize_window reset
