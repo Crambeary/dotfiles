@@ -100,4 +100,5 @@ return {
       colorscheme = "gruvbox",
     },
   },
+  { "mbbill/undotree" },
 }
