@@ -1,0 +1,20 @@
+---
+title: Tecplot
+---
+@@
+|Microsoft Teams (work or school)
+(delay 5)
+%SonicWall Mobile Connect
+%Arc
+%NotePlan
+%kitty
+!!!GitKraken
+!!!VSCode
+Slack
+!!mobileconnect://disconnect
+!!shortcuts://run-shortcut?name=Submit%20Hours%20on%20Friday
+@SonicWall Mobile Connect ~5
+mobileconnect://connect ~8
+    # < snippets/plan_the_day.snippet ?"Do you wish to plan the day?" ~5
+Session # Maybe kick off a timer for the start of the bunch? A list of possible starts?
+!!!Jump Desktop
