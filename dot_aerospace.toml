@@ -41,10 +41,6 @@ default-root-container-layout = 'tiles'
 #               tall monitor (anything higher than wide) gets vertical orientation
 default-root-container-orientation = 'auto'
 
-# Visual indent makes it easier to understand that containers of the same orientation are nested.
-# If you have 'enable-normalization-opposite-orientation-for-nested-containers' enabled then
-# there is no way to observe the indent
-indent-for-nested-containers-with-the-same-orientation = 0
 
 # Possible values: (qwerty|dvorak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
@@ -87,7 +83,7 @@ outer.right =      10
 2 = ['ROG PG278QR', 'built-in']
 3 = ['ROG PG278QR', 'built-in']
 4 = ['ROG PG278QR', 'built-in']
-5 = ['built-in', 'ROG PG278QR']
+5 = ['ROG PG278QR', 'Cintiq', 'built-in', ]
 6 = ['Cintiq', 'built-in', 'ROG PG278QR']
 7 = ['Cintiq', 'built-in', 'ROG PG278QR']
 8 = ['built-in', 'Cintiq', 'ROG PG278QR']
@@ -235,7 +231,7 @@ run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 6'
+run = 'move-node-to-workspace 9'
 
 [[on-window-detected]]
 if.app-id = 'com.philipyoungg.session-setapp'
