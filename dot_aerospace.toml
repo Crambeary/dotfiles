@@ -79,16 +79,16 @@ outer.top =        40
 outer.right =      10
 
 [workspace-to-monitor-force-assignment]
-1 = ['ROG PG278QR', 'built-in']
-2 = ['ROG PG278QR', 'built-in']
-3 = ['ROG PG278QR', 'built-in']
-4 = ['ROG PG278QR', 'built-in']
-5 = ['ROG PG278QR', 'Cintiq', 'built-in', ]
-6 = ['Cintiq', 'built-in', 'ROG PG278QR']
-7 = ['Cintiq', 'built-in', 'ROG PG278QR']
-8 = ['built-in', 'Cintiq', 'ROG PG278QR']
-9 = ['built-in', 'Cintiq', 'ROG PG278QR']
-10 = ['built-in', 'Cintiq', 'ROG PG278QR']
+1 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'built-in']
+2 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'built-in']
+3 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'built-in']
+4 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'built-in']
+5 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'Cintiq', 'built-in', ]
+6 = ['Cintiq', 'built-in', '3', '2', 'ROG PG278QR']
+7 = ['Cintiq', 'built-in', '3', '2', 'ROG PG278QR']
+8 = ['built-in', 'Cintiq', '3', '2', 'ROG PG278QR']
+9 = ['Yam Display', 'built-in', 'Cintiq', 'secondary', 'ROG PG278QR']
+10 = ['Yam Display', 'built-in', 'Cintiq', 'secondary', 'ROG PG278QR']
 
 # See https://nikitabobko.github.io/AeroSpace/guide#exec-env-vars
 [exec]
