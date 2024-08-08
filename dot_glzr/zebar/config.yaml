@@ -220,4 +220,4 @@ window/bar:
           @case ('thunder_day') {<i class="nf nf-weather-day_lightning"></i>}
           @case ('thunder_night') {<i class="nf nf-weather-night_alt_lightning"></i>}
         }
-        {{ weather.celsiusTemp }}°
+        {{ Math.round(weather.celsiusTemp * 1.8 + 32) }}°
