@@ -1,0 +1,4 @@
+[2m2024-08-08T14:46:43.487829Z[0m [31mERROR[0m [2mglazewm[0m[2m:[0m window_rules[1]: missing field `commands` at line 106 column 5
+[2m2024-08-08T14:46:55.071194Z[0m [31mERROR[0m [2mglazewm[0m[2m:[0m window_rules[1].commands: invalid type: string "set-floating", expected a sequence at line 106 column 15
+[2m2024-08-08T14:47:06.646269Z[0m [31mERROR[0m [2mglazewm[0m[2m:[0m duplicate field `window_rules`
+[2m2024-08-08T14:47:13.779136Z[0m [31mERROR[0m [2mglazewm[0m[2m:[0m window_rules[1]: missing field `commands` at line 106 column 5
