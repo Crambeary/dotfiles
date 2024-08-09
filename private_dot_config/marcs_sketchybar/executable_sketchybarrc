@@ -1,0 +1,265 @@
+# This is a demo config to show some of the most important commands more easily.
+# This is meant to be changed and configured, as it is intentionally kept sparse.
+# For a more advanced configuration example see my dotfiles:
+# https://github.com/FelixKratz/dotfiles
+
+source "$CONFIG_DIR/icons.sh" # Loads all defined icons
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+ITEM_DIR="$CONFIG_DIR/items" # Directory where the items are configured
+
+##### Bar Appearance #####
+# Configuring the general appearance of the bar, these are only some of the
+# options available. For all options see:
+# https://felixkratz.github.io/SketchyBar/config/bar
+# If you are looking for other colors, see the color picker:
+# https://felixkratz.github.io/SketchyBar/config/tricks#color-picker
+
+sketchybar --bar height=30        \
+                 blur_radius=30   \
+                 position=top     \
+                 sticky=off       \
+                 padding_left=10  \
+                 padding_right=10 \
+                 color=0x15ffffff
+
+##### Changing Defaults #####
+# We now change some default values that are applied to all further items
+# For a full list of all available item properties see:
+# https://felixkratz.github.io/SketchyBar/config/items
+
+sketchybar --default icon.font="Hack Nerd Font:Bold:17.0"  \
+                     icon.color=0xffffffff                 \
+                     label.font="Hack Nerd Font:Bold:14.0" \
+                     label.color=0xff000000                \
+                     padding_left=5                        \
+                     padding_right=5                       \
+                     label.padding_left=4                  \
+                     label.padding_right=4                 \
+                     icon.padding_left=4                   \
+                     icon.padding_right=4
+
+##### Adding Mission Control Space Indicators #####
+# Now we add some mission control spaces:
+# https://felixkratz.github.io/SketchyBar/config/components#space----associate-mission-control-spaces-with-an-item
+# to indicate active and available mission control spaces
+
+# SPACE_ICONS=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
+#
+# for i in "${!SPACE_ICONS[@]}"
+# do
+#   sid=$(($i+1))
+#   sketchybar --add space space.$sid left                                 \
+#              --set space.$sid space=$sid                                 \
+#                               icon=${SPACE_ICONS[i]}                     \
+#                               background.color=0x44ffffff                \
+#                               background.corner_radius=5                 \
+#                               background.height=20                       \
+#                               background.drawing=off                     \
+#                               label.drawing=off                          \
+#                               script="$PLUGIN_DIR/space.sh"              \
+#                               click_script="yabai -m space --focus $sid"
+# done
+
+# aerospace setting
+AEROSPACE_FOCUSED_MONITOR_NO=$(aerospace list-workspaces --focused)
+AEROSPACE_LIST_OF_WINDOWS_IN_FOCUSED_MONITOR=$(aerospace list-windows --workspace $AEROSPACE_FOCUSED_MONITOR_NO | awk -F'|' '{gsub(/^ *| *$/, "", $2); print $2}')
+
+##### Adding Left Items #####
+# We add some regular items to the left side of the bar
+# only the properties deviating from the current defaults need to be set
+
+source "$ITEM_DIR/spaces.sh" # https://github.com/forteleaf/sketkchybar-with-aerospace
+source "$ITEM_DIR/front_app.sh"
+
+sketchybar --add item space_separator left                         \
+           --set space_separator icon=                            \
+                                 padding_left=10                   \
+                                 padding_right=10                  \
+                                 label.drawing=off                 \
+                                                                   \
+           --add item front_app left                               \
+           --set front_app       script="$PLUGIN_DIR/front_app.sh" \
+                                 icon.drawing=off                  \
+           --subscribe front_app front_app_switched
+
+sketchybar --add event aerospace_workspace_change
+
+for sid in $(aerospace list-workspaces --all); do
+    sketchybar --add item space.$sid left \
+        --subscribe space.$sid aerospace_workspace_change \
+        --set space.$sid \
+        background.color=0x44ffffff \
+        background.corner_radius=5 \
+        background.height=20 \
+        background.drawing=off \
+        label="$sid" \
+        click_script="aerospace workspace $sid" \
+        script="$CONFIG_DIR/plugins/aerospace.sh $sid"
+done
+##### Adding Right Items #####
+# In the same way as the left items we can add items to the right side.
+# Additional position (e.g. center) are available, see:
+# https://felixkratz.github.io/SketchyBar/config/items#adding-items-to-sketchybar
+
+# Some items refresh on a fixed cycle, e.g. the clock runs its script once
+# every 10s. Other items respond to events they subscribe to, e.g. the
+# volume.sh script is only executed once an actual change in system audio
+# volume is registered. More info about the event system can be found here:
+# https://felixkratz.github.io/SketchyBar/config/events
+
+sketchybar --add item clock right                              \
+           --set clock   update_freq=10                        \
+                         icon=                                \
+                         script="$PLUGIN_DIR/clock.sh"         \
+                                                               \
+           --add item volume right                             \
+           --set volume  script="$PLUGIN_DIR/volume.sh"        \
+           --subscribe volume volume_change                    \
+                                                               \
+           --add item battery right                            \
+           --set battery script="$PLUGIN_DIR/battery.sh"       \
+                         update_freq=120                       \
+           --subscribe battery system_woke power_source_change \
+           --add alias "SonicWall Mobile Connect,Item-0" right 
+
+##### Center
+POPUP_SCRIPT="sketchybar -m --set media_ctrl.anchor popup.drawing=toggle"
+
+media_ctrl_anchor=(
+script="$PLUGIN_DIR/media_ctrl.sh"
+click_script="$POPUP_SCRIPT"
+popup.horizontal=on
+popup.align=center
+popup.height=150
+)
+
+media_ctrl_cover=(
+script="$PLUGIN_DIR/media_ctrl.sh"
+click_script="open -a 'Arc'; $POPUP_SCRIPT"
+label.drawing=off
+icon.drawing=off
+padding_left=12
+padding_right=10
+background.image.scale=0.6
+background.image.drawing=on
+background.drawing=on
+)
+
+media_ctrl_title=(
+icon.drawing=off
+padding_left=0
+padding_right=0
+width=0
+label.font="$FONT:Heavy:15.0"
+label.max_chars=25
+y_offset=55
+)
+
+media_ctrl_artist=(
+icon.drawing=off
+y_offset=30
+padding_left=0
+padding_right=0
+width=0
+label.max_chars=20
+)
+
+media_ctrl_album=(
+icon.drawing=off
+padding_left=0
+padding_right=0
+y_offset=15
+width=0
+label.max_chars=30
+)
+
+media_ctrl_back=(
+icon=􀊎
+icon.padding_left=5
+icon.padding_right=5
+icon.color=$BLACK
+script="$PLUGIN_DIR/media_ctrl.sh"
+label.drawing=off
+y_offset=-45
+)
+
+media_ctrl_play=(
+icon=􀊔
+background.height=40
+background.corner_radius=20
+width=100
+align=center
+background.color=$POPUP_BACKGROUND_COLOR
+background.border_color=$WHITE
+background.border_width=0
+background.drawing=on
+icon.padding_left=4
+icon.padding_right=5
+updates=on
+label.drawing=off
+script="$PLUGIN_DIR/media_ctrl.sh"
+y_offset=-45
+)
+
+media_ctrl_next=(
+icon=􀊐
+icon.padding_left=5
+icon.padding_right=5
+icon.color=$BLACK
+label.drawing=off
+script="$PLUGIN_DIR/media_ctrl.sh"
+y_offset=-45
+)
+
+media_ctrl_controls=(
+background.color=$GREEN
+background.corner_radius=11
+background.drawing=on
+y_offset=-45
+)
+
+sketchybar --add item media_ctrl.anchor center                      \
+         --set media_ctrl.anchor "${media_ctrl_anchor[@]}"           \
+         --subscribe media_ctrl.anchor mouse.entered mouse.exited \
+                                    mouse.exited.global media_change \
+                                                               \
+         --add item media_ctrl.cover popup.media_ctrl.anchor         \
+         --set media_ctrl.cover "${media_ctrl_cover[@]}"             \
+                                                               \
+         --add item media_ctrl.title popup.media_ctrl.anchor         \
+         --set media_ctrl.title "${media_ctrl_title[@]}"             \
+                                                               \
+         --add item media_ctrl.artist popup.media_ctrl.anchor        \
+         --set media_ctrl.artist "${media_ctrl_artist[@]}"           \
+                                                               \
+         --add item media_ctrl.album popup.media_ctrl.anchor         \
+         --set media_ctrl.album "${media_ctrl_album[@]}"             \
+                                                               \
+         --add item media_ctrl.back popup.media_ctrl.anchor          \
+         --set media_ctrl.back "${media_ctrl_back[@]}"               \
+         --subscribe media_ctrl.back mouse.clicked                \
+                                                               \
+         --add item media_ctrl.play popup.media_ctrl.anchor          \
+         --set media_ctrl.play "${media_ctrl_play[@]}"               \
+         --subscribe media_ctrl.play mouse.clicked media_change   \
+                                                               \
+         --add item media_ctrl.next popup.media_ctrl.anchor          \
+         --set media_ctrl.next "${media_ctrl_next[@]}"               \
+         --subscribe media_ctrl.next mouse.clicked                \
+                                                               \
+         --add item media_ctrl.spacer popup.media_ctrl.anchor        \
+         --set media_ctrl.spacer width=5                          \
+                                                               \
+         --add bracket media_ctrl.controls media_ctrl.back           \
+                                        media_ctrl.play           \
+                                        media_ctrl.next           \
+         --set media_ctrl.controls "${media_ctrl_controls[@]}"
+         
+
+
+##### Finalizing Setup #####
+# The below command is only needed at the end of the initial configuration to
+# force all scripts to run the first time, it should never be run in an item script.
+
+sketchybar --update
