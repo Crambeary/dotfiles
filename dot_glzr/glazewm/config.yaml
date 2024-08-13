@@ -123,7 +123,7 @@ binding_modes:
       # Press enter/escape to return to default keybindings.
       - commands: ['wm-disable-binding-mode --name resize']
         bindings: ['escape', 'enter']
-
+ 
   # When enabled, all keybindings are disabled except for alt+shift+p which
   # returns to default keybindings.
   - name: 'pause'
@@ -206,7 +206,7 @@ keybindings:
     bindings: ['alt+shift+e']
 
   # Re-evaluate configuration file.
-  - commands: ['wm-reload-config']
+  - commands: ['wm-reload-config', 'shell-exec taskkill /IM "zebar.exe" /F', "shell-exec %userprofile%/.glzr/zebar/start.bat",]
     bindings: ['alt+shift+r']
 
   # Redraw all windows.
