@@ -4,21 +4,6 @@
 
 return {
   -- opts will be merged with the parent spec
-
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = {
-      ensure_installed = {
-        "hbs",
-      },
-    },
-  },
-  {
-    "folke/tokyonight.nvim",
-    opts = { style = "night" },
-  },
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    opts = { position = "right" },
-  },
+  "nvim-neo-tree/neo-tree.nvim",
+  opts = { window = { position = "right" } },
 }
