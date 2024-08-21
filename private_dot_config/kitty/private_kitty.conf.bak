@@ -2184,6 +2184,8 @@ macos_titlebar_color #242235
 
 #: Font sizes {{{
 
+font_size 16.0
+
 #: You can change the font size for all top-level kitty OS windows at
 #: a time or only the current one.
 
@@ -2489,7 +2491,7 @@ macos_titlebar_color #242235
 
 
 # BEGIN_KITTY_THEME
-# Tokyo Night
+# Gruvbox Material Dark Medium
 include current-theme.conf
 # END_KITTY_THEME
 
