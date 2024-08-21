@@ -7,6 +7,8 @@ source ~/.config/fish/alias.fish
 # Install Starship
 starship init fish | source
 
+fish_add_path /opt/homebrew/bin
+
 # =============================================================================
 #
 # Utility functions for zoxide.
@@ -116,3 +118,10 @@ zoxide init fish | source
 
 # Set up fzf key bindings
 fzf --fish | source
+
+# proto
+set -gx PROTO_HOME "$HOME/.proto"
+set -gx PATH "$PROTO_HOME/shims:$PROTO_HOME/bin" $PATH
+# proto
+set -gx PROTO_HOME "$HOME/.proto"
+set -gx PATH "$PROTO_HOME/shims:$PROTO_HOME/bin" $PATH
