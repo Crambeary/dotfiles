@@ -18,8 +18,13 @@ after-startup-command = [
 
 # Notify Sketchybar about workspace change
 exec-on-workspace-change = ['/bin/bash', '-c',
-    '/opt/homebrew/opt/sketchybar/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
+    '/opt/homebrew/opt/sketchybar/bin/sketchybar --trigger aerospace_workspace_change AEROSPACE_FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE AEROSPACE_PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE'
 ]
+
+# exec-on-workspace-change = ['/bin/bash', '-c',
+#     '/opt/homebrew/opt/sketchybar/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
+# ]
+
 
 # Start AeroSpace at login
 start-at-login = true
@@ -46,6 +51,13 @@ default-root-container-orientation = 'auto'
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
 key-mapping.preset = 'qwerty'
 
+# Mouse follows focus when focused monitor changes
+# Drop it from your config, if you don't like this behavior
+# See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
+# See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+on-focus-changed = "move-mouse window-lazy-center"
+
 # Windows that need to float by default
 [[on-window-detected]]
 if.app-id = 'com.raycast.macos'
@@ -63,6 +75,7 @@ run = 'layout floating'
 if.app-id = 'com.pilotmoon.popclip-setapp'
 run = 'layout floating'
 
+
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
 # - Constant:     gaps.outer.top = 8
@@ -75,7 +88,7 @@ inner.horizontal = 20
 inner.vertical =   15
 outer.left =       10
 outer.bottom =     10
-outer.top =        40
+outer.top =        50
 outer.right =      10
 
 [workspace-to-monitor-force-assignment]
@@ -108,8 +121,11 @@ alt-s = 'layout v_accordion' # 'layout stacking' in i3
 alt-w = 'layout h_accordion' # 'layout tabbed' in i3
 alt-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
 
-alt-shift-space = 'layout floating tiling' # 'floating toggle' in i3
-alt-shift-r = 'reload-config'
+# alt-shift-space = 'layout floating tiling' # 'floating toggle' in i3
+# alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
+#   'reload-config',  ]
+alt-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
+# alt-shift-r = 'reload-config'
 
 # All possible keys:
 # - Letters.        a, b, c, ..., z
