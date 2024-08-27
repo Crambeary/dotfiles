@@ -90,6 +90,8 @@ workspaces:
     bind_to_monitor: 1
   - name: '10'
     bind_to_monitor: 1
+  - name: 'aux'
+    bind_to_monitor: 2
 
 window_rules:
   - commands: ['ignore']
@@ -107,6 +109,13 @@ window_rules:
         window_class: { regex: 'HwndWrapper*' }
       - window_process: { regex: 'Tecplot' }
         window_title: { regex: '^(?!.*\bTecplot 360 EX Beta\b).*'}
+
+      # Ignore fullscreen games
+      - window_process: { regex: 'cyberpunk' }
+
+  - commands: ['set-floating']
+    match:
+      - window_process: { equals: 'godot' }
 
 binding_modes:
   # When enabled, the focused window can be resized via arrow keys or HJKL.
@@ -220,14 +229,14 @@ keybindings:
     bindings: ['alt+enter']
 
   # Focus the next/previous workspace defined in `workspaces` config.
-  - commands: ['focus --next-workspace']
-    bindings: ['alt+s']
-  - commands: ['focus --prev-workspace']
-    bindings: ['alt+a']
+  # - commands: ['focus --next-workspace']
+  #   bindings: ['alt+t']
+  # - commands: ['focus --prev-workspace']
+  #   bindings: ['alt+s']
 
   # Focus the workspace that last had focus.
-  - commands: ['focus --recent-workspace']
-    bindings: ['alt+d']
+  # - commands: ['focus --recent-workspace']
+  #   bindings: ['alt+d']
 
   # Change focus to a workspace defined in `workspaces` config.
   - commands: ['focus --workspace 1']
@@ -250,17 +259,19 @@ keybindings:
     bindings: ['alt+9']
   - commands: ['focus --workspace 10']
     bindings: ['alt+0']
+  - commands: ['focus --workspace aux']
+    bindings: ['alt+a']
 
   # Move the focused window's parent workspace to a monitor in a given
   # direction.
-  - commands: ['move-workspace --direction left']
-    bindings: ['alt+shift+a']
-  - commands: ['move-workspace --direction right']
-    bindings: ['alt+shift+f']
-  - commands: ['move-workspace --direction up']
-    bindings: ['alt+shift+d']
-  - commands: ['move-workspace --direction down']
-    bindings: ['alt+shift+s']
+  # - commands: ['move-workspace --direction left']
+  #   bindings: ['alt+shift+r']
+  # - commands: ['move-workspace --direction right']
+  #   bindings: ['alt+shift+t']
+  # - commands: ['move-workspace --direction up']
+  #   bindings: ['alt+shift+f']
+  # - commands: ['move-workspace --direction down']
+  #   bindings: ['alt+shift+s']
 
   # Move focused window to a workspace defined in `workspaces` config.
   - commands: ['move --workspace 1', 'focus --workspace 1']
@@ -283,3 +294,5 @@ keybindings:
     bindings: ['alt+shift+9']
   - commands: ['move --workspace 10', 'focus --workspace 10']
     bindings: ['alt+shift+0']
+  - commands: ['move --workspace aux', 'focus --workspace aux']
+    bindings: ['alt+shift+a']
