@@ -1,7 +1,8 @@
 general:
   # Commands to run when the WM has started (e.g. to run a script or launch
   # another application). Here we are running a batch script to start Zebar.
-  startup_commands: ['shell-exec %userprofile%/.glzr/zebar/start.bat']
+  # startup_commands: ['shell-exec %userprofile%/.glzr/zebar/start.bat']
+  startup_commands: ['shell-exec zebar']
 
   # Whether to automatically focus windows underneath the cursor.
   focus_follows_cursor: false
@@ -215,7 +216,7 @@ keybindings:
     bindings: ['alt+shift+e']
 
   # Re-evaluate configuration file.
-  - commands: ['wm-reload-config', 'shell-exec taskkill /IM "zebar.exe" /F', "shell-exec %userprofile%/.glzr/zebar/start.bat",]
+  - commands: ['wm-reload-config', 'shell-exec taskkill /IM "zebar.exe" /F', 'shell-exec zebar',]
     bindings: ['alt+shift+r']
 
   # Redraw all windows.
