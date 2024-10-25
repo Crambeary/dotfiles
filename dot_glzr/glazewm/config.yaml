@@ -108,8 +108,6 @@ window_rules:
       - window_process: { equals: 'PowerToys.PowerAccent' }
       - window_process: { equals: 'Lively' }
         window_class: { regex: 'HwndWrapper*' }
-      - window_process: { regex: 'Tecplot' }
-        window_title: { regex: '^(?!.*\bTecplot 360 EX Beta\b).*'}
 
       # Ignore fullscreen games
       - window_process: { regex: 'cyberpunk' }
@@ -117,6 +115,8 @@ window_rules:
   - commands: ['set-floating']
     match:
       - window_process: { equals: 'godot' }
+      - window_process: { regex: 'tec*' }
+      - window_process: { regex: 'fv*' }
 
 binding_modes:
   # When enabled, the focused window can be resized via arrow keys or HJKL.
@@ -226,7 +226,7 @@ keybindings:
   # Launch CMD terminal. Alternatively, use `shell-exec wt` or
   # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
   # Terminal and Git Bash respectively.
-  - commands: ['shell-exec wt']
+  - commands: ['shell-exec wezterm-gui.exe']
     bindings: ['alt+enter']
 
   # Focus the next/previous workspace defined in `workspaces` config.
