@@ -123,7 +123,9 @@ Set-Alias -Name zi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 
 # =============================================================================
 
-function ezaGrid { eza --grid --icons --sort type }
+function ezaGrid($a) { 
+  eza --grid --icons --sort type $a
+  }
 Set-Alias -Name ls -Value ezaGrid -Option AllScope -Scope Global -Force
 Set-Alias -Name cd -Value __zoxide_z -Option AllScope -Scope Global -Force
 Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
