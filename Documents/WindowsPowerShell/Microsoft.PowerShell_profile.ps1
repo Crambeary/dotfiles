@@ -2,7 +2,6 @@ Invoke-Expression (&starship init powershell)
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
 
-
 # =============================================================================
 #
 # Utility functions for zoxide.
@@ -123,8 +122,8 @@ Set-Alias -Name z -Value __zoxide_z -Option AllScope -Scope Global -Force
 Set-Alias -Name zi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 
 # =============================================================================
-#
-# To initialize zoxide, add this to your configuration (find it by running
-# `echo $profile` in PowerShell):
-#
-# Invoke-Expression (& { (zoxide init powershell | Out-String) })
+
+function ezaGrid { eza --grid --icons --sort type }
+Set-Alias -Name ls -Value ezaGrid -Option AllScope -Scope Global -Force
+Set-Alias -Name cd -Value __zoxide_z -Option AllScope -Scope Global -Force
+Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
