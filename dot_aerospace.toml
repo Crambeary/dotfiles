@@ -145,7 +145,8 @@ alt-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
 # You can uncomment this line to open up terminal with alt + enter shortcut
 # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
 # alt-enter = 'exec-and-forget open -n /System/Applications/Utilities/Terminal.app'
-alt-enter = 'exec-and-forget open -n /Applications/kitty.app'
+# alt-enter = 'exec-and-forget open -n /Applications/kitty.app'
+alt-enter = 'exec-and-forget open -n /Applications/WezTerm.app/'
 cmd-h = []
 
 
