@@ -1,0 +1,13 @@
+[keyboard]
+bindings = [{ key = "N", mods = "Control|Shift", action = "CreateNewWindow" }]
+
+[general]
+import = ["./themes/themes/tokyo_night.toml"]
+
+[font]
+normal = { family = "Hack Nerd Font", style = "Regular" }
+
+[window]
+decorations = "none"
+padding = { x = 10, y = 10 }
+opacity = 0.9
