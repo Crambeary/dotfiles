@@ -5,4 +5,5 @@
 {{ end }}
 {{ if ne .chezkoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
+AppData/*
 {{ end }}
