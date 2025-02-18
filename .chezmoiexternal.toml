@@ -1,0 +1,11 @@
+
+{{ if eq .chezmoi.os "windows" }}
+["AppData/Roaming/alacritty/themes"]
+  type = "git-repo"
+  url = "https://github.com/alacritty/alacritty-theme.git"
+{{ else }}
+[".config/alacritty/themes"]
+  type = "git-repo"
+  url = "https://github.com/alacritty/alacritty-theme.git"
+{{ end }}
+
