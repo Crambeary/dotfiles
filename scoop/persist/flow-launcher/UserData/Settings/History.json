@@ -1,0 +1,668 @@
+{
+  "Items": [
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-08-09T11:24:14.1273303-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-09T11:26:44.5295881-05:00"
+    },
+    {
+      "Query": "explor",
+      "ExecutedDateTime": "2024-08-09T11:27:45.9735465-05:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-08-09T11:29:44.1990862-05:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-08-09T11:29:47.7854772-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-09T11:37:18.6293587-05:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-08-11T21:14:41.5021037-05:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-08-11T21:14:52.1828686-05:00"
+    },
+    {
+      "Query": "cybe",
+      "ExecutedDateTime": "2024-08-13T11:05:33.8638614-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-13T11:43:03.5029251-05:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-08-13T12:41:13.3277599-05:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-08-13T21:09:48.0303008-05:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-08-13T21:10:01.3194493-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-13T22:01:29.7119085-05:00"
+    },
+    {
+      "Query": "arc",
+      "ExecutedDateTime": "2024-08-14T10:11:25.4266589-05:00"
+    },
+    {
+      "Query": "cy",
+      "ExecutedDateTime": "2024-08-14T11:41:13.5514375-05:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-08-14T16:29:38.0018771-05:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-08-14T16:30:16.4769614-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-14T20:36:06.6494541-05:00"
+    },
+    {
+      "Query": "sett",
+      "ExecutedDateTime": "2024-08-15T10:12:59.6438386-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-15T10:16:57.4602782-05:00"
+    },
+    {
+      "Query": "cy",
+      "ExecutedDateTime": "2024-08-15T12:21:35.3701811-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-15T20:33:52.6474385-05:00"
+    },
+    {
+      "Query": "spo",
+      "ExecutedDateTime": "2024-08-15T22:02:33.3047418-05:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-08-15T22:02:38.293434-05:00"
+    },
+    {
+      "Query": "arc",
+      "ExecutedDateTime": "2024-08-16T10:53:38.9195411-05:00"
+    },
+    {
+      "Query": "ob",
+      "ExecutedDateTime": "2024-08-16T11:07:20.1647972-05:00"
+    },
+    {
+      "Query": "open",
+      "ExecutedDateTime": "2024-08-16T11:07:24.079626-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-16T22:58:10.0855895-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-16T23:00:14.503686-05:00"
+    },
+    {
+      "Query": "setting",
+      "ExecutedDateTime": "2024-08-17T13:48:52.8792832-05:00"
+    },
+    {
+      "Query": "gla",
+      "ExecutedDateTime": "2024-08-17T13:49:09.0857101-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-17T14:07:21.8575917-05:00"
+    },
+    {
+      "Query": "godo",
+      "ExecutedDateTime": "2024-08-17T14:12:09.2917692-05:00"
+    },
+    {
+      "Query": "god",
+      "ExecutedDateTime": "2024-08-17T14:19:23.553724-05:00"
+    },
+    {
+      "Query": "godo",
+      "ExecutedDateTime": "2024-08-17T14:24:05.1944196-05:00"
+    },
+    {
+      "Query": "ticktick",
+      "ExecutedDateTime": "2024-08-20T10:04:13.3727608-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-21T11:54:46.9608587-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-08-24T16:51:25.334542-05:00"
+    },
+    {
+      "Query": "term",
+      "ExecutedDateTime": "2024-08-26T21:11:58.9758211-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-08-27T13:04:35.5899397-05:00"
+    },
+    {
+      "Query": "todi",
+      "ExecutedDateTime": "2024-08-27T18:40:24.9559942-05:00"
+    },
+    {
+      "Query": "tick",
+      "ExecutedDateTime": "2024-08-31T12:56:45.170586-05:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-08-31T13:01:39.4762023-05:00"
+    },
+    {
+      "Query": "tik",
+      "ExecutedDateTime": "2024-09-02T12:23:22.1319851-05:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-09-02T12:24:39.0032317-05:00"
+    },
+    {
+      "Query": "spark",
+      "ExecutedDateTime": "2024-09-02T12:27:12.4733258-05:00"
+    },
+    {
+      "Query": "cyb",
+      "ExecutedDateTime": "2024-09-02T20:29:30.5911651-05:00"
+    },
+    {
+      "Query": "todo",
+      "ExecutedDateTime": "2024-09-08T22:28:39.4545236-05:00"
+    },
+    {
+      "Query": "pm install VolumeFlow",
+      "ExecutedDateTime": "2024-09-09T21:05:55.1018208-05:00"
+    },
+    {
+      "Query": "tick",
+      "ExecutedDateTime": "2024-10-30T21:55:50.9143107-05:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-10-30T22:21:57.6762091-05:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-11-01T21:43:20.9367196-05:00"
+    },
+    {
+      "Query": "togg",
+      "ExecutedDateTime": "2024-11-03T20:35:20.8765019-06:00"
+    },
+    {
+      "Query": "arc",
+      "ExecutedDateTime": "2024-11-03T21:00:58.5204472-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-11-03T21:10:00.103355-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-11-06T09:31:33.2773364-06:00"
+    },
+    {
+      "Query": "gla",
+      "ExecutedDateTime": "2024-11-06T09:36:44.7010294-06:00"
+    },
+    {
+      "Query": "omen",
+      "ExecutedDateTime": "2024-11-06T09:37:19.6990921-06:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-11-06T10:14:53.9899168-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-11-06T10:35:57.8643921-06:00"
+    },
+    {
+      "Query": "spark",
+      "ExecutedDateTime": "2024-11-07T12:08:47.6027214-06:00"
+    },
+    {
+      "Query": "epic",
+      "ExecutedDateTime": "2024-11-07T20:29:17.6543621-06:00"
+    },
+    {
+      "Query": "wez",
+      "ExecutedDateTime": "2024-11-08T11:17:23.1810917-06:00"
+    },
+    {
+      "Query": "task",
+      "ExecutedDateTime": "2024-11-08T11:42:34.6959093-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-11-08T12:10:37.5733702-06:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-11-08T12:26:49.0138052-06:00"
+    },
+    {
+      "Query": "arc",
+      "ExecutedDateTime": "2024-11-08T13:18:20.998955-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-11-09T08:19:38.3394571-06:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-11-09T08:51:25.5994217-06:00"
+    },
+    {
+      "Query": "sett",
+      "ExecutedDateTime": "2024-11-09T08:51:34.0659802-06:00"
+    },
+    {
+      "Query": "flo",
+      "ExecutedDateTime": "2024-11-09T08:54:35.4091858-06:00"
+    },
+    {
+      "Query": "spo",
+      "ExecutedDateTime": "2024-11-09T12:26:35.2749026-06:00"
+    },
+    {
+      "Query": "ste",
+      "ExecutedDateTime": "2024-11-13T07:49:43.7082136-06:00"
+    },
+    {
+      "Query": "web",
+      "ExecutedDateTime": "2024-11-13T14:15:52.1234539-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-11-13T14:23:55.9301782-06:00"
+    },
+    {
+      "Query": "webs",
+      "ExecutedDateTime": "2024-11-13T14:24:48.6984507-06:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-11-13T14:25:10.1043576-06:00"
+    },
+    {
+      "Query": "SPOT",
+      "ExecutedDateTime": "2024-11-13T14:41:51.0227181-06:00"
+    },
+    {
+      "Query": "sp",
+      "ExecutedDateTime": "2024-11-14T15:23:37.7926708-06:00"
+    },
+    {
+      "Query": "spo",
+      "ExecutedDateTime": "2024-11-14T20:44:15.0814316-06:00"
+    },
+    {
+      "Query": "web",
+      "ExecutedDateTime": "2024-11-16T21:12:04.3216801-06:00"
+    },
+    {
+      "Query": "webs",
+      "ExecutedDateTime": "2024-11-16T21:12:24.0359813-06:00"
+    },
+    {
+      "Query": "web",
+      "ExecutedDateTime": "2024-11-18T16:50:39.8600173-06:00"
+    },
+    {
+      "Query": "set",
+      "ExecutedDateTime": "2024-11-18T16:51:16.4516183-06:00"
+    },
+    {
+      "Query": "webs",
+      "ExecutedDateTime": "2024-11-18T16:51:38.9993776-06:00"
+    },
+    {
+      "Query": "web",
+      "ExecutedDateTime": "2024-11-18T16:52:05.4404048-06:00"
+    },
+    {
+      "Query": "obs",
+      "ExecutedDateTime": "2024-11-19T11:06:35.2538905-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-11-19T14:59:35.7845361-06:00"
+    },
+    {
+      "Query": "zeb",
+      "ExecutedDateTime": "2024-11-19T19:41:06.487222-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-11-19T21:18:42.9052462-06:00"
+    },
+    {
+      "Query": "gla",
+      "ExecutedDateTime": "2024-11-20T10:31:11.2392287-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-11-24T20:42:30.4180458-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-11-26T14:12:23.3636483-06:00"
+    },
+    {
+      "Query": "winds",
+      "ExecutedDateTime": "2024-11-27T11:23:18.5976703-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-11-29T10:54:57.3870687-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-11-29T21:00:11.9141431-06:00"
+    },
+    {
+      "Query": "w",
+      "ExecutedDateTime": "2024-11-29T21:03:33.6560544-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-11-29T21:27:34.2620162-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2024-11-29T23:19:36.0980828-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-11-30T10:25:45.6927924-06:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-11-30T10:42:57.1735257-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-11-30T21:22:24.7985974-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-12-03T22:02:20.7253849-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-12-03T22:57:13.5216398-06:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2024-12-04T09:39:54.8966841-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-12-05T15:45:02.7728557-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-12-05T16:03:21.7292686-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-12-07T10:34:32.3340791-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2024-12-09T10:43:53.2823185-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-12-09T10:46:20.945947-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-12-09T13:41:55.2808748-06:00"
+    },
+    {
+      "Query": "days",
+      "ExecutedDateTime": "2024-12-09T14:22:17.9442511-06:00"
+    },
+    {
+      "Query": "shx",
+      "ExecutedDateTime": "2024-12-10T12:40:41.3404747-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2024-12-10T14:24:43.8421163-06:00"
+    },
+    {
+      "Query": "days",
+      "ExecutedDateTime": "2024-12-10T15:17:49.9606415-06:00"
+    },
+    {
+      "Query": "gla",
+      "ExecutedDateTime": "2024-12-11T08:21:21.8423591-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2024-12-11T08:24:08.3930216-06:00"
+    },
+    {
+      "Query": "zen",
+      "ExecutedDateTime": "2024-12-13T06:48:09.5789597-06:00"
+    },
+    {
+      "Query": "ob",
+      "ExecutedDateTime": "2024-12-16T06:06:08.562079-06:00"
+    },
+    {
+      "Query": "zen",
+      "ExecutedDateTime": "2024-12-16T09:34:10.9554591-06:00"
+    },
+    {
+      "Query": "shx",
+      "ExecutedDateTime": "2024-12-16T11:33:25.4244559-06:00"
+    },
+    {
+      "Query": "sett",
+      "ExecutedDateTime": "2024-12-16T11:33:41.3345415-06:00"
+    },
+    {
+      "Query": "pm install ShareX_Flow_Plugin",
+      "ExecutedDateTime": "2024-12-16T11:33:52.3841073-06:00"
+    },
+    {
+      "Query": "winds",
+      "ExecutedDateTime": "2025-01-09T12:56:20.5692452-06:00"
+    },
+    {
+      "Query": "rim",
+      "ExecutedDateTime": "2025-01-10T12:03:48.664051-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2025-01-10T12:49:15.7083869-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2025-01-10T16:12:14.9357667-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2025-01-10T16:12:41.9410563-06:00"
+    },
+    {
+      "Query": "glz",
+      "ExecutedDateTime": "2025-01-10T16:14:48.9454975-06:00"
+    },
+    {
+      "Query": "ste",
+      "ExecutedDateTime": "2025-01-10T17:44:31.7047269-06:00"
+    },
+    {
+      "Query": "zen",
+      "ExecutedDateTime": "2025-01-11T13:39:51.7307499-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2025-01-14T13:30:24.2170632-06:00"
+    },
+    {
+      "Query": "epic",
+      "ExecutedDateTime": "2025-01-14T13:30:31.8375101-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2025-01-16T16:29:53.4385588-06:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2025-01-19T19:53:22.0778693-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2025-01-20T11:22:02.0413179-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2025-01-22T10:24:36.6353351-06:00"
+    },
+    {
+      "Query": "sett",
+      "ExecutedDateTime": "2025-01-22T10:24:40.0912427-06:00"
+    },
+    {
+      "Query": "zen",
+      "ExecutedDateTime": "2025-01-22T10:25:07.1275381-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2025-01-22T20:33:40.8674567-06:00"
+    },
+    {
+      "Query": "wind",
+      "ExecutedDateTime": "2025-01-23T11:14:05.9957601-06:00"
+    },
+    {
+      "Query": "spot",
+      "ExecutedDateTime": "2025-01-23T14:04:48.0995352-06:00"
+    },
+    {
+      "Query": "epic",
+      "ExecutedDateTime": "2025-01-23T14:46:38.4813399-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2025-01-28T12:10:39.7234758-06:00"
+    },
+    {
+      "Query": "epic",
+      "ExecutedDateTime": "2025-01-28T12:10:41.237674-06:00"
+    },
+    {
+      "Query": "steam",
+      "ExecutedDateTime": "2025-01-28T14:00:14.6563322-06:00"
+    },
+    {
+      "Query": "capa",
+      "ExecutedDateTime": "2025-01-28T14:05:49.0852113-06:00"
+    },
+    {
+      "Query": "tick",
+      "ExecutedDateTime": "2025-01-29T09:24:59.4201986-06:00"
+    },
+    {
+      "Query": "share",
+      "ExecutedDateTime": "2025-01-30T05:41:32.7325331-06:00"
+    },
+    {
+      "Query": "(4.6\u002B4.5\u002B4.48\u002B4.60\u002B4.59)/5",
+      "ExecutedDateTime": "2025-01-30T05:44:55.4662235-06:00"
+    },
+    {
+      "Query": "(4.42\u002B4.36\u002B4.39\u002B4.42\u002B4.40)/5",
+      "ExecutedDateTime": "2025-01-30T05:45:22.9795659-06:00"
+    },
+    {
+      "Query": "(4.47\u002B4.45\u002B4.44\u002B4.43\u002B4.53)/5",
+      "ExecutedDateTime": "2025-01-30T06:48:15.6454008-06:00"
+    },
+    {
+      "Query": "(17.85\u002B16.42\u002B16.90\u002B16.51\u002B17.31)/5",
+      "ExecutedDateTime": "2025-01-30T07:59:18.6770626-06:00"
+    },
+    {
+      "Query": "(7.81\u002B7.75\u002B7.82\u002B7.64\u002B7.60)/5",
+      "ExecutedDateTime": "2025-01-30T08:19:48.1493647-06:00"
+    },
+    {
+      "Query": "code",
+      "ExecutedDateTime": "2025-01-30T15:10:19.9063146-06:00"
+    },
+    {
+      "Query": "capac",
+      "ExecutedDateTime": "2025-01-31T09:59:28.5802087-06:00"
+    },
+    {
+      "Query": "spark",
+      "ExecutedDateTime": "2025-02-02T14:13:58.8315314-06:00"
+    },
+    {
+      "Query": "glaze",
+      "ExecutedDateTime": "2025-02-06T09:46:55.2253124-06:00"
+    },
+    {
+      "Query": "syn",
+      "ExecutedDateTime": "2025-02-06T10:19:17.3046185-06:00"
+    },
+    {
+      "Query": "obsi",
+      "ExecutedDateTime": "2025-02-06T11:49:21.2273981-06:00"
+    },
+    {
+      "Query": "sett",
+      "ExecutedDateTime": "2025-02-13T09:34:45.9165094-06:00"
+    },
+    {
+      "Query": "pm install Emoji Finder",
+      "ExecutedDateTime": "2025-02-13T09:36:23.716993-06:00"
+    },
+    {
+      "Query": "e bug",
+      "ExecutedDateTime": "2025-02-13T09:37:16.1945161-06:00"
+    },
+    {
+      "Query": "shx rec",
+      "ExecutedDateTime": "2025-02-13T16:44:59.9143243-06:00"
+    },
+    {
+      "Query": "wez",
+      "ExecutedDateTime": "2025-02-14T09:25:07.88851-06:00"
+    }
+  ]
+}

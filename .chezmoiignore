@@ -9,6 +9,7 @@
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
 AppData/*
+scoop/*
 {{ end }}
 
 
