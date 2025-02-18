@@ -146,7 +146,7 @@ alt-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
 # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
 # alt-enter = 'exec-and-forget open -n /System/Applications/Utilities/Terminal.app'
 # alt-enter = 'exec-and-forget open -n /Applications/kitty.app'
-alt-enter = 'exec-and-forget open -n /Applications/WezTerm.app/'
+alt-enter = 'exec-and-forget open -n /Applications/Alacritty.app/'
 cmd-h = []
 
 
