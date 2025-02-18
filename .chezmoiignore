@@ -3,7 +3,7 @@
 {{ if eq .chezmoi.os "windows" }}
 .config/alacritty/alacritty.toml
 {{ end }}
-{{ if ne .chezkoi.os "windows" }}
+{{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
 AppData/*
 {{ end }}
