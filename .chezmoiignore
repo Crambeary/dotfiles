@@ -1,9 +1,18 @@
 .config/nvim/plugin/packer_compiled.lua
 
+# Mac and Linux only 
 {{ if eq .chezmoi.os "windows" }}
 .config/alacritty/alacritty.toml
 {{ end }}
+
+# Windows only
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
 AppData/*
+{{ end }}
+
+
+# macOS only files
+{{ if ne .chezmoi.os "darwin" }}
+.aerospace.toml
 {{ end }}
