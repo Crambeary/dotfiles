@@ -2,8 +2,36 @@ local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 wezterm.gui.enumerate_gpus()
 
+
 config.color_scheme = "tokyonight_night"
-config.font = wezterm.font("Hack Nerd Font", { weight = 'Book' })
+local bar = wezterm.plugin.require("https://github.com/adriankarlen/bar.wezterm")
+-- apply bar after color_scheme is set
+bar.apply_to_config(config,
+  {
+    modules = {
+      spotify = {
+        enabled = true,
+      },
+      workspace = {
+        enabled = false,
+      },
+      pane = {
+        enabled = false,
+      },
+      username = {
+        enabled = false,
+      },
+      hostname = {
+        enabled = false,
+      },
+      clock = {
+        enabled = false,
+      }
+    }
+  }
+)
+
+config.font = wezterm.font("Hack Nerd Font", { weight = 'Regular' })
 config.window_decorations = "RESIZE"
 -- config.tab_bar_at_bottom = true
 config.adjust_window_size_when_changing_font_size = false
