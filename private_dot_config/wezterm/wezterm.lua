@@ -32,7 +32,7 @@ bar.apply_to_config(config,
 )
 
 config.font = wezterm.font("Hack Nerd Font", { weight = 'Regular' })
-config.window_decorations = "RESIZE"
+config.window_decorations = "NONE"
 -- config.tab_bar_at_bottom = true
 config.adjust_window_size_when_changing_font_size = false
 -- config.front_end = "WebGpu" -- Fix render issue on Intel Xe graphics
