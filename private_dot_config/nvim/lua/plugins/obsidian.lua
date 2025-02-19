@@ -1,7 +1,7 @@
 -- Disable the file
--- if true then
---   return {}
--- end
+if true then
+  return {}
+end
 
 -- This is disabled from the lines above
 return {
