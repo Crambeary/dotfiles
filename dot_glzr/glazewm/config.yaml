@@ -108,6 +108,7 @@ window_rules:
       - window_process: { equals: 'PowerToys.PowerAccent' }
       - window_process: { equals: 'Lively' }
         window_class: { regex: 'HwndWrapper*' }
+      - window_process: { equals: 'kunkun' }
 
       # Ignore fullscreen games
       - window_process: { regex: 'cyberpunk' }
