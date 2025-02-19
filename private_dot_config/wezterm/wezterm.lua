@@ -1,18 +1,26 @@
 local wezterm = require("wezterm")
-local config = {}
+local config = wezterm.config_builder()
+wezterm.gui.enumerate_gpus()
 
 config.color_scheme = "tokyonight_night"
 config.font = wezterm.font("Hack Nerd Font")
 config.window_decorations = "RESIZE"
-config.tab_bar_at_bottom = true
+-- config.tab_bar_at_bottom = true
 config.adjust_window_size_when_changing_font_size = false
+-- config.front_end = "WebGpu" -- Fix render issue on Intel Xe graphics
+config.front_end = "OpenGL"
+config.window_background_opacity = 0.9
+-- config.win32_system_backdrop = 'Mica'
+-- config.win32_system_backdrop = 'Tabbed'
+-- config.win32_system_backdrop = 'Acrylic'
+config.window_close_confirmation = 'NeverPrompt'
+
+
+
 -- Platform-specific adjustments (if needed)
 
-if os.getenv("OS") == "Darwin" then
-	-- Mac-specific setting here
-	config.default_prog = { "fish" }
-elseif os.getenv("OS") == "Windows" then
-	config.default_prog = { "powershell.exe" }
+if wezterm.target_triple == "x86_64-pc-windows-msvc" then
+	config.default_prog = { "powershell.exe", '-NoLogo' }
 end
 
 return config
