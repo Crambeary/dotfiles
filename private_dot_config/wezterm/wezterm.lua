@@ -3,7 +3,7 @@ local config = wezterm.config_builder()
 wezterm.gui.enumerate_gpus()
 
 config.color_scheme = "tokyonight_night"
-config.font = wezterm.font("Hack Nerd Font")
+config.font = wezterm.font("Hack Nerd Font", { weight = 'Book' })
 config.window_decorations = "RESIZE"
 -- config.tab_bar_at_bottom = true
 config.adjust_window_size_when_changing_font_size = false
