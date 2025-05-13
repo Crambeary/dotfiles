@@ -14,7 +14,7 @@ command_timeout = 1000
 # $all[╰─](238)$character"""
 
 # new config
-format = """$env_var $all"""
+# format = """$env_var $all"""
 
 # Change the default prompt characters
 [character]
@@ -96,9 +96,11 @@ format = "via [ $version](bold purple) "
 disabled = true
 
 [python]
-symbol = " "
 python_binary = "python3"
-disabled = true
+disabled = false
+symbol = "🐍 "
+format = 'via [$symbol\($virtualenv\) ]($style)'
+style  = "fg:color_fg0 bg:color_blue"
 
 [nodejs]
 format = "via [ $version](bold green) "
@@ -125,31 +127,43 @@ color_orange = '#d65d0e'
 color_purple = '#b16286'
 color_red = '#cc241d'
 
-# Define the prompt format
+
 format = """
-[](color_orange)
-$os
-$username
-[](bg:color_yellow fg:color_orange)
-$directory
-[](fg:color_yellow bg:color_aqua)
-$git_branch
-$git_status
-[](fg:color_aqua bg:color_blue)
-$c
-$rust
-$golang
-$nodejs
-$php
-$java
-$kotlin
-$haskell
-$python
-[](fg:color_blue bg:color_bg3)
-$docker_context
-$conda
-[](fg:color_bg3 bg:color_bg1)
-$time
+[](color_orange)$os$username
+[](bg:color_yellow fg:color_orange)$directory
+[](fg:color_yellow bg:color_aqua)$git_branch$git_status
+[](fg:color_aqua bg:color_blue)$c$rust$golang$nodejs$php$java$kotlin$haskell$python
+[](fg:color_blue bg:color_bg3)$docker_context$conda
+[](fg:color_bg3 bg:color_bg1)$time
 [ ](fg:color_bg1)
 $line_break$character
 """
+
+# # Define the prompt format
+# format = """
+# [](color_orange)
+# $os
+# $username
+# [](bg:color_yellow fg:color_orange)
+# $directory
+# [](fg:color_yellow bg:color_aqua)
+# $git_branch
+# $git_status
+# [](fg:color_aqua bg:color_blue)
+# $c
+# $rust
+# $golang
+# $nodejs
+# $php
+# $java
+# $kotlin
+# $haskell
+# $python
+# [](fg:color_blue bg:color_bg3)
+# $docker_context
+# $conda
+# [](fg:color_bg3 bg:color_bg1)
+# $time
+# [ ](fg:color_bg1)
+# $line_break$character
+# """
