@@ -116,3 +116,11 @@ alias zi=__zoxide_zi
 zoxide init fish | source
 
 
+
+set -gx VULKAN_SDK ~/vulkan/1.4.313.0/x86_64
+set -gx PATH $VULKAN_SDK/bin $PATH
+set -gx LD_LIBRARY_PATH $VULKAN_SDK/lib $LD_LIBRARY_PATH
+set -gx VK_ADD_LAYER_PATH $VULKAN_SDK/share/vulkan/explicit_layer.d
+
+set -x GOPATH $HOME/go
+set -x PATH $PATH $GOPATH/bin $GOROOT/bin
