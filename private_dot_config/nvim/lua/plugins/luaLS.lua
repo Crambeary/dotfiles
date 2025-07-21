@@ -1,0 +1,13 @@
+return {}
+-- disable
+-- return {
+--   config = {
+--     settings = {
+--       Lua = {
+--         diagnostics = {
+--           globals = { "getenv", "fv_script" },
+--         },
+--       },
+--     },
+--   },
+-- }
