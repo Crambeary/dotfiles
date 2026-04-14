@@ -116,11 +116,23 @@ alias zi=__zoxide_zi
 zoxide init fish | source
 
 
-
-set -gx VULKAN_SDK ~/vulkan/1.4.313.0/x86_64
+set -gx PATH /opt/homebrew/sbin $PATH
+set -gx VULKAN_SDK ~/VulkanSDK/1.4.328.0/macOS/
 set -gx PATH $VULKAN_SDK/bin $PATH
-set -gx LD_LIBRARY_PATH $VULKAN_SDK/lib $LD_LIBRARY_PATH
+set -gx DYLD_LIBRARY_PATH $VULKAN_SDK/lib $DYLD_LIBRARY_PATH
+# set -gx VK_ICD_FILENAMES $VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json
+# set -gx VK_DRIVER_FILES $VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json
 set -gx VK_ADD_LAYER_PATH $VULKAN_SDK/share/vulkan/explicit_layer.d
+set -gx PKG_CONFIG_PATH $VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH
 
-set -x GOPATH $HOME/go
-set -x PATH $PATH $GOPATH/bin $GOROOT/bin
+string match -q "$TERM_PROGRAM" "kiro" and . (kiro --locate-shell-integration-path fish)
+
+# Targetprocess MCP auth via macOS Keychain
+set -gx TP_BASE_URL https://tecplot.tpondemand.com
+if type -q security
+    set -l __tp_token (security find-generic-password -a "$USER" -s targetprocess_api_token -w 2>/dev/null)
+    if test $status -eq 0 -a -n "$__tp_token"
+        set -gx TP_ACCESS_TOKEN $__tp_token
+    end
+    set -e __tp_token
+end

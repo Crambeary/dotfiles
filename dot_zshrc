@@ -1,3 +1,9 @@
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Kiro CLI pre block. Keep at the top of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh"
+
 [[ -f ~/.zsh/aliases.zsh ]] && source ~/.zsh/aliases.zsh
 [[ -f ~/.zsh/functions.zsh ]] && source ~/.zsh/functions.zsh
 [[ -f ~/.zsh/starship.zsh ]] && source ~/.zsh/starship.zsh
@@ -8,8 +14,29 @@
 eval "$(starship init zsh)"
 
 alias bat="bat --theme=ansi"
-export PATH="/Users/marc/.local/share/mise/shims:$PATH"
-. /usr/local/opt/z/etc/profile.d/z.sh
+eval "$(zoxide init zsh)"
 
 export EDITOR=nvim
 export VISUAL=nvim
+
+# Vulkan SDK
+export VULKAN_SDK=~/VulkanSDK/1.4.328.0/macOS
+export PATH="$VULKAN_SDK/bin:$PATH"
+export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
+export VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d"
+export PKG_CONFIG_PATH="$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+# Targetprocess MCP auth via macOS Keychain
+export TP_BASE_URL=https://tecplot.tpondemand.com
+__tp_token=$(security find-generic-password -a "$USER" -s targetprocess_api_token -w 2>/dev/null)
+[[ -n "$__tp_token" ]] && export TP_ACCESS_TOKEN="$__tp_token"
+unset __tp_token
+
+source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+antidote load ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
+
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+
+
+# Kiro CLI post block. Keep at the bottom of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
