@@ -1,5 +1,5 @@
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+[[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
 
 [[ -f ~/.zsh/aliases.zsh ]] && source ~/.zsh/aliases.zsh
 [[ -f ~/.zsh/functions.zsh ]] && source ~/.zsh/functions.zsh
@@ -16,6 +16,13 @@ eval "$(zoxide init zsh)"
 export EDITOR=nvim
 export VISUAL=nvim
 
+export PATH="$HOME/bin:$PATH"
+
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY
+
 # Vulkan SDK
 export VULKAN_SDK=~/VulkanSDK/1.4.328.0/macOS
 export PATH="$VULKAN_SDK/bin:$PATH"
@@ -29,7 +36,11 @@ __tp_token=$(security find-generic-password -a "$USER" -s targetprocess_api_toke
 [[ -n "$__tp_token" ]] && export TP_ACCESS_TOKEN="$__tp_token"
 unset __tp_token
 
-source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+if [[ -f /opt/homebrew/opt/antidote/share/antidote/antidote.zsh ]]; then
+  source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+elif [[ -f ${ZDOTDIR:-~}/.antidote/antidote.zsh ]]; then
+  source ${ZDOTDIR:-~}/.antidote/antidote.zsh
+fi
 antidote load ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
 
 autoload -Uz compinit
