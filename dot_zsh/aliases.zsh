@@ -7,4 +7,7 @@ alias code="open -a 'Visual Studio Code'"
 # ALIAS COMMANDS
 alias ls="eza --icons --group-directories-first"
 alias ll="eza --icons --group-directories-first -l"
+alias res="toggle-panel-res"
+alias bat="bat --theme=ansi"
+alias audio-separator="/home/marc/tools/audio-separator/.venv/bin/audio-separator"
 
