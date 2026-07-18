@@ -1,5 +1,8 @@
 .config/nvim/plugin/packer_compiled.lua
 
+# Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
+.config/secrets/**
+
 # Mac and Linux only 
 {{ if eq .chezmoi.os "windows" }}
 .config/alacritty/alacritty.toml

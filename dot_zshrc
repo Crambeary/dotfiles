@@ -1,23 +1,33 @@
 
 [[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# PATH setup moved to the top so it's fully in place even if a later
+# block (antidote/compinit/fzf init) stalls and gets Ctrl+C'd.
+export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.npm-global/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 [[ -f ~/.zsh/aliases.zsh ]] && source ~/.zsh/aliases.zsh
 [[ -f ~/.zsh/functions.zsh ]] && source ~/.zsh/functions.zsh
 [[ -f ~/.zsh/starship.zsh ]] && source ~/.zsh/starship.zsh
 [[ -f ~/.zsh/nvm.zsh ]] && source ~/.zsh/nvm.zsh
 [[ -f ~/.zsh/wsl2fix.zsh ]] && source ~/.zsh/wsl2fix.zsh
+[[ -f ~/.config/secrets/.env ]] && set -a && source ~/.config/secrets/.env
+set +a
 
 # Load Starship
 eval "$(starship init zsh)"
 
-alias bat="bat --theme=ansi"
 eval "$(zoxide init zsh)"
 
 export EDITOR=nvim
 export VISUAL=nvim
 
-export PATH="$HOME/bin:$PATH"
-export PATH="$HOME/.npm-global/bin:$PATH"
+# sudoplz askpass helper — lets agents run `sudo -A` instead of failing on the password prompt
+command -v askpass >/dev/null 2>&1 && export SUDO_ASKPASS="$(command -v askpass)"
 
 HISTFILE=~/.zsh_history
 HISTSIZE=50000
@@ -59,3 +69,11 @@ source <(fzf --zsh)
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 
+# Audio: wine and yabridge
+export WINEESYNC=1
+export WINEFSYNC=1
+export PATH="$PATH:$HOME/.local/share/yabridge"
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/marc/.local/bin:$PATH"
