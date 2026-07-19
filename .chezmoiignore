@@ -20,3 +20,13 @@ scoop/*
 {{ if ne .chezmoi.os "darwin" }}
 .aerospace.toml
 {{ end }}
+
+# KDE Plasma (Linux only)
+{{ if ne .chezmoi.os "linux" }}
+.config/plasma*
+.config/kwin*
+.config/kde*
+.config/kglobalshortcutsrc
+.config/kcminputrc
+.config/ksplashrc
+{{ end }}
