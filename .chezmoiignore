@@ -1,5 +1,8 @@
 .config/nvim/plugin/packer_compiled.lua
 
+# Repo docs, not a dotfile target
+README.md
+
 # Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
 .config/secrets/**
 
