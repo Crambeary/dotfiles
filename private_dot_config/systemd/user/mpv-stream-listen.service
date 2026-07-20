@@ -1,0 +1,12 @@
+[Unit]
+Description=Listen for video streamed from yazi over SSH and play it in mpv
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/mpv-stream-listen.sh
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=graphical-session.target
