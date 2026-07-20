@@ -8,5 +8,8 @@
 
 port=6600
 while true; do
-    ncat -l "$port" | mpv --loop --geometry=25%x25% --profile=gpu-hq -
+    # No --loop here: stdin from ncat is a non-seekable pipe, and mpv
+    # looping requires seeking back to the start, which fails fast on
+    # short clips ("Cannot seek backward in linear streams!").
+    ncat -l "$port" | mpv --geometry=25%x25% --profile=gpu-hq -
 done
