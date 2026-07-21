@@ -79,3 +79,9 @@ export PATH="$PATH:$HOME/.local/share/yabridge"
 
 # Added by Antigravity CLI installer
 export PATH="/home/marc/.local/bin:$PATH"
+{{- if eq .chezmoi.hostname "marc-mac-fedora" }}
+
+# ML4W Hyprland integration aliases/scripts (merged in, not the full ML4W zshrc stack), this host only
+[[ -f ~/.config/zshrc/25-aliases ]] && source ~/.config/zshrc/25-aliases
+[[ -f ~/.config/zshrc/30-autostart ]] && source ~/.config/zshrc/30-autostart
+{{- end }}

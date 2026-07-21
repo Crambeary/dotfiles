@@ -1,0 +1,5 @@
+{{- if eq .chezmoi.hostname "marc-mac-fedora" -}}
+if status is-interactive
+    fastfetch
+end
+{{- end }}
