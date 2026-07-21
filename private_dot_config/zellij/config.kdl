@@ -129,6 +129,13 @@ keybinds clear-defaults=true {
             }
             SwitchToMode "normal"
         }
+        bind "f" {
+            LaunchOrFocusPlugin "forgot" {
+                floating true
+                move_to_focused_tab true
+            }
+            SwitchToMode "normal"
+        }
         bind "Ctrl o" { SwitchToMode "normal"; }
         bind "p" {
             LaunchOrFocusPlugin "plugin-manager" {
@@ -274,6 +281,7 @@ plugins {
     filepicker location="zellij:strider" {
         cwd "/"
     }
+    forgot location="https://github.com/karimould/zellij-forgot/releases/latest/download/zellij-forgot.wasm"
     plugin-manager location="zellij:plugin-manager"
     session-manager location="zellij:session-manager"
     status-bar location="zellij:status-bar"
