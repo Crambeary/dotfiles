@@ -33,3 +33,8 @@ scoop/*
 .config/kcminputrc
 .config/ksplashrc
 {{ end }}
+
+# KDE session-state churn (desktop UUIDs, popup geometry px, screen res) -
+# not real config, just noise on every login
+.config/kwinrc
+.config/plasma-org.kde.plasma.desktop-appletsrc
