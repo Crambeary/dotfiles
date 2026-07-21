@@ -297,6 +297,11 @@ plugins {
 // eg. "https://example.com/my-plugin.wasm"
 load_plugins {
     zellij:link
+    "file:/home/marc/.config/zellij/plugins/zjframes.wasm" {
+        hide_frame_for_single_pane       "true"
+        hide_frame_except_for_search     "false"
+        hide_frame_except_for_fullscreen "false"
+    }
 }
 web_client {
     font "monospace"
@@ -375,7 +380,7 @@ default_mode "normal"
 //   - true (default, enabled)
 //   - false
 // 
-// pane_frames false
+pane_frames false
  
 // When attaching to an existing session with other users,
 // should the session be mirrored (true)
