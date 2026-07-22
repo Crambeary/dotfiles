@@ -50,6 +50,7 @@ layout {
                 tab_floating_indicator   " 󰹙"
 
                 command_git_branch_command     "git rev-parse --abbrev-ref HEAD"
+                command_git_branch_cwd         "{focused_pane_cwd}"
                 command_git_branch_format      "#[fg=#89b4fa] {stdout} "
                 command_git_branch_interval    "10"
                 command_git_branch_rendermode  "static"
@@ -59,5 +60,54 @@ layout {
             }
         }
         children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        pane size=1 borderless=true {
+            plugin location="file:/home/marc/.config/zellij/plugins/zjstatus.wasm" {
+                format_left   "{command_cpu_temp}#[bg=#11111b]{command_mem_usage}#[bg=#11111b]{command_disk_usage}"
+                format_center "{command_claude_daily}#[bg=#11111b]{command_claude_weekly}"
+                format_right  "{command_git_branch}#[bg=#11111b]{datetime}"
+                format_space  "#[bg=#11111b]"
+                format_hide_on_overlength "true"
+                format_precedence "crl"
+
+                border_enabled  "false"
+
+                command_git_branch_command     "git rev-parse --abbrev-ref HEAD"
+                command_git_branch_cwd         "{focused_pane_cwd}"
+                command_git_branch_format      "#[fg=#89b4fa] {stdout} "
+                command_git_branch_interval    "10"
+                command_git_branch_rendermode  "static"
+
+                command_cpu_temp_command    "/home/marc/.config/zellij/scripts/cpu-temp.sh"
+                command_cpu_temp_format     "#[fg=#fab387] 󰔏 {stdout} "
+                command_cpu_temp_interval   "5"
+                command_cpu_temp_rendermode "static"
+
+                command_mem_usage_command    "/home/marc/.config/zellij/scripts/mem-usage.sh"
+                command_mem_usage_format     "#[fg=#f9e2af] 󰍛 {stdout} "
+                command_mem_usage_interval   "5"
+                command_mem_usage_rendermode "static"
+
+                command_disk_usage_command    "/home/marc/.config/zellij/scripts/disk-usage.sh"
+                command_disk_usage_format     "#[fg=#a6e3a1] 󰋊 {stdout} "
+                command_disk_usage_interval   "60"
+                command_disk_usage_rendermode "static"
+
+                command_claude_daily_command    "/home/marc/.config/zellij/scripts/claude-limit-session.sh"
+                command_claude_daily_format     "#[fg=#cba6f7] 5h: {stdout} "
+                command_claude_daily_interval   "30"
+                command_claude_daily_rendermode "static"
+
+                command_claude_weekly_command    "/home/marc/.config/zellij/scripts/claude-limit-weekly.sh"
+                command_claude_weekly_format     "#[fg=#f38ba8] week: {stdout} "
+                command_claude_weekly_interval   "30"
+                command_claude_weekly_rendermode "static"
+
+                datetime        "#[fg=#6c7086,bold] {format} "
+                datetime_format "%A, %d %b %Y %H:%M"
+            }
+        }
     }
 }
