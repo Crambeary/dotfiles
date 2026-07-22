@@ -125,3 +125,7 @@ set -gx VK_ADD_LAYER_PATH $VULKAN_SDK/share/vulkan/explicit_layer.d
 
 set -x GOPATH $HOME/go
 set -x PATH $PATH $GOPATH/bin $GOROOT/bin
+
+
+# Added by Antigravity CLI installer
+set -gx PATH "/home/marc/.local/bin" $PATH
