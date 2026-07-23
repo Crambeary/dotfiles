@@ -3,14 +3,9 @@
 # Kept short and put context/usage first: narrow panes can lose content,
 # so the important numbers go first with minimal escape overhead.
 #
-# Usage-tracking pattern borrowed from ssenart/oh-my-claude:
-#  - context % is computed locally from the token counts Claude Code
-#    already hands us, instead of trusting a field from a fetch.
-#  - 5h/weekly (D/W) usage comes from a cache file only; this script
-#    never blocks on the network. A separate script
-#    (statusline-usage-update.sh) is fired in the background to
-#    refresh that cache, so a slow or rate-limited fetch never stalls
-#    or breaks the line.
+# Context % and 5h/weekly (D/W) usage both come straight from fields
+# Claude Code already includes on stdin (context_window, rate_limits) —
+# no network calls, no external tools (ccusage etc.) needed.
 
 input=$(cat)
 
@@ -68,22 +63,9 @@ if [ -n "$used_rounded" ]; then
   ctx="${ctx_color}${BOLD}C:${used_rounded}%${RESET}"
 fi
 
-# --- 5h / weekly usage: cache-only read, background refresh ---
-CACHE="$HOME/.cache/claude-usage/usage.json"
-UPDATER="$HOME/.claude/statusline-usage-update.sh"
-cache_timeout=60
-
-mkdir -p "$HOME/.cache/claude-usage"
-mtime=$( [ -f "$CACHE" ] && stat -c %Y "$CACHE" 2>/dev/null || echo 0)
-now=$(date +%s)
-
-if [ $((now - mtime)) -ge "$cache_timeout" ]; then
-  setsid bash "$UPDATER" >/dev/null 2>&1 < /dev/null &
-  disown 2>/dev/null
-fi
-
-five_hour=$(jq -r '.five_hour.utilization // empty' "$CACHE" 2>/dev/null)
-seven_day=$(jq -r '.seven_day.utilization // empty' "$CACHE" 2>/dev/null)
+# --- 5h / weekly usage: straight from Claude Code's own rate_limits field ---
+five_hour=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+seven_day=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 
 usage=""
 if [ -n "$five_hour" ]; then
