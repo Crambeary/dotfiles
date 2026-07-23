@@ -120,6 +120,8 @@ ForegroundVisited=203, 166, 247
 
 [General]
 ColorSchemeHash=5189d572ac818e13a7bb240c2f307730f01ff45b
+TerminalApplication=kitty
+TerminalService=kitty.desktop
 font=Rubik,10,-1,5,50,0,0,0,0,0
 menuFont=Rubik,10,-1,5,50,0,0,0,0,0
 toolBarFont=Rubik,10,-1,5,50,0,0,0,0,0

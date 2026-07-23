@@ -2530,7 +2530,7 @@ font_size 16.0
 
 
 # BEGIN_KITTY_THEME
-# Tokyo Night
+# Catppuccin-Mocha
 include current-theme.conf
 # END_KITTY_THEME
 
@@ -2541,4 +2541,17 @@ map ctrl+up resize_window taller
 map ctrl+down resize_window shorter
 # reset all windows in the tab to default sizes
 map ctrl+home resize_window reset
+
+#: Transparency + blur (added for KDE/X11 blur-behind) {{"{{{"}}
+background_opacity 0.85
+background_blur 48
+dynamic_background_opacity yes
+watcher focus-dim.py
+#: {{"}}}"}}
+
+#: Ported from wezterm.lua/appearance.lua {{"{{{"}}
+font_family      Hack Nerd Font
+hide_window_decorations titlebar-only
+confirm_os_window_close 0
+#: {{"}}}"}}
 {{- end }}
