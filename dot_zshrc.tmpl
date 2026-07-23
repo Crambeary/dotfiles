@@ -23,11 +23,13 @@ eval "$(starship init zsh)"
 
 eval "$(zoxide init zsh)"
 
-export EDITOR=nvim
-export VISUAL=nvim
+export EDITOR=hx
+export VISUAL=hx
 
+{{- if or (eq .chezmoi.hostname "marc-mac-fedora") (eq .chezmoi.hostname "marc-fedora") }}
 # sudoplz askpass helper — lets agents run `sudo -A` instead of failing on the password prompt
 command -v askpass >/dev/null 2>&1 && export SUDO_ASKPASS="$(command -v askpass)"
+{{- end }}
 
 HISTFILE=~/.zsh_history
 HISTSIZE=50000
