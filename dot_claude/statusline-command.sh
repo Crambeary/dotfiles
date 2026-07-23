@@ -1,10 +1,11 @@
 #!/bin/bash
-# Claude Code statusline: context, 5h/weekly usage, model, and effort
+# Claude Code statusline: context, 5h/weekly usage + time-to-reset, model, effort
 # Kept short and put context/usage first: narrow panes can lose content,
 # so the important numbers go first with minimal escape overhead.
 #
-# Context % and 5h/weekly (D/W) usage both come straight from fields
-# Claude Code already includes on stdin (context_window, rate_limits) —
+# Context %, 5h/weekly (D/W) usage, and their reset countdowns all come
+# straight from fields Claude Code already includes on stdin
+# (context_window, rate_limits.*.used_percentage/resets_at) —
 # no network calls, no external tools (ccusage etc.) needed.
 
 input=$(cat)
@@ -66,17 +67,49 @@ fi
 # --- 5h / weekly usage: straight from Claude Code's own rate_limits field ---
 five_hour=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 seven_day=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+five_hour_resets=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+seven_day_resets=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+
+# fmt_remaining <resets_at epoch> -> "Xh Ym" or "Xd Yh" countdown to reset
+fmt_remaining() {
+  local resets_at="$1"
+  local now secs
+  now=$(date +%s)
+  secs=$((resets_at - now))
+  if [ "$secs" -le 0 ]; then
+    echo "0m"
+    return
+  fi
+  local days=$((secs / 86400))
+  local hours=$(((secs % 86400) / 3600))
+  local mins=$(((secs % 3600) / 60))
+  if [ "$days" -gt 0 ]; then
+    echo "${days}d${hours}h"
+  elif [ "$hours" -gt 0 ]; then
+    echo "${hours}h${mins}m"
+  else
+    echo "${mins}m"
+  fi
+}
 
 usage=""
 if [ -n "$five_hour" ]; then
   d_rounded=$(printf '%.0f' "$five_hour")
   d_color=$(ge_color "$d_rounded")
-  usage="${usage} ${d_color}D:${d_rounded}%${RESET}"
+  d_left=""
+  if [ -n "$five_hour_resets" ]; then
+    d_left="${GRAY}(${RESET}$(fmt_remaining "$five_hour_resets")${GRAY})${RESET}"
+  fi
+  usage="${usage} ${d_color}D:${d_rounded}%${RESET}${d_left}"
 fi
 if [ -n "$seven_day" ]; then
   w_rounded=$(printf '%.0f' "$seven_day")
   w_color=$(ge_color "$w_rounded")
-  usage="${usage} ${w_color}W:${w_rounded}%${RESET}"
+  w_left=""
+  if [ -n "$seven_day_resets" ]; then
+    w_left="${GRAY}(${RESET}$(fmt_remaining "$seven_day_resets")${GRAY})${RESET}"
+  fi
+  usage="${usage} ${w_color}W:${w_rounded}%${RESET}${w_left}"
 fi
 
 # --- model + effort (single-letter code) ---
