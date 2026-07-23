@@ -1,5 +1,7 @@
 #!/bin/bash
-# Claude Code statusline: model, effort, context window, and 5h/weekly usage
+# Claude Code statusline: context, 5h/weekly usage, model, and effort
+# Kept short and put context/usage first: narrow panes can lose content,
+# so the important numbers go first with minimal escape overhead.
 
 input=$(cat)
 
@@ -30,28 +32,17 @@ ge_color() {
   fi
 }
 
-left="${BOLD}${CYAN}${model}${RESET}"
-
-if [ -n "$effort" ]; then
-  case "$effort" in
-    high|max|xhigh) effort_color="$MAGENTA" ;;
-    medium)         effort_color="$YELLOW" ;;
-    *)               effort_color="$GRAY" ;;
-  esac
-  left="$left ${GRAY}(${RESET}${effort_color}${effort} effort${RESET}${GRAY})${RESET}"
-fi
-
 # --- context window ---
 ctx=""
 if [ -n "$used_pct" ]; then
   used_rounded=$(printf '%.0f' "$used_pct")
-  ctx_color=$(ge_color "$used_rounded")
-  ctx="${GRAY}<${RESET}${ctx_color}${BOLD}C: ${used_rounded}%${RESET}${GRAY}>${RESET}"
 elif [ -n "$remaining_pct" ]; then
   remaining_rounded=$(printf '%.0f' "$remaining_pct")
   used_rounded=$((100 - remaining_rounded))
+fi
+if [ -n "$used_rounded" ]; then
   ctx_color=$(ge_color "$used_rounded")
-  ctx="${GRAY}<${RESET}${ctx_color}${BOLD}C: ${used_rounded}%${RESET}${GRAY}>${RESET}"
+  ctx="${ctx_color}${BOLD}C:${used_rounded}%${RESET}"
 fi
 
 # --- 5h / weekly usage, via an undocumented oauth/usage endpoint ---
@@ -90,18 +81,33 @@ usage=""
 if [ -n "$five_hour" ]; then
   d_rounded=$(printf '%.0f' "$five_hour")
   d_color=$(ge_color "$d_rounded")
-  usage="${usage}${GRAY} ${RESET}${d_color}D: ${d_rounded}%${RESET}"
+  usage="${usage} ${d_color}D:${d_rounded}%${RESET}"
 fi
 if [ -n "$seven_day" ]; then
   w_rounded=$(printf '%.0f' "$seven_day")
   w_color=$(ge_color "$w_rounded")
-  usage="${usage}${GRAY} ${RESET}${w_color}W: ${w_rounded}%${RESET}"
+  usage="${usage} ${w_color}W:${w_rounded}%${RESET}"
 fi
 
-right="$ctx$usage"
+# --- model + effort (single-letter code) ---
+model_part="${BOLD}${CYAN}${model}${RESET}"
 
-if [ -n "$right" ]; then
-  printf "%b %b" "$right" "$left"
+if [ -n "$effort" ]; then
+  case "$effort" in
+    low)    effort_code="l";  effort_color="$GRAY" ;;
+    medium) effort_code="m";  effort_color="$YELLOW" ;;
+    high)   effort_code="h";  effort_color="$MAGENTA" ;;
+    xhigh)  effort_code="xh"; effort_color="$MAGENTA" ;;
+    max)    effort_code="mx"; effort_color="$MAGENTA" ;;
+    *)      effort_code="$effort"; effort_color="$GRAY" ;;
+  esac
+  model_part="${model_part}${GRAY}(${RESET}${effort_color}${effort_code}${RESET}${GRAY})${RESET}"
+fi
+
+stats="$ctx$usage"
+
+if [ -n "$stats" ]; then
+  printf "%b %b" "$stats" "$model_part"
 else
-  printf "%b" "$left"
+  printf "%b" "$model_part"
 fi
