@@ -2,14 +2,20 @@
 # Claude Code statusline: context, 5h/weekly usage, model, and effort
 # Kept short and put context/usage first: narrow panes can lose content,
 # so the important numbers go first with minimal escape overhead.
+#
+# Usage-tracking pattern borrowed from ssenart/oh-my-claude:
+#  - context % is computed locally from the token counts Claude Code
+#    already hands us, instead of trusting a field from a fetch.
+#  - 5h/weekly (D/W) usage comes from a cache file only; this script
+#    never blocks on the network. A separate script
+#    (statusline-usage-update.sh) is fired in the background to
+#    refresh that cache, so a slow or rate-limited fetch never stalls
+#    or breaks the line.
 
 input=$(cat)
 
 model=$(echo "$input" | jq -r '.model.display_name // "unknown"')
 effort=$(echo "$input" | jq -r '.effort.level // empty')
-
-used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
-remaining_pct=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
 
 # Colors
 RESET='\033[0m'
@@ -33,45 +39,47 @@ ge_color() {
 }
 
 # --- context window ---
-ctx=""
-if [ -n "$used_pct" ]; then
-  used_rounded=$(printf '%.0f' "$used_pct")
-elif [ -n "$remaining_pct" ]; then
-  remaining_rounded=$(printf '%.0f' "$remaining_pct")
-  used_rounded=$((100 - remaining_rounded))
+# Prefer computing this ourselves from raw token counts (matches what
+# oh-my-claude does) rather than trusting a precomputed percentage field.
+used_rounded=$(echo "$input" | jq -r '
+  (.context_window.current_usage // empty) as $u
+  | if $u == null then empty else
+      (($u.input_tokens // 0) + ($u.cache_creation_input_tokens // 0) + ($u.cache_read_input_tokens // 0)) as $current
+      | (.context_window.context_window_size // 0) as $size
+      | if $size == 0 then empty else (($current * 100 / $size) | round) end
+    end
+' 2>/dev/null)
+
+if [ -z "$used_rounded" ]; then
+  # Fall back to Claude Code's own precomputed fields if current_usage isn't present
+  used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+  remaining_pct=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
+  if [ -n "$used_pct" ]; then
+    used_rounded=$(printf '%.0f' "$used_pct")
+  elif [ -n "$remaining_pct" ]; then
+    remaining_rounded=$(printf '%.0f' "$remaining_pct")
+    used_rounded=$((100 - remaining_rounded))
+  fi
 fi
+
+ctx=""
 if [ -n "$used_rounded" ]; then
   ctx_color=$(ge_color "$used_rounded")
   ctx="${ctx_color}${BOLD}C:${used_rounded}%${RESET}"
 fi
 
-# --- 5h / weekly usage, via an undocumented oauth/usage endpoint ---
-# Shared cache with a lock so multiple statuslines don't hammer the endpoint
-# (it rate-limits hard). Refreshed at most once every 25s.
+# --- 5h / weekly usage: cache-only read, background refresh ---
 CACHE="$HOME/.cache/claude-usage/usage.json"
-LOCK="$HOME/.cache/claude-usage/usage.lock"
+UPDATER="$HOME/.claude/statusline-usage-update.sh"
+cache_timeout=60
+
 mkdir -p "$HOME/.cache/claude-usage"
-
-now=$(date +%s)
 mtime=$( [ -f "$CACHE" ] && stat -c %Y "$CACHE" 2>/dev/null || echo 0)
+now=$(date +%s)
 
-if [ $((now - mtime)) -ge 25 ]; then
-  (
-    flock -n 9 || exit 0
-    mtime=$( [ -f "$CACHE" ] && stat -c %Y "$CACHE" 2>/dev/null || echo 0)
-    now=$(date +%s)
-    [ $((now - mtime)) -lt 25 ] && exit 0
-
-    token=$(jq -r '.claudeAiOauth.accessToken // empty' "$HOME/.claude/.credentials.json" 2>/dev/null)
-    [ -z "$token" ] && exit 0
-
-    curl -s -m 5 "https://api.anthropic.com/api/oauth/usage" \
-      -H "Authorization: Bearer $token" \
-      -H "anthropic-beta: oauth-2025-04-20" 2>/dev/null > "$CACHE.tmp"
-
-    [ -s "$CACHE.tmp" ] && jq -e . "$CACHE.tmp" >/dev/null 2>&1 && mv "$CACHE.tmp" "$CACHE"
-    rm -f "$CACHE.tmp"
-  ) 9>"$LOCK"
+if [ $((now - mtime)) -ge "$cache_timeout" ]; then
+  setsid bash "$UPDATER" >/dev/null 2>&1 < /dev/null &
+  disown 2>/dev/null
 fi
 
 five_hour=$(jq -r '.five_hour.utilization // empty' "$CACHE" 2>/dev/null)
