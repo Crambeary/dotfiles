@@ -1,11 +1,11 @@
-{{- if eq .chezmoi.hostname "marc-mac-fedora" -}}
+{{- if ne .chezmoi.os "darwin" -}}
 #    __ ___ __  __
 #   / //_(_) /_/ /___ __
 #  / ,< / / __/ __/ // /
 # /_/|_/_/\__/\__/\_, /
 #                /___/
 #
-# Configuration (ML4W Hyprland desktop, this host only)
+# Configuration (ML4W Hyprland desktop, any non-macOS host)
 font_family                 JetBrainsMono Nerd Font
 font_size                   12
 bold_font                   auto
@@ -345,7 +345,7 @@ include $HOME/.config/kitty/custom.conf
 #: Scrollback {{"{{{"}}
 
 # kitty-scrollback.nvim Kitten alias
-action_alias kitty_scrollback_nvim kitten /Users/marc/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py
+action_alias kitty_scrollback_nvim kitten {{ .chezmoi.homeDir }}/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py
 
 # Browse scrollback buffer in nvim
 map kitty_mod+h kitty_scrollback_nvim
@@ -2542,7 +2542,7 @@ map ctrl+down resize_window shorter
 # reset all windows in the tab to default sizes
 map ctrl+home resize_window reset
 
-#: Transparency + blur (added for KDE/X11 blur-behind) {{"{{{"}}
+#: Transparency + blur (macOS native window blur) {{"{{{"}}
 background_opacity 0.85
 background_blur 48
 dynamic_background_opacity yes
