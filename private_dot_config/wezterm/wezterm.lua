@@ -44,7 +44,8 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
 	config.adjust_window_size_when_changing_font_size = false
 	config.front_end = "OpenGL"
 	config.window_background_opacity = 0.9
-	config.window_close_confirmation = "NeverPrompt"
+	-- Confirm before closing, matching kitty's confirm_os_window_close -1
+	config.window_close_confirmation = "AlwaysPrompt"
 end
 
 -- Local machine overrides: create ~/.config/wezterm/custom.lua with
