@@ -297,11 +297,14 @@ plugins {
 // eg. "https://example.com/my-plugin.wasm"
 load_plugins {
     zellij:link
-    "file:/home/marc/.config/zellij/plugins/zjframes.wasm" {
-        hide_frame_for_single_pane       "true"
-        hide_frame_except_for_search     "false"
-        hide_frame_except_for_fullscreen "false"
-    }
+    // zjframes temporarily disabled: it conflicts with `pane_frames false`
+    // above and causes pane-frame flicker. Re-enable once frame ownership
+    // is settled (pick zjframes OR pane_frames, not both).
+    // "file:{{ .chezmoi.homeDir }}/.config/zellij/plugins/zjframes.wasm" {
+    //     hide_frame_for_single_pane       "true"
+    //     hide_frame_except_for_search     "false"
+    //     hide_frame_except_for_fullscreen "false"
+    // }
 }
 web_client {
     font "monospace"
