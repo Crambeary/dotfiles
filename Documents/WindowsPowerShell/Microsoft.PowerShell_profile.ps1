@@ -1,6 +1,23 @@
 Invoke-Expression (&starship init powershell)
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
+# Enable inline command predictions when the installed PSReadLine supports it.
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine -ErrorAction SilentlyContinue
+    $psReadLineModule = Get-Module PSReadLine
+
+    if ($psReadLineModule -and $psReadLineModule.Version -ge [version]'2.1.0') {
+        $canRenderPredictions = ($Host.Name -eq 'ConsoleHost') -and (-not [Console]::IsOutputRedirected)
+        if ($canRenderPredictions) {
+            Set-PSReadLineOption -PredictionSource History -ErrorAction Stop
+            if ((Get-Command Set-PSReadLineOption).Parameters.ContainsKey('PredictionViewStyle')) {
+                Set-PSReadLineOption -PredictionViewStyle InlineView
+            }
+        }
+        Set-PSReadLineOption -HistorySaveStyle SaveIncrementally
+    }
+}
+
 
 # =============================================================================
 #

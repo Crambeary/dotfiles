@@ -1,2 +1,0 @@
-Host marc-fedora
-    RemoteForward 6600 localhost:6600

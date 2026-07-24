@@ -21,6 +21,11 @@ AppData/*
 scoop/*
 {{ end }}
 
+# Fish is used in the Linux/WSL environment, not native Windows.
+{{ if eq .chezmoi.os "windows" }}
+.config/fish/**
+{{ end }}
+
 
 # macOS only files
 {{ if ne .chezmoi.os "darwin" }}

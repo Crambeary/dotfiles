@@ -36,6 +36,15 @@ bar.apply_to_config(config,
 
 if wezterm.target_triple == "x86_64-pc-windows-msvc" then
 	config.default_prog = { "powershell.exe", '-NoLogo' }
+
+	-- Local Windows defaults, kept off Mac/Linux so they keep their native
+	-- (Metal/WebGpu) rendering and window behaviour.
+	config.font = wezterm.font("Hack Nerd Font", { weight = "Regular" })
+	config.window_decorations = "RESIZE"
+	config.adjust_window_size_when_changing_font_size = false
+	config.front_end = "OpenGL"
+	config.window_background_opacity = 0.9
+	config.window_close_confirmation = "NeverPrompt"
 end
 
 -- Local machine overrides: create ~/.config/wezterm/custom.lua with
