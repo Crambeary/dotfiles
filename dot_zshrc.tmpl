@@ -73,14 +73,13 @@ source <(fzf --zsh)
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 
-# Audio: wine and yabridge
+{{- if or (eq .chezmoi.hostname "marc-fedora") (eq .chezmoi.hostname "marc-mac-fedora") }}
+
+# Audio: wine and yabridge (personal Linux machines only)
 export WINEESYNC=1
 export WINEFSYNC=1
 export PATH="$PATH:$HOME/.local/share/yabridge"
-
-
-# Added by Antigravity CLI installer
-export PATH="/home/marc/.local/bin:$PATH"
+{{- end }}
 {{- if eq .chezmoi.hostname "marc-mac-fedora" }}
 
 # ML4W Hyprland integration aliases/scripts (merged in, not the full ML4W zshrc stack), this host only

@@ -1,0 +1,12 @@
+{{- $cache := "$HOME/.cache/antidote" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- $cache = "$HOME/Library/Caches/antidote" -}}
+{{- end -}}
+fpath+=( "{{ $cache }}/github.com/zsh-users/zsh-syntax-highlighting" )
+source "{{ $cache }}/github.com/zsh-users/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh"
+fpath+=( "{{ $cache }}/github.com/zsh-users/zsh-autosuggestions" )
+source "{{ $cache }}/github.com/zsh-users/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
+fpath+=( "{{ $cache }}/github.com/zsh-users/zsh-history-substring-search" )
+source "{{ $cache }}/github.com/zsh-users/zsh-history-substring-search/zsh-history-substring-search.plugin.zsh"
+fpath+=( "{{ $cache }}/github.com/zsh-users/zsh-completions" )
+source "{{ $cache }}/github.com/zsh-users/zsh-completions/zsh-completions.plugin.zsh"
