@@ -71,8 +71,6 @@ bindkey '^[[B' history-substring-search-down
 # fzf shell integration (Ctrl+R history, Ctrl+T file picker, Alt+C cd)
 source <(fzf --zsh)
 
-[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
-
 {{- if or (eq .chezmoi.hostname "marc-fedora") (eq .chezmoi.hostname "marc-mac-fedora") }}
 
 # Audio: wine and yabridge (personal Linux machines only)

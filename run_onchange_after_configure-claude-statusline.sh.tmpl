@@ -2,7 +2,7 @@
 # Merges the statusLine key into ~/.claude/settings.json without touching
 # other machine-specific keys (model, effortLevel, tui, voice, theme, etc).
 # Re-runs automatically (via run_onchange) whenever this script's content changes.
-# script hash: {{ include "dot_claude/statusline-command.sh" | sha256sum }}
+# script hash: {{ include "dot_claude/executable_statusline-command.sh" | sha256sum }}
 set -euo pipefail
 
 SETTINGS="$HOME/.claude/settings.json"
