@@ -23,7 +23,8 @@ window_padding_width        10
 hide_window_decorations     yes
 background_opacity          0.7
 dynamic_background_opacity  yes
-confirm_os_window_close     0
+# -1 warns before closing a window whose tabs have a running process (Claude)
+confirm_os_window_close     -1
 selection_foreground        none
 selection_background        none
 
