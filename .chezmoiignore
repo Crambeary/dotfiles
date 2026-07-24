@@ -1,6 +1,6 @@
 .config/nvim/plugin/packer_compiled.lua
 
-# Generated antidote bundle — .zshrc rebuilds it from .zsh_plugins.txt on demand
+# Generated antidote bundle â€” .zshrc rebuilds it from .zsh_plugins.txt on demand
 .zsh_plugins.zsh
 
 # fish-managed universal vars: fish rewrites this itself; tracking it across
@@ -19,9 +19,10 @@ README.md
 {{ end }}
 
 # Windows only. The PowerShell profile stays tracked in source so Windows
-# still gets it — it's just not a target anywhere else.
+# still gets it â€” it's just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
+AppData/Roaming/Zellij/**
 AppData/*
 scoop/*
 Documents/WindowsPowerShell/**

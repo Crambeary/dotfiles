@@ -1,7 +1,7 @@
 layout {
     default_tab_template {
         pane size=2 borderless=true {
-            plugin location="file:{{ .chezmoi.homeDir }}/.config/zellij/plugins/zjstatus.wasm" {
+            plugin location="file:{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/plugins/zjstatus.wasm" {
                 format_left   "{mode}#[bg=#11111b] {tabs}"
                 format_center ""
                 format_right  "#[bg=#11111b,fg=#45475a]{swap_layout}#[bg=#11111b,fg=#45475a] Zellij: #[bg=#11111b,fg=#45475a]{session}"
@@ -10,7 +10,7 @@ layout {
                 format_precedence "crl"
 
                 border_enabled  "false"
-                border_char     "─"
+                border_char     "â”€"
                 border_format   "#[fg=#6c7086]{char}"
                 border_position "top"
 
@@ -49,8 +49,8 @@ layout {
 
                 // indicators
                 tab_sync_indicator       " "
-                tab_fullscreen_indicator " 󰊓"
-                tab_floating_indicator   " 󰹙"
+                tab_fullscreen_indicator " ó°Š“"
+                tab_floating_indicator   " ó°¹™"
 
                 command_git_branch_command     "git rev-parse --abbrev-ref HEAD"
                 command_git_branch_cwd         "{focused_pane_cwd}"
@@ -67,7 +67,7 @@ layout {
             plugin location="zellij:status-bar"
         }
         pane size=1 borderless=true {
-            plugin location="file:{{ .chezmoi.homeDir }}/.config/zellij/plugins/zjstatus.wasm" {
+            plugin location="file:{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/plugins/zjstatus.wasm" {
                 format_left   "{{ if ne .chezmoi.os "darwin" }}{command_cpu_temp}#[bg=#11111b]{{ end }}{command_mem_usage}#[bg=#11111b]{command_disk_usage}"
                 format_center ""
                 format_right  "{command_git_branch}#[bg=#11111b]{datetime}"
@@ -83,18 +83,18 @@ layout {
                 command_git_branch_interval    "10"
                 command_git_branch_rendermode  "static"
 
-                command_cpu_temp_command    "{{ .chezmoi.homeDir }}/.config/zellij/scripts/cpu-temp.sh"
-                command_cpu_temp_format     "#[fg=#fab387] 󰔏 {stdout} "
+                command_cpu_temp_command    "{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/scripts/cpu-temp.sh"
+                command_cpu_temp_format     "#[fg=#fab387] ó°” {stdout} "
                 command_cpu_temp_interval   "5"
                 command_cpu_temp_rendermode "static"
 
-                command_mem_usage_command    "{{ .chezmoi.homeDir }}/.config/zellij/scripts/mem-usage.sh"
-                command_mem_usage_format     "#[fg=#f9e2af] 󰍛 {stdout} "
+                command_mem_usage_command    "{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/scripts/mem-usage.sh"
+                command_mem_usage_format     "#[fg=#f9e2af] ó°› {stdout} "
                 command_mem_usage_interval   "5"
                 command_mem_usage_rendermode "static"
 
-                command_disk_usage_command    "{{ .chezmoi.homeDir }}/.config/zellij/scripts/disk-usage.sh"
-                command_disk_usage_format     "#[fg=#a6e3a1] 󰋊 {stdout} "
+                command_disk_usage_command    "{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/scripts/disk-usage.sh"
+                command_disk_usage_format     "#[fg=#a6e3a1] ó°‹Š {stdout} "
                 command_disk_usage_interval   "60"
                 command_disk_usage_rendermode "static"
 

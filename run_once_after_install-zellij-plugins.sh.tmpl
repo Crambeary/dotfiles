@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-plugin_dir="{{ .chezmoi.homeDir }}/.config/zellij/plugins"
+plugin_dir="{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/plugins"
 mkdir -p "$plugin_dir"
 
 curl -sL -o "$plugin_dir/zjstatus.wasm" \

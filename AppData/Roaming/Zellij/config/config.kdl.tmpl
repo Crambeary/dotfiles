@@ -300,7 +300,7 @@ load_plugins {
     // zjframes temporarily disabled: it conflicts with `pane_frames false`
     // above and causes pane-frame flicker. Re-enable once frame ownership
     // is settled (pick zjframes OR pane_frames, not both).
-    // "file:{{ .chezmoi.homeDir }}/.config/zellij/plugins/zjframes.wasm" {
+    // "file:{{ if eq .chezmoi.os "windows" }}{{ .chezmoi.homeDir }}/AppData/Roaming/Zellij/config{{ else }}{{ .chezmoi.homeDir }}/.config/zellij{{ end }}/plugins/zjframes.wasm" {
     //     hide_frame_for_single_pane       "true"
     //     hide_frame_except_for_search     "false"
     //     hide_frame_except_for_fullscreen "false"
@@ -348,7 +348,7 @@ default_mode "normal"
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
 // 
-// default_shell "fish"
+{{ if eq .chezmoi.os "windows" }}default_shell "pwsh.exe"{{ else }}// default_shell "fish"{{ end }}
  
 // Choose the path to override cwd that zellij will use for opening new panes
 // 
