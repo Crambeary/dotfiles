@@ -207,13 +207,23 @@ fi
 # shell out to ccusage (global install) for today's cost. Cached to a file
 # with a short TTL since ccusage parses local JSONL logs (~1-3s), which is
 # too slow to re-run on every statusline refresh.
+# at_cap <pct> -> success when a window is genuinely at/over 100%. Compared in
+# awk rather than via printf '%.0f', which rounds — 99.6% would read as maxed.
+at_cap() {
+  [ -n "$1" ] && awk -v v="$1" 'BEGIN { exit !(v >= 100) }'
+}
+
 maxed=0
-[ -n "$five_hour" ] && [ "$(printf '%.0f' "$five_hour")" -ge 100 ] && maxed=1
-[ -n "$seven_day" ] && [ "$(printf '%.0f' "$seven_day")" -ge 100 ] && maxed=1
+at_cap "$five_hour" && maxed=1
+at_cap "$seven_day" && maxed=1
 
 credit=""
 if [ "$maxed" -eq 1 ] && command -v ccusage >/dev/null 2>&1; then
-  cache_file="/tmp/.claude-credit-burn-cache"
+  # Per-user temp dir where available: /tmp is world-writable and sticky on
+  # Linux, so a fixed filename there can be squatted by another user, leaving
+  # the cache permanently unwritable (and every refresh paying ccusage's 1-3s).
+  cache_dir="${TMPDIR:-/tmp}"
+  cache_file="${cache_dir%/}/.claude-credit-burn-cache"
   cache_ttl=90
   now_epoch=$(date +%s)
   cached_cost=""
@@ -227,12 +237,16 @@ if [ "$maxed" -eq 1 ] && command -v ccusage >/dev/null 2>&1; then
     today_cost=$(ccusage daily --json --since "$(date +%Y%m%d)" 2>/dev/null | jq -r '.totals.totalCost // empty')
     if [ -n "$today_cost" ]; then
       cached_cost=$(printf '%.2f' "$today_cost")
-      echo "$cached_cost" > "$cache_file"
+      echo "$cached_cost" > "$cache_file" 2>/dev/null
     fi
   fi
   if [ -n "$cached_cost" ]; then
     credit=" ${RED}${BOLD}Extra:\$${cached_cost}${RESET}"
   fi
+elif [ "$maxed" -eq 1 ]; then
+  # Maxed with no ccusage on PATH: say so instead of omitting the line, so an
+  # unprovisioned machine doesn't look like it's burning nothing past the cap.
+  credit=" ${RED}${BOLD}Extra:?${RESET}${GRAY}(ccusage)${RESET}"
 fi
 
 stats="$ctx$cache_age$usage$credit"
