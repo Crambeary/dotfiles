@@ -1710,7 +1710,9 @@ macos_titlebar_color #1A1B26
 #: background_opacity. If you want to use both, you are probably
 #: better off just hiding the titlebar with hide_window_decorations.
 
-# macos_option_as_alt no
+# Send Option+key through as Alt+key so zellij/terminal bindings see it
+# (paired with the Karabiner rule disabling the n e i u ` dead keys).
+macos_option_as_alt yes
 
 #: Use the Option key as an Alt key on macOS. With this set to no,
 #: kitty will use the macOS native Option+Key to enter Unicode
@@ -2552,6 +2554,7 @@ watcher focus-dim.py
 #: Ported from wezterm.lua/appearance.lua {{"{{{"}}
 font_family      Hack Nerd Font
 hide_window_decorations titlebar-only
-confirm_os_window_close 0
+# -1 warns before closing a window whose tabs have a running process (Claude)
+confirm_os_window_close -1
 #: {{"}}}"}}
 {{- end }}

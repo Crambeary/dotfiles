@@ -23,6 +23,13 @@ GREEN='\033[32m'
 RED='\033[31m'
 GRAY='\033[2;37m'
 
+# floor_pct <pct> -> integer, rounded DOWN. A "% used" figure must never
+# overstate: printf '%.0f' turns 99.6% into a "100%" that reads as capped when
+# it isn't. Flooring also matches the context figure, which is integer division.
+floor_pct() {
+  awk -v v="$1" 'BEGIN { printf "%d", int(v) }'
+}
+
 # ge_color <used_pct> -> color for a "% used" figure (green/yellow/red)
 ge_color() {
   if [ "$1" -ge 85 ]; then
@@ -168,7 +175,7 @@ seven_day_resets=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // em
 
 usage=""
 if [ -n "$five_hour" ]; then
-  d_rounded=$(printf '%.0f' "$five_hour")
+  d_rounded=$(floor_pct "$five_hour")
   d_color=$(ge_color "$d_rounded")
   d_left=""
   if [ -n "$five_hour_resets" ]; then
@@ -177,7 +184,7 @@ if [ -n "$five_hour" ]; then
   usage="${usage} ${d_color}D:${d_rounded}%${RESET}${d_left}"
 fi
 if [ -n "$seven_day" ]; then
-  w_rounded=$(printf '%.0f' "$seven_day")
+  w_rounded=$(floor_pct "$seven_day")
   w_color=$(ge_color "$w_rounded")
   w_left=""
   if [ -n "$seven_day_resets" ]; then
