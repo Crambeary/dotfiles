@@ -24,6 +24,24 @@ scoop/*
 .aerospace.toml
 {{ end }}
 
+# Karabiner: macOS only, and this mac's live config is the source of truth
+{{ if ne .chezmoi.os "darwin" }}
+.config/karabiner/**
+{{ end }}
+
+# mpv stream listener: runs only on marc-fedora (the SSH host side of the
+# RemoteForward tunnel, playing audio streamed back from marc-mac-fedora)
+{{ if ne .chezmoi.hostname "marc-fedora" }}
+.config/systemd/user/mpv-stream-listen.service
+.local/bin/mpv-stream-listen.sh
+{{ end }}
+
+# SSH RemoteForward stanza for marc-fedora: only needed on marc-mac-fedora,
+# the machine that initiates the connection and listens locally on 6600
+{{ if ne .chezmoi.hostname "marc-mac-fedora" }}
+.ssh/config.d/chezmoi
+{{ end }}
+
 # KDE Plasma (Linux only)
 {{ if ne .chezmoi.os "linux" }}
 .config/plasma*
