@@ -1,5 +1,8 @@
 .config/nvim/plugin/packer_compiled.lua
 
+# Generated antidote bundle — .zshrc rebuilds it from .zsh_plugins.txt on demand
+.zsh_plugins.zsh
+
 # Repo docs, not a dotfile target
 README.md
 
