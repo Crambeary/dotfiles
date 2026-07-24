@@ -18,11 +18,13 @@ README.md
 .config/alacritty/alacritty.toml
 {{ end }}
 
-# Windows only
+# Windows only. The PowerShell profile stays tracked in source so Windows
+# still gets it — it's just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
 AppData/*
 scoop/*
+Documents/WindowsPowerShell/**
 {{ end }}
 
 # Fish is used in the Linux/WSL environment, not native Windows.
