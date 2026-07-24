@@ -1,3 +1,12 @@
+# Shared PowerShell profile managed by chezmoi. PowerShell 7 loads this through
+# Documents\PowerShell\Microsoft.PowerShell_profile.ps1.
+$env:PROTO_HOME = Join-Path $HOME ".proto"
+$env:PATH = @(
+  (Join-Path $env:PROTO_HOME "shims"),
+  (Join-Path $env:PROTO_HOME "bin"),
+  $env:PATH
+) -join [IO.Path]::PathSeparator
+
 Invoke-Expression (&starship init powershell)
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
