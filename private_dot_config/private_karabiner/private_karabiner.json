@@ -5,6 +5,51 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "Disable Option dead keys (n e i u `) so Option+key sends a real Alt+key to the terminal instead of composing accents",
+                        "manipulators": [
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "n",
+                                    "modifiers": { "mandatory": ["option"], "optional": ["caps_lock"] }
+                                },
+                                "to": [{ "key_code": "n", "modifiers": ["left_option"] }]
+                            },
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "e",
+                                    "modifiers": { "mandatory": ["option"], "optional": ["caps_lock"] }
+                                },
+                                "to": [{ "key_code": "e", "modifiers": ["left_option"] }]
+                            },
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "i",
+                                    "modifiers": { "mandatory": ["option"], "optional": ["caps_lock"] }
+                                },
+                                "to": [{ "key_code": "i", "modifiers": ["left_option"] }]
+                            },
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "u",
+                                    "modifiers": { "mandatory": ["option"], "optional": ["caps_lock"] }
+                                },
+                                "to": [{ "key_code": "u", "modifiers": ["left_option"] }]
+                            },
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "grave_accent_and_tilde",
+                                    "modifiers": { "mandatory": ["option"], "optional": ["caps_lock"] }
+                                },
+                                "to": [{ "key_code": "grave_accent_and_tilde", "modifiers": ["left_option"] }]
+                            }
+                        ]
+                    },
+                    {
                         "description": "Implements the Extend layer created by DreymaR as documented in https://dreymar.colemak.org/layers-extend.html, with some modifications.",
                         "manipulators": [
                             {
