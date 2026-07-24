@@ -128,4 +128,4 @@ set -x PATH $PATH $GOPATH/bin $GOROOT/bin
 
 
 # Added by Antigravity CLI installer
-set -gx PATH "/home/marc/.local/bin" $PATH
+set -gx PATH "$HOME/.local/bin" $PATH
