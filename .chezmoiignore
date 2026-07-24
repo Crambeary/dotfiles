@@ -3,6 +3,10 @@
 # Generated antidote bundle — .zshrc rebuilds it from .zsh_plugins.txt on demand
 .zsh_plugins.zsh
 
+# fish-managed universal vars: fish rewrites this itself; tracking it across
+# machines just accumulates dead per-host paths. Each machine owns its own.
+.config/fish/fish_variables
+
 # Repo docs, not a dotfile target
 README.md
 
