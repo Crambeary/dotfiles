@@ -1,5 +1,7 @@
 # add fish-like features
-zsh-users/zsh-syntax-highlighting
-zsh-users/zsh-autosuggestions
-zsh-users/zsh-history-substring-search
+# order matters: completions must load before compinit; syntax-highlighting
+# must load late; history-substring-search must load after syntax-highlighting.
 zsh-users/zsh-completions
+zsh-users/zsh-autosuggestions
+zsh-users/zsh-syntax-highlighting
+zsh-users/zsh-history-substring-search
