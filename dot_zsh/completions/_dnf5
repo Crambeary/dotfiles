@@ -10,18 +10,35 @@
 # on-screen prefix, so an absolute-path candidate against a `~/...` prefix
 # never matches and just beeps.
 _dnf5() {
-    local -a entries entries_nospace expanded_words
-    local line word entry w
-    local cur_word="${words[CURRENT]}"
+    local -a entries entries_nospace entries_path expanded_words
+    local line word entry w i
+    # words[CURRENT] keeps any not-yet-closed shell quote (e.g. a literal
+    # leading `"` when completing inside `"~/Documents/...`), which breaks
+    # the tilde-prefix match below. $PREFIX/$IPREFIX are zsh's already
+    # quote-stripped view of the in-progress word, so use those instead.
+    local cur_word="${IPREFIX}${PREFIX}"
     local cur_expanded="${cur_word/#\~/$HOME}"
 
-    for w in "${words[@]}"; do
-        expanded_words+=("${w/#\~/$HOME}")
+    for (( i = 1; i < CURRENT; i++ )); do
+        expanded_words+=("${words[i]/#\~/$HOME}")
     done
+    expanded_words+=("$cur_expanded")
 
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
-        word="${line%%[[:space:]]*}"
+        # Option lines look like "--repo REPO_ID,...   (description)" — the
+        # word is just the flag, the rest is a placeholder to discard. Every
+        # other line (paths, subcommands, package names) is "<word>" or
+        # "<word>   (description)", with no placeholder in between, so the
+        # word can itself contain spaces (e.g. a directory named "REAPER
+        # Media") and must not be split on the first whitespace.
+        if [[ "$line" == -* ]]; then
+            word="${line%%[[:space:]]*}"
+        elif [[ "$line" =~ '^(.*[^[:space:]])[[:space:]]+\(.+\)$' ]]; then
+            word="${match[1]}"
+        else
+            word="$line"
+        fi
         [[ -z "$word" ]] && continue
         if [[ "$cur_word" != "$cur_expanded" && "$word" == "$cur_expanded"* ]]; then
             word="${cur_word}${word#$cur_expanded}"
@@ -33,12 +50,18 @@ _dnf5() {
         fi
         if [[ "$word" == *= ]]; then
             entries_nospace+=("$entry")
+        elif [[ "$word" == */ ]]; then
+            entries_path+=("$entry")
         else
             entries+=("$entry")
         fi
     done < <(dnf5 --complete=$((CURRENT-1)) "${expanded_words[@]}" 2>/dev/null)
 
     (( ${#entries} )) && _describe -V 'dnf5' entries -Q
+    # compadd -f applies filename-style quoting: it backslash-escapes spaces
+    # (needed for e.g. "REAPER Media/") without escaping a leading `~`
+    # (which -Q/-S-only handling above would do, breaking tilde-expansion).
+    (( ${#entries_path} )) && compadd -f -S '' -a entries_path
     (( ${#entries_nospace} )) && _describe -V 'dnf5 options' entries_nospace -S '' -Q
 }
 
