@@ -1,11 +1,11 @@
-{{- if ne .chezmoi.os "darwin" -}}
+{{- if eq .chezmoi.hostname "marc-mac-fedora" -}}
 #    __ ___ __  __
 #   / //_(_) /_/ /___ __
 #  / ,< / / __/ __/ // /
 # /_/|_/_/\__/\__/\_, /
 #                /___/
 #
-# Configuration (ML4W Hyprland desktop, any non-macOS host)
+# Configuration (ML4W Hyprland desktop — marc-mac-fedora only)
 font_family                 JetBrainsMono Nerd Font
 font_size                   12
 bold_font                   auto
@@ -2557,5 +2557,11 @@ font_family      Hack Nerd Font
 hide_window_decorations titlebar-only
 # -1 warns before closing a window whose tabs have a running process (Claude)
 confirm_os_window_close -1
+#: {{"}}}"}}
+
+#: Animated cursor trail (native kitty, no ml4w dependency) {{"{{{"}}
+cursor_trail 1
+cursor_trail_decay 0.1 0.4
+cursor_trail_start_threshold 2
 #: {{"}}}"}}
 {{- end }}

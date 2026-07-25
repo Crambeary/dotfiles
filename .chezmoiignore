@@ -18,14 +18,16 @@ README.md
 .config/alacritty/alacritty.toml
 {{ end }}
 
-# Windows only. The PowerShell profile stays tracked in source so Windows
-# still gets it â€” it's just not a target anywhere else.
+# Windows only. The PowerShell profiles stay tracked in source so Windows
+# still gets them â€” they're just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/alacritty/alacritty.toml
 AppData/Roaming/Zellij/**
 AppData/*
 scoop/*
 Documents/WindowsPowerShell/**
+Documents/PowerShell/**
+install-powershell7.cmd
 {{ end }}
 
 # Fish is used in the Linux/WSL environment, not native Windows.
