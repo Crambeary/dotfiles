@@ -60,6 +60,11 @@ install-powershell7.cmd
 .ssh/config.d/chezmoi
 {{ end }}
 
+# dnf5 zsh completion override: Fedora/Linux only, dnf doesn't exist on macOS
+{{ if ne .chezmoi.os "linux" }}
+.zsh/completions/_dnf5
+{{ end }}
+
 # KDE Plasma (Linux only)
 {{ if ne .chezmoi.os "linux" }}
 .config/plasma*

@@ -1,0 +1,45 @@
+#compdef dnf5 dnf
+
+# Override for the system _dnf5 (see /usr/share/zsh/site-functions/_dnf5).
+# dnf5's own `--complete` helper does not expand a leading `~` itself, so
+# typing `dnf install -y ~/Down<TAB>` sends the literal string `~/Down` and
+# gets zero candidates back (silent beep) instead of completing to
+# `~/Downloads/...`. We expand `~` to $HOME before asking dnf5, but then have
+# to translate its expanded-path answers back to the `~`-relative form the
+# user actually typed — _describe matches candidates against the literal
+# on-screen prefix, so an absolute-path candidate against a `~/...` prefix
+# never matches and just beeps.
+_dnf5() {
+    local -a entries entries_nospace expanded_words
+    local line word entry w
+    local cur_word="${words[CURRENT]}"
+    local cur_expanded="${cur_word/#\~/$HOME}"
+
+    for w in "${words[@]}"; do
+        expanded_words+=("${w/#\~/$HOME}")
+    done
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        word="${line%%[[:space:]]*}"
+        [[ -z "$word" ]] && continue
+        if [[ "$cur_word" != "$cur_expanded" && "$word" == "$cur_expanded"* ]]; then
+            word="${cur_word}${word#$cur_expanded}"
+        fi
+        if [[ "$line" =~ '\((.+)\)$' ]]; then
+            entry="${word}:${match[1]}"
+        else
+            entry="${word}"
+        fi
+        if [[ "$word" == *= ]]; then
+            entries_nospace+=("$entry")
+        else
+            entries+=("$entry")
+        fi
+    done < <(dnf5 --complete=$((CURRENT-1)) "${expanded_words[@]}" 2>/dev/null)
+
+    (( ${#entries} )) && _describe -V 'dnf5' entries -Q
+    (( ${#entries_nospace} )) && _describe -V 'dnf5 options' entries_nospace -S '' -Q
+}
+
+_dnf5 "$@"
