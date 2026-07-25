@@ -13,9 +13,10 @@ README.md
 # Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
 .config/secrets/**
 
-# Mac and Linux only 
+# Mac and Linux only
 {{ if eq .chezmoi.os "windows" }}
 .config/alacritty/alacritty.toml
+.config/herdr/**
 {{ end }}
 
 # Windows only. The PowerShell profiles stay tracked in source so Windows
