@@ -60,8 +60,9 @@ install-powershell7.cmd
 .ssh/config.d/chezmoi
 {{ end }}
 
-# dnf5 zsh completion override: Fedora/Linux only, dnf doesn't exist on macOS
-{{ if ne .chezmoi.os "linux" }}
+# dnf5 zsh completion override: only where dnf is actually installed
+# (Fedora/RHEL-family) — not macOS, not dnf-less Linux like Ubuntu/Debian.
+{{ if not (lookPath "dnf") }}
 .zsh/completions/_dnf5
 {{ end }}
 
