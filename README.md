@@ -3,6 +3,29 @@
 Managed with [chezmoi](https://www.chezmoi.io/), synced across macOS, Windows, and Linux.
 OS-specific files are gated in `.chezmoiignore` using `{{ if ... .chezmoi.os }}` blocks.
 
+## Herdr
+
+Config lives at `~/.config/herdr/config.toml` on Linux/macOS (both use the same
+path — herdr doesn't split them like some tools do) and `%APPDATA%\herdr\config.toml`
+on Windows. Both are thin `.tmpl` wrappers (`private_dot_config/herdr/config.toml.tmpl`,
+`AppData/Roaming/herdr/config.toml.tmpl`) that pull the real content from the shared
+`.chezmoitemplates/herdr-config.toml` partial, following the same pattern as Alacritty.
+
+Four custom `[[keys.command]]` bindings shell out to scripts in
+`private_dot_config/herdr/scripts/` (pane→new-tab, move-back-to-origin-tab,
+move-to-selected-tab via `fzf`, and split-direction toggle). They're wrapped in
+`{{ if ne .chezmoi.os "windows" }}` inside the shared template and omitted from the
+Windows config entirely — herdr runs custom command strings through `cmd.exe /d /c`
+on Windows, which can't source a bash shebang script, and there's no `fzf`/`jq` there
+by default either. Rather than ship bindings that silently fail, Windows just doesn't
+get them. Revisit if this setup regularly needs multi-pane tab layouts on Windows —
+would need PowerShell equivalents (no `jq` needed there, `ConvertFrom-Json` is
+built in; `fzf` is available via `winget`/`scoop`).
+
+`channel = "stable"` is set explicitly, since herdr's own unset-default is
+`stable` on Linux/macOS but `preview` on Windows — pinned so all three machines
+track the same release channel.
+
 ## KDE Plasma (Linux)
 
 Only the small text config files are tracked here — panel/widget layout, window
