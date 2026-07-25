@@ -65,6 +65,10 @@ if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
 fi
 source ${zsh_plugins}.zsh
 
+# Our own completion overrides take precedence over site-functions (fpath
+# order determines which same-named function autoload finds first).
+fpath=(${ZDOTDIR:-$HOME}/.zsh/completions $fpath)
+
 autoload -Uz compinit
 if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
   compinit
