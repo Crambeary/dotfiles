@@ -94,10 +94,10 @@ channel = "stable"
 # close_tab = "prefix+shift+x"
 # rename_pane = "prefix+shift+p"
 # edit_scrollback = "prefix+e"
-focus_pane_left = ["prefix+h", "alt+h"]
+focus_pane_left = ["prefix+h"]
 focus_pane_down = ["prefix+j", "alt+j"]
 focus_pane_up = ["prefix+k", "alt+k"]
-focus_pane_right = ["prefix+l", "alt+l"]
+focus_pane_right = ["prefix+l"]
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
@@ -154,6 +154,21 @@ command = "~/.config/herdr/scripts/move-to-selected-tab.sh"
 description = "move pane to selected tab (picker)"
 width = "80%"
 height = "80%"
+
+# alt+h/alt+l: focus the neighboring pane, or wrap to the previous/next
+# tab (cycling continuously) when already at the tab's edge pane —
+# mirrors zellij's alt+h/l tab-crossing move-focus.
+[[keys.command]]
+key = "alt+h"
+type = "shell"
+command = "~/.config/herdr/scripts/focus-pane-or-tab.sh left"
+description = "focus pane left, wrapping across tabs"
+
+[[keys.command]]
+key = "alt+l"
+type = "shell"
+command = "~/.config/herdr/scripts/focus-pane-or-tab.sh right"
+description = "focus pane right, wrapping across tabs"
 {{ end -}}
 
 # Legacy indexed shortcut config is still parsed for compatibility.
