@@ -142,12 +142,6 @@ command = "~/.config/herdr/scripts/break-to-tab.sh"
 description = "break pane out to new tab"
 
 [[keys.command]]
-key = "prefix+shift+b"
-type = "shell"
-command = "~/.config/herdr/scripts/move-back.sh"
-description = "move pane back to origin tab (split)"
-
-[[keys.command]]
 key = "prefix+shift+f"
 type = "shell"
 command = "~/.config/herdr/scripts/toggle-split-direction.sh"
@@ -155,9 +149,11 @@ description = "flip split direction (vertical/horizontal)"
 
 [[keys.command]]
 key = "prefix+shift+v"
-type = "pane"
+type = "popup"
 command = "~/.config/herdr/scripts/move-to-selected-tab.sh"
 description = "move pane to selected tab (picker)"
+width = "80%"
+height = "80%"
 {{ end -}}
 
 # Legacy indexed shortcut config is still parsed for compatibility.
