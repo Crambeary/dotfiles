@@ -2,7 +2,7 @@
 bindings = [{ key = "N", mods = "Control|Shift", action = "CreateNewWindow" }]
 
 [general]
-import = ["./themes/themes/tokyo_night.toml"]
+import = ["./themes/themes/catppuccin_mocha.toml"]
 
 [font]
 normal = { family = "Hack Nerd Font", style = "Regular" }
