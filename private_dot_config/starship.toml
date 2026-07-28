@@ -70,6 +70,7 @@ truncation_symbol = "…/"
 style = "bold green"
 
 [git_status]
+ignore_submodules = true
 format = '[\($all_status$ahead_behind\)]($style) '
 style = "bold green"
 conflicted = "🏳"
