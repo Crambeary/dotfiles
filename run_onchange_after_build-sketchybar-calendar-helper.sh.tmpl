@@ -1,0 +1,27 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# source hash: {{ include "private_dot_config/sketchybar/helper/meeting_calendar.swift" | sha256sum }}
+# plist hash: {{ include "private_dot_config/sketchybar/helper/MeetingCalendarHelper.app/Contents/Info.plist" | sha256sum }}
+
+set -euo pipefail
+
+helper_dir="$HOME/.config/sketchybar/helper"
+app_dir="$helper_dir/MeetingCalendarHelper.app"
+binary="$app_dir/Contents/MacOS/meeting-calendar-helper"
+
+if ! command -v swiftc >/dev/null 2>&1; then
+  echo "Skipping SketchyBar calendar helper: swiftc is unavailable. Install Xcode Command Line Tools." >&2
+  exit 0
+fi
+
+mkdir -p "$app_dir/Contents/MacOS"
+swiftc "$helper_dir/meeting_calendar.swift" \
+  -o "$binary" \
+  -framework EventKit
+codesign --force --sign - \
+  --requirements '=designated => identifier "com.marc.sketchybar.meeting-calendar-helper"' \
+  "$app_dir"
+{{ else -}}
+#!/bin/sh
+exit 0
+{{ end -}}

@@ -130,3 +130,65 @@ letterboxing. Effect: ~36% fewer pixels to render/composite (helps with this mac
 fan-not-spinning/thermal issue) *and* an effective 1.333x
 UI/font scale-up, achieved with one `kscreen-doctor output.eDP-1.mode.<id>`
 call instead of per-toolkit Qt/GTK scaling hacks.
+
+## macOS: SketchyBar and AeroSpace
+
+The macOS bar and window-manager configuration is managed by chezmoi. Run
+`chezmoi apply` after cloning this repository. Chezmoi installs the
+configuration and compiles the EventKit calendar helper from its tracked Swift
+source. The SketchyBar configuration is ignored automatically on non-macOS
+hosts.
+
+Install the required tools:
+
+```sh
+brew install sketchybar jq
+brew install --cask font-sketchybar-app-font
+brew install --cask nikitabobko/tap/aerospace
+xcode-select --install
+```
+
+MeetingBar can be installed with `brew install --cask meetingbar`. FortiClient
+is normally supplied by the organization providing the VPN. Both are optional:
+
+- The MeetingBar item is only created when `/Applications/MeetingBar.app`
+  exists. It displays the next event from calendars currently enabled in
+  Calendar.app.
+- The FortiClient item is only created when FortiClient and a Fortinet network
+  service are present. The service name is detected automatically, so it does
+  not need to be named `VPN`.
+- The Focus item uses SketchyBar's native Control Center alias and is only
+  created when that alias is available.
+
+Grant these macOS permissions after the first apply:
+
+1. In **System Settings > Privacy & Security > Screen Recording**, enable
+   SketchyBar. This lets SketchyBar expose the native Focus menu-bar item.
+2. In **System Settings > Privacy & Security > Calendars**, enable SketchyBar
+   and **SketchyBar Calendar Helper** if it is listed. Depending on the macOS
+   version, this may appear under Full Calendar Access.
+3. In **System Settings > Control Center > Menu Bar**, enable **Show menu bar
+   background** and set **Automatically hide and show the menu bar** to
+   **Always**.
+
+Restart the bar after changing permissions:
+
+```sh
+brew services restart sketchybar
+```
+
+The weather item defaults to Ishpeming, Michigan. To use another location on
+one Mac without changing the shared dotfiles, create the ignored file
+`~/.config/sketchybar/local.sh`:
+
+```sh
+export SKETCHYBAR_WEATHER_LOCATION="Detroit, Michigan, United States"
+```
+
+After editing the dotfiles, apply and reload them with:
+
+```sh
+chezmoi apply
+aerospace reload-config
+sketchybar --reload
+```
