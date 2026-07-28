@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>meeting-calendar-helper</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.marc.sketchybar.meeting-calendar-helper</string>
+  <key>CFBundleName</key>
+  <string>SketchyBar Calendar Helper</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSBackgroundOnly</key>
+  <true/>
+  <key>NSCalendarsFullAccessUsageDescription</key>
+  <string>Show the next MeetingBar calendar event in SketchyBar.</string>
+</dict>
+</plist>

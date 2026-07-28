@@ -40,7 +40,12 @@ install-powershell7.cmd
 # macOS only files
 {{ if ne .chezmoi.os "darwin" }}
 .aerospace.toml
+.config/sketchybar/**
+.config/marcs_sketchybar/**
 {{ end }}
+
+# Optional per-machine SketchyBar settings
+.config/sketchybar/local.sh
 
 # Karabiner: macOS only, and this mac's live config is the source of truth
 {{ if ne .chezmoi.os "darwin" }}
