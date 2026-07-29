@@ -169,8 +169,15 @@ key = "alt+l"
 type = "shell"
 command = "~/.config/herdr/scripts/focus-pane-or-tab.sh right"
 description = "focus pane right, wrapping across tabs"
-{{ end -}}
 
+{{ end -}}
+[[keys.command]]
+key = "prefix+alt+h"
+type = "popup"
+command = "hunk diff"
+description = "review working tree with Hunk"
+width = "90%"
+height = "90%"
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
 # [keys.indexed]
@@ -314,7 +321,7 @@ delivery = "system"
 [session]
 # Resume supported AI-agent panes into their native conversation sessions after
 # a Herdr server restart. Requires official integrations that report session refs.
-# resume_agents_on_restore = true
+resume_agents_on_restore = true
 
 [remote]
 # Whether herdr manages the ssh config used for `herdr --remote`.
