@@ -159,6 +159,32 @@ description = "move pane to selected tab (picker)"
 width = "80%"
 height = "80%"
 
+# prefix+d: pop up tuicr against the focused pane's cwd for an on-demand
+# diff review. Popup type is session-modal and closes on quit (q), so it
+# never disturbs the tab's existing split layout. Runs in whatever repo
+# the focused Claude Code/opencode/pi pane is in via new_cwd = "follow".
+# -w skips tuicr's commit-range selector and jumps straight to the
+# working-tree diff — without it, repos with real history (chezmoi, unlike
+# a fresh/empty repo) stop on that selector screen instead.
+[[keys.command]]
+key = "prefix+d"
+type = "popup"
+command = "tuicr -w"
+description = "review current diff in tuicr"
+width = "90%"
+height = "90%"
+
+# prefix+shift+d: same as prefix+d, but lets you fzf-pick any directory to
+# review instead of only the launching pane's cwd — e.g. reviewing chezmoi
+# from a pane that's sitting in an unrelated repo.
+[[keys.command]]
+key = "prefix+shift+d"
+type = "popup"
+command = "~/.config/herdr/scripts/pick-tuicr-dir.sh"
+description = "review diff in a picked directory"
+width = "90%"
+height = "90%"
+
 # prefix+o: takes over from the built-in open_notification_target (unbound
 # above). Jumps straight to the most recently notifying agent — the highest
 # state_change_seq among blocked/done — with no picker.
