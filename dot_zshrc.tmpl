@@ -82,6 +82,10 @@ bindkey '^[[B' history-substring-search-down
 # fzf shell integration (Ctrl+R history, Ctrl+T file picker, Alt+C cd)
 source <(fzf --zsh)
 
+# opencode — the installer appends a hardcoded absolute path to ~/.zshrc;
+# kept portable and guarded so it's a no-op where opencode isn't installed.
+[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
 {{- if or (eq .chezmoi.hostname "marc-fedora") (eq .chezmoi.hostname "marc-mac-fedora") }}
 
 # Audio: wine and yabridge (personal Linux machines only)
@@ -91,7 +95,11 @@ export PATH="$PATH:$HOME/.local/share/yabridge"
 {{- end }}
 {{- if eq .chezmoi.hostname "marc-mac-fedora" }}
 
-# ML4W Hyprland integration aliases/scripts (merged in, not the full ML4W zshrc stack), this host only
-[[ -f ~/.config/zshrc/25-aliases ]] && source ~/.config/zshrc/25-aliases
-[[ -f ~/.config/zshrc/30-autostart ]] && source ~/.config/zshrc/30-autostart
+# ML4W Hyprland integration aliases/scripts (merged in, not the full ML4W
+# zshrc stack). This host dual-boots KDE and Hyprland, so it's gated on the
+# running session — the files exist on disk either way.
+if [[ "$XDG_CURRENT_DESKTOP" == "Hyprland" || -n "$HYPRLAND_INSTANCE_SIGNATURE" ]]; then
+  [[ -f ~/.config/zshrc/25-aliases ]] && source ~/.config/zshrc/25-aliases
+  [[ -f ~/.config/zshrc/30-autostart ]] && source ~/.config/zshrc/30-autostart
+fi
 {{- end }}
