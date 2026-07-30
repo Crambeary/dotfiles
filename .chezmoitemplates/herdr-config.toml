@@ -131,7 +131,7 @@ focus_pane_right = ["prefix+l"]
 # height = "80%"
 
 {{ if ne .chezmoi.os "windows" -}}
-# The four bindings below shell out to bash scripts (~/.config/herdr/scripts/)
+# The five bindings below shell out to bash scripts (~/.config/herdr/scripts/)
 # that use bash, jq, and fzf. Linux/macOS only — Windows lacks these by
 # default (cmd.exe /d /c can't source a shebang script), so they're omitted
 # from the Windows config entirely rather than shipping broken bindings.
@@ -154,6 +154,16 @@ command = "~/.config/herdr/scripts/move-to-selected-tab.sh"
 description = "move pane to selected tab (picker)"
 width = "80%"
 height = "80%"
+
+# prefix+shift+o: Linux stand-in for click-to-pane. Built-in prefix+o
+# (open_notification_target) only fires while a notification is still
+# visible; this jumps straight to the most recently notifying agent
+# (highest state_change_seq) with no picker.
+[[keys.command]]
+key = "prefix+shift+o"
+type = "shell"
+command = "~/.config/herdr/scripts/pick-attention-pane.sh"
+description = "jump to most recent agent notification"
 
 # alt+h/alt+l: focus the neighboring pane, or wrap to the previous/next
 # tab (cycling continuously) when already at the tab's edge pane —
