@@ -70,7 +70,11 @@ channel = "stable"
 # settings = "prefix+s"
 # detach = "prefix+q"
 # reload_config = "prefix+shift+r"
-# open_notification_target = "prefix+o"
+# Unbound on purpose: the built-in only fires while a notification is still
+# visible, which in practice meant it almost never did anything. prefix+o is
+# reclaimed below by pick-attention-pane.sh, which finds the target from the
+# snapshot instead and so works whether or not a toast is still on screen.
+open_notification_target = ""
 # workspace_picker = "prefix+w"
 # goto = "prefix+g"
 # new_workspace = "prefix+shift+n"
@@ -155,12 +159,11 @@ description = "move pane to selected tab (picker)"
 width = "80%"
 height = "80%"
 
-# prefix+shift+o: Linux stand-in for click-to-pane. Built-in prefix+o
-# (open_notification_target) only fires while a notification is still
-# visible; this jumps straight to the most recently notifying agent
-# (highest state_change_seq) with no picker.
+# prefix+o: takes over from the built-in open_notification_target (unbound
+# above). Jumps straight to the most recently notifying agent — the highest
+# state_change_seq among blocked/done — with no picker.
 [[keys.command]]
-key = "prefix+shift+o"
+key = "prefix+o"
 type = "shell"
 command = "~/.config/herdr/scripts/pick-attention-pane.sh"
 description = "jump to most recent agent notification"
@@ -310,7 +313,16 @@ agent_panel_sort = "spaces"
 # "terminal" routes through the outer terminal's OSC notification support so
 # clicking the toast focuses that window; "system" toasts can't raise anything.
 # Ghostty and kitty both support it, as does Windows Terminal (OSC 9).
+{{ if eq .chezmoi.os "linux" -}}
+# Linux: off, because herdr-notify.service posts the toasts instead. Its
+# libnotify notifications carry the pane id in the action button, so a click
+# focuses the exact pane — an OSC toast has no return channel and can only
+# raise the window. Leaving this on "terminal" double-notifies.
+# Turn this back to "terminal" on any machine where that unit isn't enabled.
+delivery = "off"
+{{- else -}}
 delivery = "terminal"
+{{- end }}
 [ui.toast.herdr]
 # position = "bottom-right"
 

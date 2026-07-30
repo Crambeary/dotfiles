@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch herdr agents and post click-to-focus desktop notifications
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/herdr/scripts/notify-watch.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
