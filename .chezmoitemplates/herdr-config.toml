@@ -163,13 +163,13 @@ height = "80%"
 # diff review. Popup type is session-modal and closes on quit (q), so it
 # never disturbs the tab's existing split layout. Runs in whatever repo
 # the focused Claude Code/opencode/pi pane is in via new_cwd = "follow".
-# -w skips tuicr's commit-range selector and jumps straight to the
-# working-tree diff — without it, repos with real history (chezmoi, unlike
-# a fresh/empty repo) stop on that selector screen instead.
+# run-tuicr-here.sh shows the working-tree diff when there are uncommitted
+# changes, else falls back to tuicr's own commit selector so a clean repo
+# still has something to browse instead of an empty screen.
 [[keys.command]]
 key = "prefix+d"
 type = "popup"
-command = "tuicr -w"
+command = "~/.config/herdr/scripts/run-tuicr-here.sh"
 description = "review current diff in tuicr"
 width = "90%"
 height = "90%"

@@ -14,4 +14,4 @@ target=$(printf '%s\n' "${candidates[@]}" | sort -u | fzf --prompt="review diff 
 [[ -n "${target:-}" ]] || exit 0
 
 cd "$target"
-exec tuicr -w
+exec "$HOME/.config/herdr/scripts/run-tuicr-here.sh"
