@@ -329,11 +329,11 @@ agent_panel_sort = "spaces"
 # Linux: off, because herdr-notify.service posts the toasts instead. Its
 # libnotify notifications carry the pane id in the action button, so a click
 # focuses the exact pane — an OSC toast has no return channel and can only
-# raise the window. Leaving this on "terminal" double-notifies.
-# Turn this back to "terminal" on any machine where that unit isn't enabled.
+# raise the window. Leaving delivery on double-notifies.
+# Turn this back to "system" on any machine where that unit isn't enabled.
 delivery = "off"
 {{- else -}}
-delivery = "terminal"
+delivery = "system"
 {{- end }}
 [ui.toast.herdr]
 # position = "bottom-right"
