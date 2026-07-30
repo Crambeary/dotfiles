@@ -85,3 +85,10 @@ install-powershell7.cmd
 # not real config, just noise on every login
 .config/kwinrc
 .config/plasma-org.kde.plasma.desktop-appletsrc
+
+# Flow Launcher: search history and per-plugin usage state, not config -
+# churns every time it's used, so don't track it at all.
+scoop/persist/flow-launcher/**
+
+# GlazeWM error log: just grows forever, not real config.
+.glzr/glazewm/errors.log
