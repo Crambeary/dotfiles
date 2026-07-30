@@ -8,6 +8,10 @@ import = ["./themes/themes/tokyo_night.toml"]
 normal = { family = "Hack Nerd Font", style = "Regular" }
 
 [window]
+{{- if eq .chezmoi.os "windows" }}
+decorations = "full"
+{{- else }}
 decorations = "none"
+{{- end }}
 padding = { x = 10, y = 10 }
 opacity = 0.9
