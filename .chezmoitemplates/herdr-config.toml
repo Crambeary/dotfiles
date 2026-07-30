@@ -297,7 +297,10 @@ agent_panel_sort = "spaces"
 # delivery = "off"
 # delay_seconds = 1
 
-delivery = "system"
+# "terminal" routes through the outer terminal's OSC notification support so
+# clicking the toast focuses that window; "system" toasts can't raise anything.
+# Ghostty and kitty both support it, as does Windows Terminal (OSC 9).
+delivery = "terminal"
 [ui.toast.herdr]
 # position = "bottom-right"
 
@@ -338,8 +341,13 @@ resume_agents_on_restore = true
 # Allow launching herdr from inside a herdr-managed pane.
 # allow_nested = false
 # Experimental local Kitty graphics rendering for attached clients.
-# Requires a Kitty graphics-compatible outer terminal.
+# Requires a Kitty graphics-compatible outer terminal — Ghostty and kitty
+# qualify, Windows Terminal does not, so leave it off there.
+{{ if ne .chezmoi.os "windows" -}}
+kitty_graphics = true
+{{ else -}}
 # kitty_graphics = false
+{{ end -}}
 # Save recent pane screen history across full server restarts.
 pane_history = false
 # While prefix mode is active, temporarily switch the macOS host input

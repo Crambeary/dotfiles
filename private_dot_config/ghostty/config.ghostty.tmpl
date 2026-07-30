@@ -1,0 +1,70 @@
+# Ported from kitty.conf / current-theme.conf (Catppuccin Mocha)
+#
+# Ghostty loads BOTH `config` and `config.ghostty` from this directory, and
+# `config.ghostty` wins where they overlap (verified on 1.3.1). Keeping the
+# explicit extension so editors syntax-highlight it.
+
+# Font
+font-family = Hack Nerd Font
+{{ if eq .chezmoi.hostname "marc-mac-fedora" -}}
+# Matches the size used in kitty on this display
+font-size = 12
+{{ else -}}
+font-size = 16
+{{ end }}
+# Catppuccin Mocha colors (kitty ~/.config/kitty/current-theme.conf)
+background = 1E1E2E
+foreground = CDD6F4
+selection-background = F5E0DC
+selection-foreground = 1E1E2E
+cursor-color = F5E0DC
+cursor-text = 1E1E2E
+
+palette = 0=#45475A
+palette = 8=#585B70
+palette = 1=#F38BA8
+palette = 9=#F38BA8
+palette = 2=#A6E3A1
+palette = 10=#A6E3A1
+palette = 3=#F9E2AF
+palette = 11=#F9E2AF
+palette = 4=#89B4FA
+palette = 12=#89B4FA
+palette = 5=#F5C2E7
+palette = 13=#F5C2E7
+palette = 6=#94E2D5
+palette = 14=#94E2D5
+palette = 7=#BAC2DE
+palette = 15=#A6ADC8
+
+# Window
+background-opacity = 0.85
+background-blur = 48
+window-decoration = auto
+# Safe to skip the prompt because herdr owns process state: closing a surface
+# is a display action, the panes keep running on the herdr server.
+confirm-close-surface = false
+
+# Shell integration
+shell-integration = detect
+# ssh-terminfo installs the xterm-ghostty entry on remote hosts on first
+# connect; ssh-env is the fallback that downgrades TERM cleanly when it
+# can't. Both are off in Ghostty's defaults — needed for `herdr --remote`.
+shell-integration-features = cursor,no-sudo,title,ssh-env,ssh-terminfo,path
+
+# Split resizing, mirrors kitty's window resize shortcuts
+{{ if eq .chezmoi.os "darwin" -}}
+# macOS: ctrl+arrow is taken by Mission Control space switching, and Mac
+# laptop keyboards have no Home key, so equalize moves to 0.
+keybind = super+ctrl+left=resize_split:left,10
+keybind = super+ctrl+right=resize_split:right,10
+keybind = super+ctrl+up=resize_split:up,10
+keybind = super+ctrl+down=resize_split:down,10
+keybind = super+ctrl+0=equalize_splits
+{{ else -}}
+keybind = ctrl+left=resize_split:left,10
+keybind = ctrl+right=resize_split:right,10
+keybind = ctrl+up=resize_split:up,10
+keybind = ctrl+down=resize_split:down,10
+keybind = ctrl+home=equalize_splits
+{{ end -}}

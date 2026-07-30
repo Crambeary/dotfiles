@@ -17,6 +17,8 @@ README.md
 {{ if eq .chezmoi.os "windows" }}
 .config/alacritty/alacritty.toml
 .config/herdr/**
+# Ghostty has no stable Windows build
+.config/ghostty/**
 {{ end }}
 
 # Windows only. The PowerShell profiles stay tracked in source so Windows
@@ -92,3 +94,9 @@ scoop/persist/flow-launcher/**
 
 # GlazeWM error log: just grows forever, not real config.
 .glzr/glazewm/errors.log
+
+# Same class: LastSeenVersion bumps on every Plasma upgrade, and
+# plasmanotifyrc only records Seen=true per app that has ever notified.
+# Both blocked `chezmoi apply` with a TTY prompt on every run.
+.config/plasma-welcomerc
+.config/plasmanotifyrc
