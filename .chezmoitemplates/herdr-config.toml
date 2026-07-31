@@ -70,7 +70,11 @@ channel = "stable"
 # settings = "prefix+s"
 # detach = "prefix+q"
 # reload_config = "prefix+shift+r"
-# open_notification_target = "prefix+o"
+# Unbound on purpose: the built-in only fires while a notification is still
+# visible, which in practice meant it almost never did anything. prefix+o is
+# reclaimed below by pick-attention-pane.sh, which finds the target from the
+# snapshot instead and so works whether or not a toast is still on screen.
+open_notification_target = ""
 # workspace_picker = "prefix+w"
 # goto = "prefix+g"
 # new_workspace = "prefix+shift+n"
@@ -95,8 +99,8 @@ channel = "stable"
 # rename_pane = "prefix+shift+p"
 # edit_scrollback = "prefix+e"
 focus_pane_left = ["prefix+h"]
-focus_pane_down = ["prefix+j", "alt+j"]
-focus_pane_up = ["prefix+k", "alt+k"]
+focus_pane_down = ["prefix+j"]
+focus_pane_up = ["prefix+k"]
 focus_pane_right = ["prefix+l"]
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
@@ -131,7 +135,7 @@ focus_pane_right = ["prefix+l"]
 # height = "80%"
 
 {{ if ne .chezmoi.os "windows" -}}
-# The four bindings below shell out to bash scripts (~/.config/herdr/scripts/)
+# The five bindings below shell out to bash scripts (~/.config/herdr/scripts/)
 # that use bash, jq, and fzf. Linux/macOS only — Windows lacks these by
 # default (cmd.exe /d /c can't source a shebang script), so they're omitted
 # from the Windows config entirely rather than shipping broken bindings.
@@ -155,9 +159,44 @@ description = "move pane to selected tab (picker)"
 width = "80%"
 height = "80%"
 
-# alt+h/alt+l: focus the neighboring pane, or wrap to the previous/next
-# tab (cycling continuously) when already at the tab's edge pane —
-# mirrors zellij's alt+h/l tab-crossing move-focus.
+# prefix+d: pop up tuicr against the focused pane's cwd for an on-demand
+# diff review. Popup type is session-modal and closes on quit (q), so it
+# never disturbs the tab's existing split layout. Runs in whatever repo
+# the focused Claude Code/opencode/pi pane is in via new_cwd = "follow".
+# run-tuicr-here.sh shows the working-tree diff when there are uncommitted
+# changes, else falls back to tuicr's own commit selector so a clean repo
+# still has something to browse instead of an empty screen.
+[[keys.command]]
+key = "prefix+d"
+type = "popup"
+command = "~/.config/herdr/scripts/run-tuicr-here.sh"
+description = "review current diff in tuicr"
+width = "90%"
+height = "90%"
+
+# prefix+shift+d: same as prefix+d, but lets you fzf-pick any directory to
+# review instead of only the launching pane's cwd — e.g. reviewing chezmoi
+# from a pane that's sitting in an unrelated repo.
+[[keys.command]]
+key = "prefix+shift+d"
+type = "popup"
+command = "~/.config/herdr/scripts/pick-tuicr-dir.sh"
+description = "review diff in a picked directory"
+width = "90%"
+height = "90%"
+
+# prefix+o: takes over from the built-in open_notification_target (unbound
+# above). Jumps straight to the most recently notifying agent — the highest
+# state_change_seq among blocked/done — with no picker.
+[[keys.command]]
+key = "prefix+o"
+type = "shell"
+command = "~/.config/herdr/scripts/pick-attention-pane.sh"
+description = "jump to most recent agent notification"
+
+# alt+h/alt+l/alt+j/alt+k: focus the neighboring pane, or wrap to the
+# previous/next tab (cycling continuously) when already at the tab's edge
+# pane — mirrors zellij's alt+hjkl tab-crossing move-focus.
 [[keys.command]]
 key = "alt+h"
 type = "shell"
@@ -169,6 +208,18 @@ key = "alt+l"
 type = "shell"
 command = "~/.config/herdr/scripts/focus-pane-or-tab.sh right"
 description = "focus pane right, wrapping across tabs"
+
+[[keys.command]]
+key = "alt+j"
+type = "shell"
+command = "~/.config/herdr/scripts/focus-pane-or-tab.sh down"
+description = "focus pane down, wrapping across tabs"
+
+[[keys.command]]
+key = "alt+k"
+type = "shell"
+command = "~/.config/herdr/scripts/focus-pane-or-tab.sh up"
+description = "focus pane up, wrapping across tabs"
 
 {{ end -}}
 [[keys.command]]
@@ -297,7 +348,19 @@ agent_panel_sort = "spaces"
 # delivery = "off"
 # delay_seconds = 1
 
+# "terminal" routes through the outer terminal's OSC notification support so
+# clicking the toast focuses that window; "system" toasts can't raise anything.
+# Ghostty and kitty both support it, as does Windows Terminal (OSC 9).
+{{ if eq .chezmoi.os "linux" -}}
+# Linux: off, because herdr-notify.service posts the toasts instead. Its
+# libnotify notifications carry the pane id in the action button, so a click
+# focuses the exact pane — an OSC toast has no return channel and can only
+# raise the window. Leaving delivery on double-notifies.
+# Turn this back to "system" on any machine where that unit isn't enabled.
+delivery = "off"
+{{- else -}}
 delivery = "system"
+{{- end }}
 [ui.toast.herdr]
 # position = "bottom-right"
 
@@ -338,8 +401,13 @@ resume_agents_on_restore = true
 # Allow launching herdr from inside a herdr-managed pane.
 # allow_nested = false
 # Experimental local Kitty graphics rendering for attached clients.
-# Requires a Kitty graphics-compatible outer terminal.
+# Requires a Kitty graphics-compatible outer terminal — Ghostty and kitty
+# qualify, Windows Terminal does not, so leave it off there.
+{{ if ne .chezmoi.os "windows" -}}
+kitty_graphics = true
+{{ else -}}
 # kitty_graphics = false
+{{ end -}}
 # Save recent pane screen history across full server restarts.
 pane_history = false
 # While prefix mode is active, temporarily switch the macOS host input
