@@ -1,27 +1,43 @@
 {{- if eq .chezmoi.hostname "marc-mac-fedora" -}}
-# ML4W tool aliases (this host only)
+# marc-mac-fedora has both KDE and Hyprland/ML4W installed, chosen at the
+# login screen, so the ML4W aliases are gated on the *running session* rather
+# than the hostname. Several of them (hyprlock, the quickshell IPC toggles,
+# ml4w-power) either don't exist or do the wrong thing in a Plasma session.
+
+# Session-independent
 alias nf='fastfetch'
 alias pf='fastfetch'
 alias ff='fastfetch'
-alias shutdown='~/.config/ml4w/scripts/ml4w-power -p'
 alias wifi='nmtui'
-alias arch-cleanup='~/.config/ml4w/scripts/arch/cleanup.sh'
-alias apps='~/.config/ml4w/bin/ml4w-apps'
-alias screenshot='~/.config/ml4w/bin/ml4w-screenshot'
-alias updates='~/.config/ml4w/scripts/ml4w-install-system-updates'
-alias filemanager='~/.config/ml4w/settings/filemanager'
-alias autostart='~/.config/ml4w/scripts/ml4w-autostart'
-alias lock='hyprlock'
 alias clock='tty-clock'
-alias system='~/.config/ml4w/settings/systemmonitor'
-alias quick='~/.config/ml4w/bin/ml4w-quicklinks'
-alias wallpaper='~/.config/ml4w/bin/ml4w-wallpaper'
-alias settings='ml4w-dotfiles-settings com.ml4w.dotfiles'
-alias ml4w='qs ipc call welcome toggle'
-alias ml4w-settings='qs -p ~/.local/share/ml4w-dotfiles-settings/quickshell ipc call settings toggle'
-alias ml4w-calendar='qs ipc call calendar toggle'
-alias ml4w-hyprland='flatpak run com.ml4w.hyprlandsettings'
-alias ml4w-sidebar='qs ipc call sidebar toggle'
-alias ascii='~/.config/ml4w/scripts/figlet.sh'
-alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
+
+if test "$XDG_CURRENT_DESKTOP" = "Hyprland"; or set -q HYPRLAND_INSTANCE_SIGNATURE
+    # ML4W tools — Hyprland session only
+    alias shutdown='~/.config/ml4w/scripts/ml4w-power -p'
+    alias apps='~/.config/ml4w/bin/ml4w-apps'
+    alias screenshot='~/.config/ml4w/bin/ml4w-screenshot'
+    alias updates='~/.config/ml4w/scripts/ml4w-install-system-updates'
+    alias filemanager='~/.config/ml4w/settings/filemanager'
+    alias autostart='~/.config/ml4w/scripts/ml4w-autostart'
+    alias lock='hyprlock'
+    alias system='~/.config/ml4w/settings/systemmonitor'
+    alias quick='~/.config/ml4w/bin/ml4w-quicklinks'
+    alias wallpaper='~/.config/ml4w/bin/ml4w-wallpaper'
+    alias settings='ml4w-dotfiles-settings com.ml4w.dotfiles'
+    alias ml4w='qs ipc call welcome toggle'
+    alias ml4w-settings='qs -p ~/.local/share/ml4w-dotfiles-settings/quickshell ipc call settings toggle'
+    alias ml4w-calendar='qs ipc call calendar toggle'
+    alias ml4w-hyprland='flatpak run com.ml4w.hyprlandsettings'
+    alias ml4w-sidebar='qs ipc call sidebar toggle'
+    alias ascii='~/.config/ml4w/scripts/figlet.sh'
+else
+    # Plasma equivalents for the two worth keeping
+    alias lock='loginctl lock-session'
+    alias screenshot='spectacle'
+end
+
+# Dropped as part of the KDE/Hyprland split: `arch-cleanup` pointed at
+# ~/.config/ml4w/scripts/arch/cleanup.sh and `update-grub` at
+# /boot/grub/grub.cfg — both are ML4W's Arch paths and were already wrong on
+# Fedora, where the target is /boot/grub2/grub.cfg.
 {{- end }}

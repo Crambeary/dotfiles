@@ -26,7 +26,7 @@ push_to_talk=none,none,Push to talk
 
 [ksmserver]
 Halt Without Confirmation=none,none,Shut Down Without Confirmation
-Lock Session=Screensaver\tMeta+L,Screensaver\tMeta+L,Lock Session
+Lock Session=none,Screensaver\tMeta+L,Lock Session
 Log Out=Ctrl+Alt+Del,Ctrl+Alt+Del,Show Logout Screen
 Log Out Without Confirmation=none,none,Log Out Without Confirmation
 LogOut=none,none,Log Out
@@ -260,7 +260,7 @@ stopmedia=Media Stop,Media Stop,Stop media playback
 
 [openwhispr]
 _k_friendly_name=OpenWhispr
-dictation=F8,none,OpenWhispr dictation
+dictation=Alt+Shift+D,none,OpenWhispr dictation
 
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
@@ -293,6 +293,7 @@ activate task manager entry 7=none,Meta+7,Activate Task Manager Entry 7
 activate task manager entry 8=none,Meta+8,Activate Task Manager Entry 8
 activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
 activate widget 85=none,none,Activate Digital Clock Widget
+activate widget 87=none,none,Activate System Monitor Widget
 clear history=none,none,Clear Notification History
 clear-history=none,none,Clear Clipboard History
 clipboard_action=Meta+Ctrl+X,Meta+Ctrl+X,Automatic Action Popup Menu
@@ -310,3 +311,7 @@ show-on-mouse-pos=Meta+V,Meta+V,Show Clipboard Items at Mouse Position
 switch to next activity=none,none,Switch to Next Activity
 switch to previous activity=none,none,Switch to Previous Activity
 toggle do not disturb=none,none,Toggle do not disturb
+
+[services][org.kde.spectacle.desktop]
+CurrentMonitorScreenShot=none
+OpenWithoutScreenshot=none
