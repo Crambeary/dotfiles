@@ -225,8 +225,8 @@ description = "focus pane up, wrapping across tabs"
 [[keys.command]]
 key = "prefix+alt+h"
 type = "popup"
-command = "hunk diff"
-description = "review working tree with Hunk"
+command = "tuicr -w"
+description = "review working tree with tuicr"
 width = "90%"
 height = "90%"
 # Legacy indexed shortcut config is still parsed for compatibility.
