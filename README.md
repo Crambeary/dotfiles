@@ -3,6 +3,35 @@
 Managed with [chezmoi](https://www.chezmoi.io/), synced across macOS, Windows, and Linux.
 OS-specific files are gated in `.chezmoiignore` using `{{ if ... .chezmoi.os }}` blocks.
 
+## Device-specific values
+
+Anything that differs *per machine* rather than per OS — toolchain versions,
+install paths — does not belong in a tracked file, because every machine would
+then fight over the value on each `chezmoi apply`. Those live in the machine's
+own `~/.config/chezmoi/chezmoi.toml` under `[data]`, which is never committed.
+
+`.chezmoi.toml.tmpl` generates that file and is the answer to "how does a new
+machine know what to set": `chezmoi init` prompts for each value. It uses
+`promptStringOnce`, so re-running `init` on an already-configured machine keeps
+the existing answer instead of asking again, and `--no-tty` runs take the
+default. Leave a prompt blank when the thing isn't installed on that host.
+
+Current values:
+
+- `vulkan_sdk_version` — the Vulkan SDK version, e.g. `1.4.350.1`. Consumed by
+  `dot_zshrc.tmpl`, which renders the `VULKAN_SDK`/`PATH`/`DYLD_LIBRARY_PATH`
+  block only when it's set and non-empty. Blank on the Linux hosts, which have
+  no SDK and for which those macOS-only paths were previously being exported
+  regardless. **Installing a new SDK does not take effect on its own** — bump
+  the value, then `chezmoi apply ~/.zshrc`.
+
+When adding a consumer, guard it as *nested* `{{ if hasKey . "x" }}` then
+`{{ if .x }}`, not a single `and`. chezmoi renders with `missingkey=error`, so a
+bare `{{ .x }}` aborts `apply` outright on any machine that predates the prompt,
+and Go's `and` does not reliably short-circuit away from that. The second check
+catches the blank-answer case, which would otherwise interpolate an empty string
+into the middle of a path.
+
 ## Herdr
 
 Config lives at `~/.config/herdr/config.toml` on Linux/macOS (both use the same

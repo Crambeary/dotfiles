@@ -40,16 +40,26 @@ setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY
 # machine's own ~/.config/chezmoi/chezmoi.toml (untracked) rather than here:
 #   [data]
 #     vulkan_sdk_version = "1.4.350.1"
-# Machines that don't set it get no Vulkan block at all, which is what the
-# Linux hosts want — the paths below (and DYLD_LIBRARY_PATH) are macOS-only.
-# hasKey is required: a bare `.vulkan_sdk_version` aborts `chezmoi apply` with
-# "map has no entry for key" on every machine that hasn't set it.
+# `chezmoi init` prompts for it via .chezmoi.toml.tmpl; leave the answer blank
+# on machines with no SDK. Machines that skip it get no Vulkan block at all,
+# which is what the Linux hosts want — the paths below (and DYLD_LIBRARY_PATH)
+# are macOS-only.
+#
+# Both guards below are load-bearing, and they must stay nested rather than
+# collapse into a single `and`:
+#   - hasKey: a bare `.vulkan_sdk_version` aborts `chezmoi apply` with "map has
+#     no entry for key" on machines that predate the prompt. Go's `and` does not
+#     reliably short-circuit, so `and (hasKey . "x") .x` can still hit that.
+#   - non-empty: a blank answer is stored as "" rather than omitted, and would
+#     otherwise expand to the broken path ~/VulkanSDK//macOS.
 {{ if hasKey . "vulkan_sdk_version" -}}
+{{ if .vulkan_sdk_version -}}
 export VULKAN_SDK=~/VulkanSDK/{{ .vulkan_sdk_version }}/macOS
 export PATH="$VULKAN_SDK/bin:$PATH"
 export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
 export VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d"
 export PKG_CONFIG_PATH="$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH"
+{{ end -}}
 {{ end }}
 # Targetprocess MCP auth via macOS Keychain
 export TP_BASE_URL=https://tecplot.tpondemand.com
