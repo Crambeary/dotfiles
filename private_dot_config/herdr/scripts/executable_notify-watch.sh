@@ -33,12 +33,16 @@ poll() {
   '
 }
 
-raise_herdr() {
+herdr_wid() {
   # Herdr sets the outer terminal title to "herdr"; that title is how we find
   # the Ghostty window hosting it. X11 only — a Wayland session would need
   # the compositor's own activation path instead.
+  xdotool search --name '^herdr$' 2>/dev/null | head -1
+}
+
+raise_herdr() {
   local wid
-  wid=$(xdotool search --name '^herdr$' 2>/dev/null | head -1)
+  wid=$(herdr_wid)
   [[ -n "$wid" ]] && xdotool windowactivate "$wid" 2>/dev/null
   return 0
 }
@@ -54,9 +58,12 @@ notify() {
     # Expires on its own. Missing the popup costs nothing now that prefix+o
     # finds the same pane from the snapshot whenever you get to it, so there's
     # no reason to leave toasts sitting in the tray demanding a dismissal.
+    # stderr is dropped because notify-send prints "Wait timeout expired" to
+    # it every time a toast goes unclicked, which is the normal case and was
+    # burying the real log lines.
     action=$(notify-send --app-name=herdr --urgency=normal -t "$EXPIRE" \
       -A focus="Go to pane" \
-      "${title:-Agent} — $verb" "$pane_id")
+      "${title:-Agent} — $verb" "$pane_id" 2>/dev/null)
     rc=$?
     log "  notify-send rc=$rc action=${action:-<none>} pane=$pane_id"
     if [[ "$action" == "focus" ]]; then
@@ -94,12 +101,12 @@ while true; do
       continue
     fi
 
-    # A pane you're already looking at doesn't need a toast.
-    if [[ "$focused" == "true" ]]; then
-      log "  skip: pane is focused"
-      continue
-    fi
-
+    # No "you're already looking at it" suppression on purpose. Every attempt
+    # to infer that produced silent misses instead of saved annoyance: the
+    # snapshot's `focused` flag means "active pane within herdr", not "on
+    # screen", and X11 focus survives a virtual-desktop switch. A redundant
+    # toast costs 8 seconds of screen corner; a swallowed one costs a missed
+    # agent. `focused` is still logged, just not acted on.
     notify "$pane_id" "$state" "$title"
   done < <(poll)
 done
