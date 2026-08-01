@@ -36,13 +36,21 @@ HISTSIZE=50000
 SAVEHIST=50000
 setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY
 
-# Vulkan SDK
-export VULKAN_SDK=~/VulkanSDK/1.4.328.0/macOS
+# Vulkan SDK — version is device-specific, so it's pinned per machine in that
+# machine's own ~/.config/chezmoi/chezmoi.toml (untracked) rather than here:
+#   [data]
+#     vulkan_sdk_version = "1.4.350.1"
+# Machines that don't set it get no Vulkan block at all, which is what the
+# Linux hosts want — the paths below (and DYLD_LIBRARY_PATH) are macOS-only.
+# hasKey is required: a bare `.vulkan_sdk_version` aborts `chezmoi apply` with
+# "map has no entry for key" on every machine that hasn't set it.
+{{ if hasKey . "vulkan_sdk_version" -}}
+export VULKAN_SDK=~/VulkanSDK/{{ .vulkan_sdk_version }}/macOS
 export PATH="$VULKAN_SDK/bin:$PATH"
 export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
 export VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d"
 export PKG_CONFIG_PATH="$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH"
-
+{{ end }}
 # Targetprocess MCP auth via macOS Keychain
 export TP_BASE_URL=https://tecplot.tpondemand.com
 if command -v security >/dev/null 2>&1; then
