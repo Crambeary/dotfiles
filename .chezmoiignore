@@ -15,7 +15,6 @@ README.md
 
 # Mac and Linux only
 {{ if eq .chezmoi.os "windows" }}
-.config/alacritty/alacritty.toml
 .config/herdr/**
 # Ghostty has no stable Windows build
 .config/ghostty/**
@@ -24,7 +23,6 @@ README.md
 # Windows only. The PowerShell profiles stay tracked in source so Windows
 # still gets them â€” they're just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
-AppData/Roaming/alacritty/alacritty.toml
 AppData/Roaming/Zellij/**
 AppData/*
 scoop/*

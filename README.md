@@ -38,7 +38,7 @@ Config lives at `~/.config/herdr/config.toml` on Linux/macOS (both use the same
 path — herdr doesn't split them like some tools do) and `%APPDATA%\herdr\config.toml`
 on Windows. Both are thin `.tmpl` wrappers (`private_dot_config/herdr/config.toml.tmpl`,
 `AppData/Roaming/herdr/config.toml.tmpl`) that pull the real content from the shared
-`.chezmoitemplates/herdr-config.toml` partial, following the same pattern as Alacritty.
+`.chezmoitemplates/herdr-config.toml` partial.
 
 Four custom `[[keys.command]]` bindings shell out to scripts in
 `private_dot_config/herdr/scripts/` (pane→new-tab, move-back-to-origin-tab,
