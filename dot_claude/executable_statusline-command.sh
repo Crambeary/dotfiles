@@ -8,10 +8,10 @@
 # (context_window, rate_limits.*.used_percentage/resets_at) —
 # no network calls, no external tools (ccusage etc.) needed.
 
+# Drain stdin before anything else, including the dependency check below:
+# Claude Code pipes the payload in, so exiting without reading it would hand
+# the writer a broken pipe instead of our error message.
 input=$(cat)
-
-model=$(echo "$input" | jq -r '.model.display_name // "unknown"')
-effort=$(echo "$input" | jq -r '.effort.level // empty')
 
 # Colors
 RESET='\033[0m'
@@ -22,6 +22,54 @@ YELLOW='\033[33m'
 GREEN='\033[32m'
 RED='\033[31m'
 GRAY='\033[2;37m'
+
+# --- dependency preflight ---
+# Every field on the statusline is parsed with jq and most numbers are
+# formatted with awk. Without them each capture below yields an empty string
+# and the whole line renders blank — which reads as "statusline is off",
+# not "statusline is broken". Say which tool is missing instead, in the one
+# place the user is already looking.
+missing=""
+for dep in jq awk; do
+  command -v "$dep" >/dev/null 2>&1 || missing="${missing:+$missing, }$dep"
+done
+if [ -n "$missing" ]; then
+  printf "%b" "${RED}${BOLD}statusline: missing ${missing}${RESET}"
+  exit 0
+fi
+
+# now_epoch -> current unix time, overridable for deterministic tests.
+# Every time-dependent branch (cache-age countdown, rate-limit reset
+# countdowns, ccusage cache TTL) reads the clock through here so fixtures can
+# pin "now" via CLAUDE_STATUSLINE_NOW and produce byte-stable output.
+now_epoch() {
+  echo "${CLAUDE_STATUSLINE_NOW:-$(date +%s)}"
+}
+
+model=$(echo "$input" | jq -r '.model.display_name // "unknown"')
+model_id=$(echo "$input" | jq -r '.model.id // empty')
+effort=$(echo "$input" | jq -r '.effort.level // empty')
+
+# model_window <model_id> -> that model's maximum context window, or "" when
+# we have no idea.
+#
+# Only consulted when Claude Code omits context_window.context_window_size,
+# which is authoritative and needs no table here. Claude Code identifies a
+# long-context variant by suffixing the model id — "claude-opus-5[1m]",
+# "claude-sonnet-5[1m]" — so the selected variant is readable straight off the
+# id and the figure tracks /model changes automatically.
+#
+# Matching on the suffix rather than enumerating model names is deliberate: new
+# models keep working without touching this, and the caller cross-checks the
+# result against actual usage, so an unlisted window larger than anything here
+# degrades to "no percentage" instead of a wrong one.
+model_window() {
+  case "$1" in
+    '')        echo "" ;;         # no model id: nothing to infer from
+    *'[1m]'*)  echo 1000000 ;;
+    *)         echo 200000 ;;     # standard window for every current model
+  esac
+}
 
 # floor_pct <pct> -> integer, rounded DOWN. A "% used" figure must never
 # overstate: printf '%.0f' turns 99.6% into a "100%" that reads as capped when
@@ -77,7 +125,7 @@ fmt_remaining() {
 fmt_remaining_until() {
   local resets_at="$1"
   local now
-  now=$(date +%s)
+  now=$(now_epoch)
   fmt_remaining $((resets_at - now))
 }
 
@@ -106,9 +154,28 @@ fi
 
 if [ -z "$current" ] && [ -n "$last_usage" ]; then
   current=$(echo "$last_usage" | jq -r '.usage | (.input_tokens // 0) + (.cache_creation_input_tokens // 0) + (.cache_read_input_tokens // 0)')
-  # Real window size isn't exposed via the transcript, so assume the
-  # standard 200k window (Claude Code doesn't surface 1M-beta status here).
-  ctx_size=200000
+  # The transcript records token counts but never the window size, so derive it
+  # from the selected model instead of assuming one.
+  ctx_size=$(model_window "$model_id")
+fi
+
+# Sanity-check whatever size we ended up with against actual usage. A window
+# smaller than the tokens already in it is impossible, so this catches a
+# model_window() guess that has gone stale — a new model with a larger window
+# than anything listed there. Dropping the size (rather than clamping the
+# percentage to 100%) makes the statusline fall back to showing just the token
+# count, which is the part we actually know. Better a missing number than
+# "C:1.4m/1m(140%)".
+if [ -n "$current" ] && [ -n "$ctx_size" ] && [ "$current" -gt "$ctx_size" ]; then
+  ctx_size=""
+fi
+
+# Same idea from the other direction: this flag is authoritative that the
+# window exceeds 200k, so a derived 200k is provably wrong even when usage is
+# still under it (a 1M session only 150k in would otherwise read 75%).
+if [ -n "$ctx_size" ] && [ "$ctx_size" -le 200000 ] \
+   && [ "$(echo "$input" | jq -r '.exceeds_200k_tokens // false')" = "true" ]; then
+  ctx_size=""
 fi
 
 used_rounded=""
@@ -138,6 +205,12 @@ if [ -n "$used_rounded" ]; then
   else
     ctx="${ctx_color}${BOLD}C:${used_rounded}%${RESET}"
   fi
+elif [ -n "$current" ]; then
+  # Token count known, window size not. Show the count alone, prefixed with ~
+  # to signal there is no denominator behind it. Left uncoloured on purpose:
+  # the green/yellow/red scale encodes "how close to full", which is exactly
+  # what cannot be judged without a window size.
+  ctx="${BOLD}C:~$(fmt_tokens "$current")${RESET}"
 fi
 
 # --- prompt-cache age ---
@@ -154,8 +227,8 @@ if [ -n "$last_usage" ]; then
     if [ -n "$last_epoch" ]; then
       ttl=300
       [ "$uses_1h" = "true" ] && ttl=3600
-      now_epoch=$(date +%s)
-      remaining=$((ttl - (now_epoch - last_epoch)))
+      now=$(now_epoch)
+      remaining=$((ttl - (now - last_epoch)))
       if [ "$remaining" -gt 0 ]; then
         cache_color="$GREEN"
         [ "$remaining" -lt 60 ] && cache_color="$YELLOW"
@@ -232,11 +305,11 @@ if [ "$maxed" -eq 1 ] && command -v ccusage >/dev/null 2>&1; then
   cache_dir="${TMPDIR:-/tmp}"
   cache_file="${cache_dir%/}/.claude-credit-burn-cache"
   cache_ttl=90
-  now_epoch=$(date +%s)
+  now=$(now_epoch)
   cached_cost=""
   if [ -f "$cache_file" ]; then
     cache_mtime=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null)
-    if [ -n "$cache_mtime" ] && [ $((now_epoch - cache_mtime)) -lt "$cache_ttl" ]; then
+    if [ -n "$cache_mtime" ] && [ $((now - cache_mtime)) -lt "$cache_ttl" ]; then
       cached_cost=$(cat "$cache_file")
     fi
   fi
@@ -257,6 +330,9 @@ elif [ "$maxed" -eq 1 ]; then
 fi
 
 stats="$ctx$cache_age$usage$credit"
+# Every segment except the context indicator carries its own leading separator,
+# so the line opens with a stray space whenever context is the missing one.
+stats="${stats# }"
 
 if [ -n "$stats" ]; then
   printf "%b %b" "$stats" "$model_part"
