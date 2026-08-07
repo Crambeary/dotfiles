@@ -88,8 +88,12 @@ inner.horizontal = 20
 inner.vertical =   15
 outer.left =       10
 outer.bottom =     10
-outer.top =        54
 outer.right =      10
+# Gaps are measured from the visible frame. The built-in panel already reserves
+# 32pt for the notch and the sketchybar bar now fills exactly that strip, so 8
+# is pure breathing room. External monitors reserve nothing while the menu bar
+# is hidden, so their gap must clear the 39pt bar plus the same 8.
+outer.top =        [{ monitor.'built-in' = 8 }, 47]
 
 [workspace-to-monitor-force-assignment]
 1 = ['main', 'DELL U2724D \(1\)', 'ROG PG278QR', 'built-in']
