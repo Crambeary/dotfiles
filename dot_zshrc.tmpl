@@ -97,12 +97,29 @@ fi
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
+# Modified-arrow word motion. kitty sends the xterm form (CSI 1;3C/D for
+# Option, 1;5C/D for Ctrl); zsh binds none of them by default, so it consumes
+# the ESC-[ prefix, fails to match, and self-inserts the tail — typing a
+# literal ";3D" instead of moving. Terminal.app instead needs its "Use Option
+# as Meta key" profile setting, which sends ^[b/^[f (already bound by emacs
+# mode). Claude Code's TUI decodes these itself, which is why word motion
+# works there and not at the prompt.
+bindkey '^[[1;3C' forward-word
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[^?'    backward-kill-word   # Option+Backspace
+
 # fzf shell integration (Ctrl+R history, Ctrl+T file picker, Alt+C cd)
 source <(fzf --zsh)
 
 # opencode — the installer appends a hardcoded absolute path to ~/.zshrc;
 # kept portable and guarded so it's a no-op where opencode isn't installed.
 [[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
+# wt (worktree) shell init — was a local edit in ~/.zshrc that never made it
+# back into this template; adopted here so `chezmoi apply` stops reverting it.
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
 {{- if or (eq .chezmoi.hostname "marc-fedora") (eq .chezmoi.hostname "marc-mac-fedora") }}
 
