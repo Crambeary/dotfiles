@@ -1,48 +1,35 @@
 #!/bin/bash
 
-WIDTH=100
+source "$CONFIG_DIR/colors.sh"
 
-detail_on() {
-  sketchybar --animate tanh 30 --set volume slider.width=$WIDTH
-}
-
-detail_off() {
-  sketchybar --animate tanh 30 --set volume slider.width=0
-}
-
-toggle_detail() {
-  INITIAL_WIDTH=$(sketchybar --query volume | jq -r ".slider.width")
-  if [ "$INITIAL_WIDTH" -eq "0" ]; then
-    detail_on
-  else
-    detail_off
-  fi
-}
-
-toggle_devices() {
-  which SwitchAudioSource >/dev/null || exit 0
-  source "$CONFIG_DIR/colors.sh"
-
+# One popup holds both the slider (added in items/volume.sh) and the output
+# device list (rebuilt on each open, since devices come and go). The slider is
+# added at config time so it always sits above the devices.
+toggle_popup() {
   args=(--remove '/volume.device\.*/' --set "$NAME" popup.drawing=toggle)
-  COUNTER=0
-  CURRENT="$(SwitchAudioSource -t output -c)"
-  while IFS= read -r device; do
-    COLOR=$GREY
-    if [ "${device}" = "$CURRENT" ]; then
-      COLOR=$WHITE
-    fi
-    args+=(--add item volume.device.$COUNTER popup."$NAME" \
-           --set volume.device.$COUNTER label="${device}" \
-                                        label.color="$COLOR" \
-                 click_script="SwitchAudioSource -s \"${device}\" && sketchybar --set /volume.device\.*/ label.color=$GREY --set \$NAME label.color=$WHITE --set $NAME popup.drawing=off")
-    COUNTER=$((COUNTER+1))
-  done <<< "$(SwitchAudioSource -a -t output)"
+
+  if command -v SwitchAudioSource >/dev/null 2>&1; then
+    COUNTER=0
+    CURRENT="$(SwitchAudioSource -t output -c)"
+    while IFS= read -r device; do
+      COLOR=$GREY
+      if [ "${device}" = "$CURRENT" ]; then
+        COLOR=$WHITE
+      fi
+      args+=(--add item volume.device.$COUNTER popup."$NAME" \
+             --set volume.device.$COUNTER label="${device}" \
+                                          label.color="$COLOR" \
+                   click_script="SwitchAudioSource -s \"${device}\" && sketchybar --set /volume.device\.*/ label.color=$GREY --set \$NAME label.color=$WHITE --set volume_icon popup.drawing=off")
+      COUNTER=$((COUNTER+1))
+    done <<< "$(SwitchAudioSource -a -t output)"
+  fi
 
   sketchybar -m "${args[@]}" > /dev/null
 }
 
-if [ "$BUTTON" = "right" ] || [ "$MODIFIER" = "shift" ]; then
-  toggle_devices
-else
-  toggle_detail
-fi
+case "$SENDER" in
+  "mouse.exited.global") sketchybar --set "$NAME" popup.drawing=off
+  ;;
+  *) toggle_popup
+  ;;
+esac

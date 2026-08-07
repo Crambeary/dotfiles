@@ -9,6 +9,9 @@ LOCK=􀒳
 BELL=􀋚
 BELL_DOT=􀝗
 
+# Homebrew Icons
+BREW=􀐛
+
 # Git Icons
 GIT_ISSUE=􀍷
 GIT_DISCUSSION=􀒤
