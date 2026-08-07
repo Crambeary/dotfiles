@@ -23,8 +23,17 @@ $CONFIG_DIR/helper/helper $HELPER > /dev/null 2>&1 &
 launchctl unload -F /System/Library/LaunchAgents/com.apple.OSDUIHelper.plist > /dev/null 2>&1 &
 
 # Setting up the general bar appearance of the bar
+# Notch handling (built-in display is 1728x1117pt; notch is 32pt tall, 185pt
+# wide, centred at x 771-956). macOS reserves that 32pt strip even with the menu
+# bar hidden, so a flush bar sized to it costs no usable space.
+#   height               - bar height on displays WITHOUT a notch
+#   notch_display_height - bar height on the notched display. NOT a gate/filter:
+#                          whatever value you set becomes the bar's height there,
+#                          so a display-sized value blanks the whole screen.
+#   notch_width          - centre region kept free of items
 bar=(
   height=39
+  notch_display_height=32
   color=$BAR_COLOR
   shadow=on
   position=top
@@ -32,10 +41,10 @@ bar=(
   padding_right=10
   padding_left=10
   corner_radius=9
-  y_offset=10
+  y_offset=0
   margin=10
   blur_radius=20
-  notch_width=0
+  notch_width=200
   topmost=window
 )
 
