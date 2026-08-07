@@ -55,6 +55,106 @@ built in; `fzf` is available via `winget`/`scoop`).
 `stable` on Linux/macOS but `preview` on Windows — pinned so all three machines
 track the same release channel.
 
+## rtk (Rust Token Killer)
+
+A CLI proxy that compacts command output before it reaches Claude Code, wired
+in as a `PreToolUse` hook that rewrites commands transparently (`git status` →
+`rtk git status`). `run_once_after_install-rtk.sh.tmpl` installs it from
+`homebrew/core`, which covers both macOS and Linux. Windows gets no automated
+install: there is no verified scoop/winget package, and **`cargo install rtk`
+is the wrong move** — that crate name belongs to an unrelated "Rust Type Kit".
+The script probes for `rtk gain`, a subcommand only the Token Killer has, so a
+machine that ended up with the impostor gets told rather than silently
+proxying through the wrong binary. Like the ccusage script this is
+best-effort: without rtk, command output is simply unfiltered.
+
+The config is the awkward part. rtk resolves its config directory per platform
+and accepts no override, so the same content has to land in three places:
+`~/Library/Application Support/rtk/` on macOS, `~/.config/rtk/` on Linux, and
+`%APPDATA%\rtk\` on Windows. Rather than triplicate it, all three are one-line
+wrappers around the shared `.chezmoitemplates/rtk-config.toml` partial, the
+same arrangement Herdr uses above, each gated to its own OS in
+`.chezmoiignore`. **Edit the partial, not the wrappers.** Only the macOS path
+is verified first-hand; the Linux and Windows paths follow the `dirs`-crate
+convention rtk is built on but have not been exercised on those machines yet.
+
+Not tracked alongside it: `filters.toml` (rtk writes a comment-only example
+scaffold with no real content) and `history.db` (per-machine usage stats).
+
+## Claude Code: prefer-modern-tools hook
+
+A `PreToolUse` hook denies `grep`, `sed`, and `find` inside Bash commands and
+steers Claude toward `rg`, `sd`, and `fd`. The denial is surgical, not
+blanket: `grep` is always denied (rg is a strict superset here, and `git
+grep` passes through untouched); `sed` is denied only for `-i`/in-place edits
+and `s///`-style substitution, since `sd` can't do those but also can't do
+ranges/prints/deletes, so `sed -n '5,10p'` and `sed '2d'` stay allowed; `find`
+is denied by *default*, escaping only via a narrow allow-list of predicates
+`fd` genuinely cannot express (`-perm`, `-newer FILE`, `-atime`/`-ctime`,
+`-inum`/`-links`/`-samefile`, `-empty`, `-printf`, `-prune`).
+
+An allow-list rather than a deny-list, because a deny-list silently passes
+whatever it forgets to name — `find . -size +1M` has no `-name`/`-type` to
+catch it. Note that `-exec` is *not* on the allow-list: fd has `-x` (per file)
+and `-X` (batched, equivalent to `-exec {} +`), along with `-S` for size,
+`--changed-within`/`--changed-before` for mtime, and `-o` for owner, so those
+all route to fd. The hook is a heuristic tokenizer, not a shell
+parser, and fails open on any parse error rather than blocking a command it
+can't confidently classify. The logic lives entirely in
+`dot_claude/hooks/executable_prefer-modern-tools.py`, plain Python with no
+templating needed in the body — the only thing that differs by OS is the
+interpreter name (`python` on Windows, `python3` elsewhere).
+
+The hook path is written into `settings.json` as the literal, *unexpanded*
+string `$HOME/.claude/hooks/prefer-modern-tools.py`, matching how the
+`statusLine` entry stores `~/...`. Expanding it at install time would hardcode
+one machine's home directory into a config synced across three of them. Left
+unexpanded, the shell Claude Code runs the hook through resolves it — including
+on Windows, where Git Bash expands `$HOME` and then MSYS-translates the POSIX
+path when handing the argument to native `python.exe`, so no `cygpath`
+conversion is needed.
+
+The merge script declares the *whole* Bash `PreToolUse` chain, rtk's hook
+included, not just this one — rtk's entry was originally added to
+settings.json by hand, so a fresh machine used to get the deny hook with no
+rtk rewriting behind it. Both hooks fire on every Bash call and a deny from
+either blocks the command; rtk stays first in the list. rtk separately
+rewrites `rg` to `rtk rg`, so steering grep→rg keeps rtk's output compaction
+rather than fighting it.
+
+One accepted gap from that coexistence: rtk rewrites `find` to `rtk find`,
+whose wrapper rejects every predicate on this hook's find allow-list
+(`-perm`, `-newer FILE`, `-atime`, …), so those commands are blocked by rtk
+even though this hook permits them. Setting `exclude_commands = ["find"]` in
+the rtk config would fix it, at the cost of losing rtk's find compaction
+everywhere; the gap is small enough that it is left alone. `rtk proxy find …`
+is the per-call escape.
+
+`~/.claude/settings.json` is deliberately **not** chezmoi-managed, because
+Claude Code rewrites it at runtime and a tracked copy would fight that on
+every `apply`. Instead, `run_onchange_after_configure-claude-hooks.sh.tmpl`
+follows the same pattern already used by
+`run_onchange_after_configure-claude-statusline.sh.tmpl`: it merges in just
+the one hook entry and leaves machine-specific keys (model, effortLevel,
+mcpServers) alone. It shells out to inline Python rather than `jq` for the
+JSON merge, since `jq` isn't assumed present on Windows. The `run_onchange_`
+prefix means chezmoi re-runs it automatically whenever the hook script's
+content changes, via a hash of that script embedded in a comment.
+
+On Windows, the merge script runs through Git Bash — Windows has no shebang
+support, so nothing would execute `run_*.sh` there at all without the new
+`[interpreters.sh]` block added to `.chezmoi.toml.tmpl`, and Claude Code's
+Windows setup guarantees Git Bash is on `PATH`. That block's `{{ if eq
+.chezmoi.os "windows" }}` gate lives in `.chezmoi.toml.tmpl` rather than
+`.chezmoiignore`, a deliberate exception to this README's opening rule:
+`.chezmoiignore` selects which *target files* apply to a machine, but this
+block configures chezmoi itself, not a target file. **`.chezmoi.toml.tmpl`
+only renders at `chezmoi init`, not at `chezmoi apply`** — so, in the same
+spirit as the "Installing a new SDK does not take effect on its own" warning
+above, an *existing* Windows machine pulling this change must run `chezmoi
+init` once before its next `chezmoi apply`, or the merge script silently
+never executes and the hook never gets registered.
+
 ## KDE Plasma (Linux)
 
 Only the small text config files are tracked here — panel/widget layout, window
