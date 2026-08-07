@@ -110,8 +110,25 @@ bindkey '^[[1;5C' forward-word
 bindkey '^[[1;5D' backward-word
 bindkey '^[^?'    backward-kill-word   # Option+Backspace
 
-# fzf shell integration (Ctrl+R history, Ctrl+T file picker, Alt+C cd)
-source <(fzf --zsh)
+# fzf shell integration (Ctrl+R history, Ctrl+T file picker, Alt+C cd).
+# fzf --zsh requires a recent fzf; distro package layouts vary for older versions.
+if (( $+commands[fzf] )); then
+  if fzf --zsh >/dev/null 2>&1; then
+    source <(fzf --zsh)
+  else
+    for fzf_shell_dir in \
+      /usr/share/fzf/shell \
+      /usr/share/doc/fzf/examples \
+      /usr/local/opt/fzf/shell; do
+      if [[ -r "$fzf_shell_dir/key-bindings.zsh" ]]; then
+        source "$fzf_shell_dir/key-bindings.zsh"
+        [[ -r "$fzf_shell_dir/completion.zsh" ]] &&
+          source "$fzf_shell_dir/completion.zsh"
+        break
+      fi
+    done
+  fi
+fi
 
 # opencode — the installer appends a hardcoded absolute path to ~/.zshrc;
 # kept portable and guarded so it's a no-op where opencode isn't installed.

@@ -52,6 +52,7 @@ install-powershell7.cmd
 # Fish is used in the Linux/WSL environment, not native Windows.
 {{ if eq .chezmoi.os "windows" }}
 .config/fish/**
+.config/zellij/**
 {{ end }}
 
 
