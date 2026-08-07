@@ -1,0 +1,92 @@
+#!/bin/bash
+# Merges the prefer-modern-tools PreToolUse hook into ~/.claude/settings.json
+# without touching other machine-specific keys (model, effortLevel, statusLine,
+# mcpServers, etc). Idempotent: re-running just confirms the entry is present.
+# Re-runs automatically (via run_onchange) whenever the hook script's content
+# changes.
+# script hash: {{ include "dot_claude/hooks/executable_prefer-modern-tools.py" | sha256sum }}
+set -euo pipefail
+
+SETTINGS="$HOME/.claude/settings.json"
+mkdir -p "$HOME/.claude"
+
+{{ if eq .chezmoi.os "windows" -}}
+PYTHON=python
+{{- else -}}
+PYTHON=python3
+{{- end }}
+
+# Deliberately UNexpanded: this string is written into settings.json verbatim
+# and $HOME is resolved by the shell Claude Code runs the hook through, not
+# here at install time. Same approach as the statusLine entry's `~/...` path.
+# That keeps one path form working everywhere — on Windows the hook runs under
+# Git Bash, which expands $HOME and then MSYS-translates the POSIX path when
+# it hands the argument to native python.exe. Baking an absolute path in here
+# instead would hardcode this machine's home directory into a synced config.
+HOOK_PATH='$HOME/.claude/hooks/prefer-modern-tools.py'
+
+if [ ! -f "$SETTINGS" ]; then
+  echo '{}' > "$SETTINGS"
+fi
+
+"$PYTHON" - "$SETTINGS" "$HOOK_PATH" "$PYTHON" <<'PY'
+import json
+import os
+import sys
+import tempfile
+
+settings_path, hook_path, python_bin = sys.argv[1:4]
+hook_basename = os.path.basename(hook_path)
+
+with open(settings_path) as f:
+    settings = json.load(f)
+
+hooks = settings.setdefault("hooks", {})
+pre_tool_use = hooks.setdefault("PreToolUse", [])
+
+# The full desired Bash PreToolUse chain, in order, as (marker, command).
+# The marker is what identifies a prior registration for replacement; it must
+# stay stable even when the command string changes. For the python hook that
+# means the script basename, since both the path form (POSIX vs. native
+# Windows) and the interpreter (python vs. python3) vary between machines.
+#
+# rtk's own hook is declared here too, not just ours. It was originally added
+# to settings.json by hand, which meant a fresh machine got the deny hook but
+# no rtk rewriting. Order matters only in that rtk stays first, preserving the
+# behaviour this was developed against; a deny from either blocks the command.
+DESIRED = [
+    ("rtk hook claude", "rtk hook claude"),
+    (hook_basename, f'{python_bin} "{hook_path}"'),
+]
+
+bash_entry = None
+for entry in pre_tool_use:
+    if entry.get("matcher") == "Bash":
+        bash_entry = entry
+        break
+
+if bash_entry is None:
+    bash_entry = {"matcher": "Bash", "hooks": []}
+    pre_tool_use.append(bash_entry)
+
+markers = [m for m, _ in DESIRED]
+bash_entry["hooks"] = [
+    h
+    for h in bash_entry["hooks"]
+    if not any(m in (h.get("command") or "") for m in markers)
+]
+bash_entry["hooks"].extend(
+    {"type": "command", "command": c} for _, c in DESIRED
+)
+
+settings_dir = os.path.dirname(settings_path) or "."
+fd, tmp_path = tempfile.mkstemp(dir=settings_dir)
+try:
+    with os.fdopen(fd, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+    os.replace(tmp_path, settings_path)
+except BaseException:
+    os.unlink(tmp_path)
+    raise
+PY

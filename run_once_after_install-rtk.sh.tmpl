@@ -1,0 +1,55 @@
+#!/bin/bash
+# Installs rtk (Rust Token Killer), the token-reducing CLI proxy that Claude
+# Code's PreToolUse hook chain shells out to. Best-effort, like the ccusage
+# script: a machine without a usable package manager just doesn't get rtk, and
+# everything degrades to plain unfiltered command output.
+#
+# Deliberately NOT `cargo install rtk`. A different crate also answers to that
+# name (reachingforthejack/rtk, "Rust Type Kit"), so cargo would silently
+# install the wrong binary — the same collision ~/.claude/RTK.md warns about.
+# The verify step below catches it either way by probing for `rtk gain`, which
+# only the Token Killer has.
+set -uo pipefail
+
+verify() {
+  # `rtk gain` exists only in the Token Killer, so it distinguishes this rtk
+  # from the same-named Rust Type Kit.
+  if rtk gain >/dev/null 2>&1; then
+    echo "rtk: verified ($(rtk --version 2>/dev/null))"
+    return 0
+  fi
+  echo "rtk: WRONG BINARY on PATH at $(command -v rtk) — 'rtk gain' failed." >&2
+  echo "rtk: this is probably reachingforthejack/rtk (Rust Type Kit)." >&2
+  echo "rtk: remove it, then re-run 'chezmoi apply'." >&2
+  return 1
+}
+
+if command -v rtk >/dev/null 2>&1; then
+  verify || exit 0
+  exit 0
+fi
+
+{{ if eq .chezmoi.os "windows" -}}
+# No Homebrew on Windows, and no verified scoop/winget package to point at.
+# Guessing an installer risks pulling the wrong "rtk", so this stops and tells
+# the human instead. The config and the Claude hook are still laid down; they
+# simply have nothing to proxy through until rtk is present.
+echo "rtk: not installed, and there is no automated Windows install here." >&2
+echo "rtk: install it manually, then re-run 'chezmoi apply'." >&2
+echo "rtk: see https://github.com/rtk-ai/rtk — do NOT 'cargo install rtk'," >&2
+echo "rtk: that name belongs to a different crate." >&2
+exit 0
+{{- else -}}
+if ! command -v brew >/dev/null 2>&1; then
+  echo "rtk: Homebrew not found — skipping (bash output stays unfiltered)." >&2
+  exit 0
+fi
+
+echo "rtk: installing via Homebrew (homebrew/core)"
+if ! brew install rtk; then
+  echo "rtk: install failed — skipping (bash output stays unfiltered)." >&2
+  exit 0
+fi
+
+verify || exit 0
+{{- end }}

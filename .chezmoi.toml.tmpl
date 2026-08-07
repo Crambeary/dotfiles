@@ -14,3 +14,11 @@ re-interrogation. Non-interactive runs (`--no-tty`) fall through to the default.
   # renders no Vulkan environment at all — correct for the Linux hosts.
   # After installing a new SDK: edit this value, then `chezmoi apply ~/.zshrc`.
   vulkan_sdk_version = {{ $vulkan | quote }}
+
+{{ if eq .chezmoi.os "windows" }}
+# Windows can't execute .sh scripts directly (no shebang support). Claude
+# Code's Windows setup guarantees Git Bash on PATH, so route run_*.sh
+# scripts (e.g. configure-claude-hooks) through it instead.
+[interpreters.sh]
+  command = "bash"
+{{ end }}

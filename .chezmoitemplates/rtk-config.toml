@@ -1,0 +1,63 @@
+# rtk (Rust Token Killer) global config — shared across macOS, Linux, Windows.
+#
+# Edit THIS file, not the rendered copies. The three per-OS wrappers
+# (Library/Application Support/rtk/, private_dot_config/rtk/,
+# AppData/Roaming/rtk/) each just `template` this partial, because rtk resolves
+# its config directory per platform and does not accept an override env var.
+#
+# NOT tracked alongside it: filters.toml (rtk writes a comment-only example
+# scaffold with no real content) and history.db (per-machine usage stats).
+
+[tracking]
+enabled = true
+history_days = 90
+
+[display]
+colors = true
+emoji = true
+max_width = 120
+
+[filters]
+ignore_dirs = [
+    ".git",
+    "node_modules",
+    "target",
+    "__pycache__",
+    ".venv",
+    "vendor",
+]
+ignore_files = [
+    "*.lock",
+    "*.min.js",
+    "*.min.css",
+]
+
+[tee]
+enabled = true
+mode = "failures"
+max_files = 20
+max_file_size = 1048576
+
+[telemetry]
+enabled = false
+consent_given = false
+# Pinned deliberately: rtk prompts for telemetry consent until this is set, so
+# syncing the answered date stops every new machine re-asking. The answer
+# itself is "no" — enabled and consent_given both stay false.
+consent_date = "2026-08-07T00:55:29.426238+00:00"
+
+[hooks]
+# Left empty on purpose. Adding "find" here would stop rtk rewriting find ->
+# rtk find, which would in turn make the prefer-modern-tools hook's find
+# allow-list (-perm, -newer FILE, -atime, ...) actually reachable — rtk's find
+# wrapper rejects all of those. That gap is accepted rather than fixed: see the
+# "Claude Code: prefer-modern-tools hook" section of the README.
+exclude_commands = []
+transparent_prefixes = []
+
+[limits]
+grep_max_results = 200
+grep_max_per_file = 25
+status_max_files = 15
+status_max_untracked = 10
+passthrough_max_chars = 2000

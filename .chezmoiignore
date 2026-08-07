@@ -10,6 +10,12 @@
 # Repo docs, not a dotfile target
 README.md
 
+# Python bytecode. The prefer-modern-tools hook runs as a script so it never
+# generates this on its own, but compiling it in the source dir (e.g. a
+# py_compile syntax check) leaves a __pycache__ that chezmoi would otherwise
+# happily sync to every machine.
+**/__pycache__/**
+
 # Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
 .config/secrets/**
 
@@ -20,9 +26,21 @@ README.md
 .config/ghostty/**
 {{ end }}
 
+# rtk resolves its config dir per platform (macOS Application Support, XDG on
+# Linux, %APPDATA% on Windows) and takes no override env var, so the same
+# partial is laid down at three paths and each is gated to its own OS. All
+# three render from .chezmoitemplates/rtk-config.toml — edit that, not these.
+{{ if ne .chezmoi.os "darwin" }}
+Library/Application Support/rtk/**
+{{ end }}
+{{ if ne .chezmoi.os "linux" }}
+.config/rtk/**
+{{ end }}
+
 # Windows only. The PowerShell profiles stay tracked in source so Windows
 # still gets them â€” they're just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
+AppData/Roaming/rtk/**
 AppData/Roaming/Zellij/**
 AppData/*
 scoop/*
