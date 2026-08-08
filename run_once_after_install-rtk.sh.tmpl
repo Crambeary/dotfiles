@@ -30,15 +30,30 @@ if command -v rtk >/dev/null 2>&1; then
 fi
 
 {{ if eq .chezmoi.os "windows" -}}
-# No Homebrew on Windows, and no verified scoop/winget package to point at.
-# Guessing an installer risks pulling the wrong "rtk", so this stops and tells
-# the human instead. The config and the Claude hook are still laid down; they
-# simply have nothing to proxy through until rtk is present.
-echo "rtk: not installed, and there is no automated Windows install here." >&2
-echo "rtk: install it manually, then re-run 'chezmoi apply'." >&2
-echo "rtk: see https://github.com/rtk-ai/rtk — do NOT 'cargo install rtk'," >&2
-echo "rtk: that name belongs to a different crate." >&2
-exit 0
+# Install the official x64 release instead of `cargo install rtk`, which
+# resolves to the unrelated reachingforthejack/rtk crate.
+echo "rtk: installing the latest official Windows release"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command '
+  $ErrorActionPreference = "Stop"
+  $release = Invoke-RestMethod -Uri "https://api.github.com/repos/rtk-ai/rtk/releases/latest"
+  $asset = $release.assets | Where-Object { $_.name -eq "rtk-x86_64-pc-windows-msvc.zip" } | Select-Object -First 1
+  if ($null -eq $asset) { throw "RTK Windows x64 release asset was not found" }
+  $binDir = Join-Path $env:USERPROFILE ".local\\bin"
+  $zip = Join-Path $env:TEMP $asset.name
+  $extractDir = Join-Path $env:TEMP ("rtk-" + $release.tag_name)
+  New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
+  Expand-Archive -LiteralPath $zip -DestinationPath $extractDir -Force
+  $binary = Get-ChildItem -LiteralPath $extractDir -Filter "rtk.exe" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+  if ($null -eq $binary) { throw "rtk.exe was not found in the downloaded release" }
+  Move-Item -LiteralPath $binary -Destination (Join-Path $binDir "rtk.exe") -Force
+  $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+  if (($userPath -split ";") -notcontains $binDir) {
+    [Environment]::SetEnvironmentVariable("Path", (($userPath.TrimEnd(";") + ";" + $binDir).TrimStart(";")), "User")
+  }
+  & (Join-Path $binDir "rtk.exe") --version
+  & (Join-Path $binDir "rtk.exe") gain | Out-Null
+'
 {{- else -}}
 if ! command -v brew >/dev/null 2>&1; then
   echo "rtk: Homebrew not found — skipping (bash output stays unfiltered)." >&2
