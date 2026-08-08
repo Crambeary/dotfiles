@@ -135,7 +135,7 @@ focus_pane_right = ["prefix+l"]
 # height = "80%"
 
 {{ if ne .chezmoi.os "windows" -}}
-# The five bindings below shell out to bash scripts (~/.config/herdr/scripts/)
+# The six bindings below shell out to bash scripts (~/.config/herdr/scripts/)
 # that use bash, jq, and fzf. Linux/macOS only — Windows lacks these by
 # default (cmd.exe /d /c can't source a shebang script), so they're omitted
 # from the Windows config entirely rather than shipping broken bindings.
@@ -194,34 +194,35 @@ type = "shell"
 command = "~/.config/herdr/scripts/pick-attention-pane.sh"
 description = "jump to most recent agent notification"
 
+{{ end -}}
 # alt+h/alt+l/alt+j/alt+k: focus the neighboring pane, or wrap to the
 # previous/next tab (cycling continuously) when already at the tab's edge
-# pane — mirrors zellij's alt+hjkl tab-crossing move-focus.
+# pane — mirrors zellij's alt+hjkl tab-crossing move-focus. Windows has no
+# bash/jq, so it shells to a PowerShell port instead of the .sh script.
 [[keys.command]]
 key = "alt+h"
 type = "shell"
-command = "~/.config/herdr/scripts/focus-pane-or-tab.sh left"
+command = "{{ if eq .chezmoi.os "windows" }}powershell -NoProfile -ExecutionPolicy Bypass -File \"{{ .chezmoi.homeDir }}/AppData/Roaming/herdr/scripts/focus-pane-or-tab.ps1\" left{{ else }}~/.config/herdr/scripts/focus-pane-or-tab.sh left{{ end }}"
 description = "focus pane left, wrapping across tabs"
 
 [[keys.command]]
 key = "alt+l"
 type = "shell"
-command = "~/.config/herdr/scripts/focus-pane-or-tab.sh right"
+command = "{{ if eq .chezmoi.os "windows" }}powershell -NoProfile -ExecutionPolicy Bypass -File \"{{ .chezmoi.homeDir }}/AppData/Roaming/herdr/scripts/focus-pane-or-tab.ps1\" right{{ else }}~/.config/herdr/scripts/focus-pane-or-tab.sh right{{ end }}"
 description = "focus pane right, wrapping across tabs"
 
 [[keys.command]]
 key = "alt+j"
 type = "shell"
-command = "~/.config/herdr/scripts/focus-pane-or-tab.sh down"
+command = "{{ if eq .chezmoi.os "windows" }}powershell -NoProfile -ExecutionPolicy Bypass -File \"{{ .chezmoi.homeDir }}/AppData/Roaming/herdr/scripts/focus-pane-or-tab.ps1\" down{{ else }}~/.config/herdr/scripts/focus-pane-or-tab.sh down{{ end }}"
 description = "focus pane down, wrapping across tabs"
 
 [[keys.command]]
 key = "alt+k"
 type = "shell"
-command = "~/.config/herdr/scripts/focus-pane-or-tab.sh up"
+command = "{{ if eq .chezmoi.os "windows" }}powershell -NoProfile -ExecutionPolicy Bypass -File \"{{ .chezmoi.homeDir }}/AppData/Roaming/herdr/scripts/focus-pane-or-tab.ps1\" up{{ else }}~/.config/herdr/scripts/focus-pane-or-tab.sh up{{ end }}"
 description = "focus pane up, wrapping across tabs"
 
-{{ end -}}
 [[keys.command]]
 key = "prefix+alt+h"
 type = "popup"
