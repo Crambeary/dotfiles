@@ -9,6 +9,15 @@ PLUGIN_DIR="$CONFIG_DIR/plugins" # Directory where all the plugin scripts are st
 FONT="SF Pro" # Needs to have Regular, Bold, Semibold, Heavy and Black variants
 PADDINGS=3 # All paddings use this value (icon, label, background)
 
+# At login, launchd starts sketchybar before AeroSpace's server accepts
+# connections, so every `aerospace` query below (and in items/spaces.sh) comes
+# back empty and the workspace items are never created. Wait for the server
+# instead of racing it; bounded so a missing AeroSpace can't hang the bar.
+for _ in $(seq 20); do
+  aerospace list-monitors >/dev/null 2>&1 && break
+  sleep 1
+done
+
 # aerospace setting
 AEROSPACE_FOCUSED_MONITOR_NO=$(aerospace list-workspaces --focused)
 AEROSPACE_LIST_OF_WINDOWS_IN_FOCUSED_MONITOR=$(aerospace list-windows --workspace $AEROSPACE_FOCUSED_MONITOR_NO | awk -F'|' '{gsub(/^ *| *$/, "", $2); print $2}')
@@ -35,7 +44,11 @@ bar=(
   height=39
   notch_display_height=32
   color=$BAR_COLOR
-  shadow=on
+  # shadow must stay off: with blur_radius set, the shadow layer gets blurred
+  # too and smears a ~15pt haze below the bar, over the top of the tiled
+  # windows. Either alone renders clean; together they do not. A flush
+  # notch-strip bar has no visible drop shadow to gain anyway.
+  shadow=off
   position=top
   sticky=on
   padding_right=10
