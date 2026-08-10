@@ -1,0 +1,38 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Disables the macOS system shortcuts that use Ctrl, so AeroSpace's ctrl-based
+# bindings (see dot_aerospace.toml) are never eaten before they reach it.
+#
+# Symbolic hotkeys are consumed by the window server *ahead of* AeroSpace's
+# CGEvent tap, so they are the one class of conflict AeroSpace cannot win. Only
+# these need disabling — everything else on Ctrl is app-level, where AeroSpace's
+# tap takes precedence.
+#
+# Managed as a setting rather than a file: com.apple.symbolichotkeys.plist also
+# holds shortcuts we don't own, so only these keys are rewritten, same
+# merge-one-key approach as configure-kwin-focus.sh.
+#
+# Re-runs (via run_onchange) whenever the id list below changes.
+# hotkey ids: 32 33 60 61 79 80 81 82 118 119 120 121 122 123 124 125 126 127
+set -euo pipefail
+
+#  32/33   Mission Control, Application windows      (ctrl-up / ctrl-down)
+#  60/61   previous / next input source              (ctrl-space / ctrl-alt-space)
+#  79-82   move left/right a space, with and without shift
+# 118-127  switch directly to Desktop 1..10          (ctrl-1 .. ctrl-0)
+ids=(32 33 60 61 79 80 81 82 118 119 120 121 122 123 124 125 126 127)
+
+for id in "${ids[@]}"; do
+  /usr/bin/defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+    -dict-add "$id" '<dict><key>enabled</key><false/></dict>'
+done
+
+# Make the window server re-read the plist. Without this the change only takes
+# effect at next login. Harmless if the service isn't running.
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u >/dev/null 2>&1 || true
+
+# Reload AeroSpace so the new bindings are live too, if it's running.
+if /usr/bin/pgrep -qx AeroSpace 2>/dev/null && command -v aerospace >/dev/null 2>&1; then
+  aerospace reload-config >/dev/null 2>&1 || true
+fi
+{{ end -}}

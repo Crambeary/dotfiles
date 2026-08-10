@@ -116,19 +116,31 @@ PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}'
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
+#
+# Modifier scheme: ctrl = act on focus/layout, ctrl-shift = act on the window.
+# (Was cmd-alt / cmd-alt-shift.)
+#
+# AeroSpace claims these with a global CGEvent tap, so no app ever sees them —
+# including the readline/vim keys ^B ^E ^F ^H ^J ^K ^L ^R ^S ^V ^W. kitty's mac
+# config remaps cmd-<key> to emit those bytes; see private_dot_config/kitty.
+# ctrl-shift-p (mode ignoring) suspends every binding, ctrl-shift-esc restores.
+#
+# The macOS side is kept out of the way by
+# run_onchange_after_configure-macos-hotkeys.sh.tmpl, which disables the
+# system's own ctrl-based symbolic hotkeys (Spaces switching, move-space).
 [mode.main.binding]
-cmd-alt-b = 'split horizontal'
-cmd-alt-v = 'split vertical'
-cmd-alt-f = 'fullscreen'
+ctrl-b = 'split horizontal'
+ctrl-v = 'split vertical'
+ctrl-f = 'fullscreen'
 
-cmd-alt-s = 'layout v_accordion' # 'layout stacking' in i3
-cmd-alt-w = 'layout h_accordion' # 'layout tabbed' in i3
-cmd-alt-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+ctrl-s = 'layout v_accordion' # 'layout stacking' in i3
+ctrl-w = 'layout h_accordion' # 'layout tabbed' in i3
+ctrl-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
 
-cmd-alt-shift-space = 'layout floating tiling' # 'floating toggle' in i3
+ctrl-shift-space = 'layout floating tiling' # 'floating toggle' in i3
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
 #   'reload-config',  ]
-cmd-alt-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
+ctrl-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
 # alt-shift-r = 'reload-config'
 
 # All possible keys:
@@ -151,63 +163,65 @@ cmd-alt-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-confi
 # alt-enter = 'exec-and-forget open -n /System/Applications/Utilities/Terminal.app'
 # alt-enter = 'exec-and-forget open -n /Applications/kitty.app'
 # alt-enter = 'exec-and-forget open -n /Applications/Alacritty.app/'
-cmd-h = []
+# cmd-h used to be swallowed here to stop macOS hiding windows. It is now left
+# alone: kitty rebinds cmd-h to send the ^H byte, since AeroSpace's global event
+# tap takes ctrl-h (focus left) before any app sees it.
 
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#layout
-cmd-alt-slash = 'layout tiles horizontal vertical'
-cmd-alt-comma = 'layout accordion horizontal vertical'
+ctrl-slash = 'layout tiles horizontal vertical'
+ctrl-comma = 'layout accordion horizontal vertical'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#focus
-cmd-alt-h = 'focus left'
-cmd-alt-j = 'focus down'
-cmd-alt-k = 'focus up'
-cmd-alt-l = 'focus right'
+ctrl-h = 'focus left'
+ctrl-j = 'focus down'
+ctrl-k = 'focus up'
+ctrl-l = 'focus right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move
-cmd-alt-shift-h = 'move left'
-cmd-alt-shift-j = 'move down'
-cmd-alt-shift-k = 'move up'
-cmd-alt-shift-l = 'move right'
+ctrl-shift-h = 'move left'
+ctrl-shift-j = 'move down'
+ctrl-shift-k = 'move up'
+ctrl-shift-l = 'move right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#resize
-cmd-alt-shift-minus = 'resize smart -50'
-cmd-alt-shift-equal = 'resize smart +50'
+ctrl-shift-minus = 'resize smart -50'
+ctrl-shift-equal = 'resize smart +50'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
-cmd-alt-1 = 'workspace 1'
-cmd-alt-2 = 'workspace 2'
-cmd-alt-3 = 'workspace 3'
-cmd-alt-4 = 'workspace 4'
-cmd-alt-5 = 'workspace 5'
-cmd-alt-6 = 'workspace 6'
-cmd-alt-7 = 'workspace 7'
-cmd-alt-8 = 'workspace 8'
-cmd-alt-9 = 'workspace 9'
-cmd-alt-0 = 'workspace 10'
+ctrl-1 = 'workspace 1'
+ctrl-2 = 'workspace 2'
+ctrl-3 = 'workspace 3'
+ctrl-4 = 'workspace 4'
+ctrl-5 = 'workspace 5'
+ctrl-6 = 'workspace 6'
+ctrl-7 = 'workspace 7'
+ctrl-8 = 'workspace 8'
+ctrl-9 = 'workspace 9'
+ctrl-0 = 'workspace 10'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
-cmd-alt-shift-1 = 'move-node-to-workspace 1'
-cmd-alt-shift-2 = 'move-node-to-workspace 2'
-cmd-alt-shift-3 = 'move-node-to-workspace 3'
-cmd-alt-shift-4 = 'move-node-to-workspace 4'
-cmd-alt-shift-5 = 'move-node-to-workspace 5'
-cmd-alt-shift-6 = 'move-node-to-workspace 6'
-cmd-alt-shift-7 = 'move-node-to-workspace 7'
-cmd-alt-shift-8 = 'move-node-to-workspace 8'
-cmd-alt-shift-9 = 'move-node-to-workspace 9'
-cmd-alt-shift-0 = 'move-node-to-workspace 10'
+ctrl-shift-1 = 'move-node-to-workspace 1'
+ctrl-shift-2 = 'move-node-to-workspace 2'
+ctrl-shift-3 = 'move-node-to-workspace 3'
+ctrl-shift-4 = 'move-node-to-workspace 4'
+ctrl-shift-5 = 'move-node-to-workspace 5'
+ctrl-shift-6 = 'move-node-to-workspace 6'
+ctrl-shift-7 = 'move-node-to-workspace 7'
+ctrl-shift-8 = 'move-node-to-workspace 8'
+ctrl-shift-9 = 'move-node-to-workspace 9'
+ctrl-shift-0 = 'move-node-to-workspace 10'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 # alt-tab = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
-cmd-alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+ctrl-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
-cmd-alt-shift-semicolon = 'mode service'
-cmd-alt-shift-slash = 'mode join'
-cmd-alt-r = 'mode resize'
-cmd-alt-shift-p = 'mode ignoring'
+ctrl-shift-semicolon = 'mode service'
+ctrl-shift-slash = 'mode join'
+ctrl-r = 'mode resize'
+ctrl-shift-p = 'mode ignoring'
 
 # 'service' binding mode declaration.
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -221,10 +235,10 @@ esc = ['reload-config', 'mode main']
 # 'join' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 [mode.join.binding]
-cmd-alt-shift-h = ['join-with left', 'mode main']
-cmd-alt-shift-j = ['join-with down', 'mode main']
-cmd-alt-shift-k = ['join-with up', 'mode main']
-cmd-alt-shift-l = ['join-with right', 'mode main']
+ctrl-shift-h = ['join-with left', 'mode main']
+ctrl-shift-j = ['join-with down', 'mode main']
+ctrl-shift-k = ['join-with up', 'mode main']
+ctrl-shift-l = ['join-with right', 'mode main']
 esc = 'mode main'
 
 [mode.resize.binding]
@@ -236,7 +250,7 @@ enter = 'mode main'
 esc = 'mode main'
 
 [mode.ignoring.binding]
-cmd-alt-shift-esc = 'mode main'
+ctrl-shift-esc = 'mode main'
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.teams2'

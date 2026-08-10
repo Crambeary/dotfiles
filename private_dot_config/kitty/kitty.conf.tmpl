@@ -360,8 +360,39 @@ include $HOME/.config/kitty/custom.conf
 # kitty-scrollback.nvim Kitten alias
 action_alias kitty_scrollback_nvim kitten {{ .chezmoi.homeDir }}/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py
 
-# Browse scrollback buffer in nvim
-map kitty_mod+h kitty_scrollback_nvim
+#: AeroSpace compatibility {{"{{{"}}
+
+#: AeroSpace binds ctrl-<key> globally via a CGEvent tap, so kitty never
+#: receives those chords and the shell loses ^B ^E ^F ^H ^J ^K ^L ^R ^S ^V ^W
+#: (readline motion, kill-line, clear, history search; and in nvim page/scroll,
+#: redo, blockwise-visual, window prefix). Cmd is free on macOS, so cmd-<key>
+#: is remapped to emit the byte ctrl-<key> would have sent.
+#:
+#: Two keys keep their macOS meaning and use cmd-shift instead: cmd-v stays
+#: paste and cmd-w stays close-window. cmd-h, cmd-k and cmd-l lose their kitty
+#: defaults (hide app / clear terminal / no default) — clearing is still on
+#: kitty_mod+delete.
+map cmd+b send_text all \x02
+map cmd+e send_text all \x05
+map cmd+f send_text all \x06
+map cmd+h send_text all \x08
+map cmd+j send_text all \x0a
+map cmd+k send_text all \x0b
+map cmd+l send_text all \x0c
+map cmd+r send_text all \x12
+map cmd+s send_text all \x13
+map cmd+slash send_text all \x1f
+map cmd+shift+v send_text all \x16
+map cmd+shift+w send_text all \x17
+
+#: kitty_mod is ctrl+shift, which AeroSpace also claims for h/j/k/l, the
+#: digits, minus/equal and tab. The mac-native equivalents survive: cmd+plus /
+#: cmd+minus for font size, cmd+shift+[ / ] for tabs, cmd+1..9 for goto_tab.
+
+#: {{"}}}"}}
+
+# Browse scrollback buffer in nvim (kitty_mod+h is taken by AeroSpace's focus left)
+map cmd+shift+h kitty_scrollback_nvim
 # Browse output of the last shell command in nvim
 map kitty_mod+g kitty_scrollback_nvim --config ksb_builtin_last_cmd_output
 # Show clicked command output in nvim
