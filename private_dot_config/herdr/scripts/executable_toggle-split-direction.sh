@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "${BASH_SOURCE[0]%/*}/lib-herdr.sh"
 pane_id="$HERDR_ACTIVE_PANE_ID"
 tab_id="$HERDR_ACTIVE_TAB_ID"
 
-layout=$(herdr pane layout --pane "$pane_id" | jq -c '.result.layout')
+layout=$(herdr_json pane layout --pane "$pane_id" | jq -c '.result.layout')
 
 pane_count=$(echo "$layout" | jq '.panes | length')
 split_count=$(echo "$layout" | jq '.splits | length')
@@ -20,5 +21,5 @@ if [[ "$direction" == "down" ]]; then
   new_direction="right"
 fi
 
-herdr pane move "$pane_id" --new-tab >/dev/null
-herdr pane move "$pane_id" --tab "$tab_id" --split "$new_direction" --target-pane "$other_pane" --focus
+herdr_json pane move "$pane_id" --new-tab >/dev/null
+herdr_json pane move "$pane_id" --tab "$tab_id" --split "$new_direction" --target-pane "$other_pane" --focus

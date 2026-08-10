@@ -26,11 +26,40 @@ EXPIRE="${HERDR_NOTIFY_EXPIRE:-8000}"
 log() { echo "[$(date +%T)] $*" >&2; }
 
 # One snapshot per tick, formatted as pane_id / status / focused / title.
+#
+# Failures are logged and skipped rather than fatal (so no lib-herdr.sh here):
+# this loop is expected to outlive server restarts and binary upgrades, and
+# should resume on its own once the server is healthy. The logging matters
+# because the old `2>/dev/null` swallowed the reason: a protocol_mismatch after
+# a herdr upgrade left the watcher polling nothing indefinitely, which looked
+# exactly like "no agent ever changed state".
+#
+# The "last error" marker is a file, not a variable: poll runs inside a process
+# substitution (`done < <(poll)`), so it is a subshell and any assignment it
+# makes is discarded before the next tick.
+poll_error_file="${TMPDIR:-/tmp}/herdr-notify-watch-$$.err"
+trap 'rm -f "$poll_error_file"' EXIT
 poll() {
-  herdr api snapshot 2>/dev/null | jq -r '
-    .result.snapshot.agents[]
-    | "\(.pane_id)\t\(.agent_status)\t\(.focused)\t\(.terminal_title_stripped // .agent)"
-  '
+  local snapshot problem
+  snapshot=$(herdr api snapshot 2>&1)
+
+  if jq -e 'has("result")' >/dev/null 2>&1 <<<"$snapshot"; then
+    rm -f "$poll_error_file"
+    jq -r '
+      .result.snapshot.agents[]
+      | "\(.pane_id)\t\(.agent_status)\t\(.focused)\t\(.terminal_title_stripped // .agent)"
+    ' <<<"$snapshot"
+    return 0
+  fi
+
+  problem=$(jq -r '.error.message // empty' <<<"$snapshot" 2>/dev/null | head -1)
+  problem="${problem:-${snapshot:-no output}}"
+  # Deduplicated: a broken server fails every tick, and at the 2s interval an
+  # unguarded log line would bury everything else in the journal.
+  if [[ "$problem" != "$(cat "$poll_error_file" 2>/dev/null)" ]]; then
+    log "poll failed, retrying every ${INTERVAL}s: ${problem:0:200}"
+    printf '%s' "$problem" >"$poll_error_file"
+  fi
 }
 
 herdr_wid() {

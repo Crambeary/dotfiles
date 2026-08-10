@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "${BASH_SOURCE[0]%/*}/lib-herdr.sh"
 
 # Bound to alt+h / alt+l / alt+j / alt+k. Focuses the neighboring pane in
 # the given direction; if there's no pane there (tab edge), wraps to the
@@ -8,11 +9,11 @@ set -euo pipefail
 # wrap to the next tab.
 direction="$1" # left, right, up, or down
 
-result=$(herdr pane focus --direction "$direction")
+result=$(herdr_json pane focus --direction "$direction")
 changed=$(jq -r '.result.focus.changed' <<<"$result")
 [[ "$changed" == "true" ]] && exit 0
 
-tabs_json=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -c '.result.tabs')
+tabs_json=$(herdr_json tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -c '.result.tabs')
 count=$(jq 'length' <<<"$tabs_json")
 (( count <= 1 )) && exit 0
 
@@ -26,7 +27,7 @@ else
 fi
 
 target_tab=$(jq -r ".[$next_index].tab_id" <<<"$tabs_json")
-herdr tab focus "$target_tab" >/dev/null
+herdr_json tab focus "$target_tab" >/dev/null
 
 # Land on the entry-side edge pane of the target tab, not whatever pane it
 # last had focused: push focus in the opposite direction until it stops
@@ -41,7 +42,7 @@ case "$direction" in
 esac
 
 for _ in $(seq 1 32); do
-  push_result=$(herdr pane focus --direction "$opposite")
+  push_result=$(herdr_json pane focus --direction "$opposite")
   push_changed=$(jq -r '.result.focus.changed' <<<"$push_result")
   [[ "$push_changed" == "true" ]] || break
 done

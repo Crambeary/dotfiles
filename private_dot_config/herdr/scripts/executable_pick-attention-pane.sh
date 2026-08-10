@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "${BASH_SOURCE[0]%/*}/lib-herdr.sh"
 
 # Linux stand-in for "jump to the pane that just notified me".
 #
@@ -13,7 +14,7 @@ set -euo pipefail
 # pane is skipped, so pressing the key repeatedly walks back through the
 # attention queue newest-first instead of sticking on one pane.
 
-target=$(herdr api snapshot \
+target=$(herdr_json api snapshot \
   | jq -r '
       [.result.snapshot.agents[]
        | select(.agent_status == "blocked" or .agent_status == "done")
@@ -27,4 +28,4 @@ if [[ -z "${target:-}" ]]; then
   exit 0
 fi
 
-herdr agent focus "$target" >/dev/null
+herdr_json agent focus "$target" >/dev/null
