@@ -43,3 +43,22 @@
   --network: var(--rp-text);
   --weather: var(--rp-text);
 }
+
+/* The widget uses zero-based workspace classes; show the configured workspace
+   number beside each indicator so every monitor presents the same ordered list. */
+button[class*="text-zb-ws-"] {
+  padding-inline: 0.375rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.text-zb-ws-0::after { content: "1"; }
+.text-zb-ws-1::after { content: "2"; }
+.text-zb-ws-2::after { content: "3"; }
+.text-zb-ws-3::after { content: "4"; }
+.text-zb-ws-4::after { content: "5"; }
+.text-zb-ws-5::after { content: "6"; }
+.text-zb-ws-6::after { content: "7"; }
+.text-zb-ws-7::after { content: "8"; }
+.text-zb-ws-8::after { content: "9"; }
+.text-zb-ws-9::after { content: "10"; }
