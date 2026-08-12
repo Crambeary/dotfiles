@@ -1,0 +1,25 @@
+{
+    (
+        modifiers: [
+            Ctrl,
+        ],
+        key: "space",
+        description: Some("Vicinae"),
+    ): Spawn("vicinae toggle"),
+    (
+        modifiers: [
+            Alt,
+            Shift,
+        ],
+        key: "d",
+        description: Some("OpenWhispr dictation toggle"),
+    ): Spawn("/home/marc/.local/bin/whispr-toggle"),
+    (
+        modifiers: [
+            Alt,
+            Shift,
+        ],
+        key: "c",
+        description: Some("OpenWhispr dictation cancel"),
+    ): Spawn("/home/marc/.local/bin/whispr-cancel"),
+}

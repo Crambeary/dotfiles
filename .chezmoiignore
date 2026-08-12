@@ -105,6 +105,19 @@ install-powershell7.cmd
 .config/kwinrc
 .config/plasma-org.kde.plasma.desktop-appletsrc
 
+# COSMIC-only: OpenWhispr's global dictation hotkey doesn't work on COSMIC
+# (no XDG GlobalShortcuts portal there yet), so these replace it with a
+# COSMIC custom-shortcut -> script workaround. Gated on whether this machine
+# actually has a COSMIC config dir, not $XDG_CURRENT_DESKTOP -- that env var
+# goes stale in long-lived shells/terminals opened before a desktop-switch,
+# so a live env check from within a chezmoi-apply shell can't be trusted.
+{{ if not (stat (joinPath .chezmoi.homeDir ".config/cosmic")) }}
+.config/cosmic/**
+.config/open-whispr-flags.conf
+.local/bin/whispr-toggle
+.local/bin/whispr-cancel
+{{ end }}
+
 # Flow Launcher: search history and per-plugin usage state, not config -
 # churns every time it's used, so don't track it at all.
 scoop/persist/flow-launcher/**

@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+// Toggles OpenWhispr dictation on COSMIC, where Electron's globalShortcut
+// (and the XDG GlobalShortcuts portal it depends on) isn't available.
+//
+// OpenWhispr must be launched with --inspect=19223 (see ~/.config/open-whispr-flags.conf).
+// This connects to that V8 inspector port, which gives us a Node REPL inside
+// the app's Electron *main* process, and from there calls
+// mainWindow.webContents.send('toggle-dictation') directly -- the exact same
+// IPC message OpenWhispr's own KDE/GNOME native-hotkey paths send. The
+// renderer's own toggle handler does the recording, transcription, and
+// (if enabled) auto-paste, so no external clipboard/paste simulation is needed.
+
+const http = require("http");
+
+const INSPECTOR_PORT = 19223;
+const MAIN_WINDOW_TITLE = "Voice Recorder"; // set via i18n key window.voiceRecorderTitle
+
+function sendToggle() {
+  return new Promise((resolve, reject) => {
+    http
+      .get(`http://localhost:${INSPECTOR_PORT}/json`, (res) => {
+        let data = "";
+        res.on("data", (c) => (data += c));
+        res.on("end", () => {
+          let targets;
+          try {
+            targets = JSON.parse(data);
+          } catch (e) {
+            reject(new Error(`bad inspector response: ${e.message}`));
+            return;
+          }
+          if (!targets.length) {
+            reject(new Error("no inspector targets -- is OpenWhispr running with --inspect?"));
+            return;
+          }
+          const ws = new WebSocket(targets[0].webSocketDebuggerUrl);
+          ws.onopen = () => {
+            ws.send(
+              JSON.stringify({
+                id: 1,
+                method: "Runtime.evaluate",
+                params: {
+                  awaitPromise: true,
+                  expression: `
+                    (async () => {
+                      try {
+                        const req = process.mainModule.require.bind(process.mainModule);
+                        const { BrowserWindow } = req('electron');
+                        const w = BrowserWindow.getAllWindows().find(
+                          w => w.getTitle() === ${JSON.stringify(MAIN_WINDOW_TITLE)}
+                        );
+                        if (!w) return 'no-main-window';
+                        if (w.isMinimized()) w.restore();
+                        // Call the app's own show-panel path (not a raw BrowserWindow.show())
+                        // so the click-through/hover-interactivity handling it sets up actually
+                        // runs -- a bare show() leaves the panel permanently click-through.
+                        await w.webContents
+                          .executeJavaScript(
+                            "window.electronAPI && window.electronAPI.showDictationPanel && window.electronAPI.showDictationPanel()"
+                          )
+                          .catch(() => {});
+                        w.webContents.send('toggle-dictation');
+                        return 'ok';
+                      } catch (e) {
+                        return 'error: ' + e.message;
+                      }
+                    })()
+                  `,
+                },
+              })
+            );
+          };
+          ws.onmessage = (ev) => {
+            ws.close();
+            resolve(ev.data);
+          };
+          ws.onerror = (err) => reject(err);
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+sendToggle()
+  .then((result) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(result);
+    } catch {
+      parsed = result;
+    }
+    const value = parsed && parsed.result && parsed.result.result && parsed.result.result.value;
+    if (value && value !== "ok") {
+      process.stderr.write(`whispr-toggle: ${value}\n`);
+      process.exit(1);
+    }
+  })
+  .catch((err) => {
+    process.stderr.write(`whispr-toggle: ${err.message || err}\n`);
+    process.exit(1);
+  });
