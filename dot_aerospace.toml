@@ -74,6 +74,9 @@ run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.pilotmoon.popclip-setapp'
 run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'org.deskflow.deskflow'
+run = 'layout floating'
 
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
