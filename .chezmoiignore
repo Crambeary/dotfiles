@@ -112,6 +112,24 @@ scoop/persist/flow-launcher/**
 # GlazeWM error log: just grows forever, not real config.
 .glzr/glazewm/errors.log
 
+# Deskflow client unit: only marc-Ubuntu-TPL071 is a client of the mac's
+# deskflow server. Tracked because the snap ships no service of its own (the
+# old Synergy .deb did), so this file is the whole autostart mechanism -- and
+# because -s encodes a non-obvious fix: the snap remaps HOME to
+# ~/snap/deskflow/<rev>, so the default config path is revision-numbered and
+# orphans itself (along with tls/, which Settings::tlsDir derives from it) on
+# every snap refresh. Left `systemctl --user disable`d: started on demand.
+{{ if ne .chezmoi.hostname "marc-Ubuntu-TPL071" }}
+.config/systemd/user/deskflow-client.service
+{{ end }}
+
+# Deskflow's own config is not tracked anywhere. Of what it needs, remoteHost
+# and computerName are facts about one machine pair (an IP on the USB-eth
+# subnet and the screen name the mac's server config already lists), and
+# everything else I'd have written matches the built-in defaults. tls/ holds
+# the client private key plus per-peer trust state re-derived on pairing.
+.config/Deskflow/**
+
 # Same class: LastSeenVersion bumps on every Plasma upgrade, and
 # plasmanotifyrc only records Seen=true per app that has ever notified.
 # Both blocked `chezmoi apply` with a TTY prompt on every run.
