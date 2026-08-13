@@ -1,0 +1,24 @@
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
+
+# Repair a stale SSH_AUTH_SOCK.
+#
+# A process's environment is fixed at exec. Long-lived parents (herdr, tmux, a
+# Claude Code session) therefore keep whatever agent socket was current when
+# they started. When the desktop session restarts, gnome-keyring publishes a
+# NEW socket to the systemd user manager and deletes the old one — but those
+# already-running processes never see the update, so every shell beneath them
+# inherits a path that no longer exists. The visible symptom is `sudo -A`
+# failing with the thoroughly misleading "no password found in secure storage".
+#
+# This lives in .zshenv rather than .zshrc because agent tool calls and scripts
+# are non-interactive, and non-interactive zsh sources only .zshenv.
+#
+# Costs nothing in the normal case: the systemctl lookup runs only when the
+# inherited socket is already broken, so healthy shells pay two builtin tests
+# and no forks. Portable by runtime check rather than template gating — macOS
+# has no systemctl and simply skips the block.
+if [[ -n $SSH_AUTH_SOCK && ! -S $SSH_AUTH_SOCK ]] && (( $+commands[systemctl] )); then
+	_live_sock=$(systemctl --user show-environment 2>/dev/null | sed -n 's/^SSH_AUTH_SOCK=//p')
+	[[ -S $_live_sock ]] && export SSH_AUTH_SOCK=$_live_sock
+	unset _live_sock
+fi
