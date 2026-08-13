@@ -1,0 +1,40 @@
+/* Catppuccin Mocha, matching the previous dunst theme, border color
+   pinned to COSMIC's current accent (mauve, #CBA6F7) instead of dunst's blue */
+:root {
+  --cc-bg: rgba(30, 30, 46, 0.88);
+  --noti-border-color: #cba6f7;
+  --noti-bg: 30, 30, 46;
+  --noti-bg-alpha: 0.88;
+  --noti-bg-darker: #181825;
+  --noti-bg-hover: #313244;
+  --noti-bg-focus: rgba(49, 50, 68, 0.6);
+  --noti-close-bg: #45475a;
+  --noti-close-bg-hover: #585b70;
+  --text-color: #cdd6f4;
+  --text-color-disabled: #6c7086;
+  --bg-selected: #cba6f7;
+  --border: 2px solid var(--noti-border-color);
+  --border-radius: 8px;
+  --font-size-body: 13px;
+  --font-size-summary: 14px;
+}
+
+* {
+  font-family: "Rubik";
+}
+
+.notification-row .notification-background .notification .notification-default-action {
+  padding: 12px 14px;
+}
+
+.notification-row .notification-background .notification.critical {
+  border: 2px solid #fab387;
+}
+
+.control-center .control-center-list .notification.critical {
+  border: 2px solid #fab387;
+}
+
+.widget-title > label {
+  color: var(--text-color);
+}
