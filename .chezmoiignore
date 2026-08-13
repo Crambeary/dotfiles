@@ -131,7 +131,7 @@ scoop/persist/flow-launcher/**
 # because -s encodes a non-obvious fix: the snap remaps HOME to
 # ~/snap/deskflow/<rev>, so the default config path is revision-numbered and
 # orphans itself (along with tls/, which Settings::tlsDir derives from it) on
-# every snap refresh. Left `systemctl --user disable`d: started on demand.
+# every snap refresh. `systemctl --user enable`d: starts at login.
 {{ if ne .chezmoi.hostname "marc-Ubuntu-TPL071" }}
 .config/systemd/user/deskflow-client.service
 {{ end }}
