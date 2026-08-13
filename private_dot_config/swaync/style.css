@@ -38,3 +38,7 @@
 .widget-title > label {
   color: var(--text-color);
 }
+
+.floating-notifications {
+  margin-top: 5px;
+}
