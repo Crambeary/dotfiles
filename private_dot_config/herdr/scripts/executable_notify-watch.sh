@@ -64,12 +64,30 @@ poll() {
 
 herdr_wid() {
   # Herdr sets the outer terminal title to "herdr"; that title is how we find
-  # the Ghostty window hosting it. X11 only — a Wayland session would need
-  # the compositor's own activation path instead.
+  # the Ghostty window hosting it. X11 only (xdotool can't see Wayland-native
+  # surfaces) — this is the KDE/X11 path.
   xdotool search --name '^herdr$' 2>/dev/null | head -1
 }
 
+# COSMIC (Wayland-native, no XWayland fallback for xdotool) needs the
+# compositor's own toplevel-activate protocol instead. cos-cli wraps
+# zcosmic_toplevel_manager_v1, which — unlike xdg_activation — has no
+# input-serial/token gating, so a background script can call it directly.
+# https://github.com/estin/cos-cli
+raise_herdr_cosmic() {
+  local idx
+  idx=$(cos-cli info --json 2>/dev/null | jq -r '.apps[] | select(.title=="herdr") | .index' | head -1)
+  [[ -z "$idx" ]] && return 1
+  cos-cli activate -i "$idx" >/dev/null 2>&1
+}
+
 raise_herdr() {
+  # cos-cli only exists/succeeds under COSMIC; KDE (and anything else) falls
+  # straight through to the xdotool/X11 path below, unchanged.
+  if [[ "${XDG_CURRENT_DESKTOP:-}" == "COSMIC" ]] && command -v cos-cli >/dev/null 2>&1 \
+      && raise_herdr_cosmic; then
+    return 0
+  fi
   local wid
   wid=$(herdr_wid)
   [[ -n "$wid" ]] && xdotool windowactivate "$wid" 2>/dev/null
