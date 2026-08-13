@@ -1,0 +1,40 @@
+#!/bin/sh
+# Wrapper around sudoplz's askpass entrypoint: plays an attention sound just
+# before the zenity approval dialog appears, so a sudo request is noticeable
+# even when the dialog opens behind other windows.
+#
+# This deliberately SHADOWS the symlink `uv tool install sudoplz` puts at
+# ~/.local/bin/askpass. Patching sudoplz's Python directly is pointless — it
+# lives in uv-managed site-packages and is wiped on every upgrade. Wrapping at
+# the ~/.local/bin seam instead catches every caller, including the inline
+# `SUDO_ASKPASS="$(command -v askpass)"` convention the agents use.
+#
+# Because chezmoi owns this file, `chezmoi apply` restores it after a
+# `uv tool upgrade sudoplz` reinstates the plain symlink — which is the whole
+# reason it is tracked rather than left as a local edit.
+#
+# IMPORTANT: sudo treats ANY stdout from an askpass helper as the password.
+# Nothing here may write to stdout — hence the redirects on the player.
+#
+# Sound override:  SUDOPLZ_PING_SOUND=/path/to/file.oga
+# Disable:         SUDOPLZ_PING_SOUND=none
+#
+# Gated in .chezmoiignore to machines that actually have sudoplz installed;
+# without the real entrypoint below, this would shadow the symlink with a
+# broken exec and take `sudo -A` down with it.
+
+REAL_ASKPASS={{ .chezmoi.homeDir }}/.local/share/uv/tools/sudoplz/bin/askpass
+PING="${SUDOPLZ_PING_SOUND:-/usr/share/sounds/freedesktop/stereo/dialog-warning.oga}"
+
+# Only ping on the GUI path. No DISPLAY means the headless TOTP prompt, where
+# Marc is away from the machine and would never hear it.
+if [ -n "$DISPLAY" ] && [ "$PING" != "none" ] && [ -r "$PING" ]; then
+	# sudo strips most of the environment, so point paplay at the PipeWire
+	# socket explicitly rather than trusting XDG_RUNTIME_DIR to survive.
+	XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
+		setsid paplay "$PING" >/dev/null 2>&1 &
+fi
+
+# exec is load-bearing: it keeps the ppid as `sudo`, which sudoplz's
+# allowed_processes check requires. A non-exec wrapper breaks authentication.
+exec "$REAL_ASKPASS" "$@"

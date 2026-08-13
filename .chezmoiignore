@@ -118,6 +118,17 @@ install-powershell7.cmd
 .local/bin/whispr-cancel
 {{ end }}
 
+# sudoplz askpass wrapper: plays a sound before the zenity sudo dialog, then
+# execs the real entrypoint. Gated on the sudoplz install actually being
+# present rather than on the OS, because the wrapper shadows uv's
+# ~/.local/bin/askpass symlink -- deploying it to a machine without sudoplz
+# would leave a wrapper exec'ing a path that does not exist and break
+# `sudo -A` outright. macOS is excluded by the same check (no uv tool there,
+# and paplay is Linux-only anyway).
+{{ if not (stat (joinPath .chezmoi.homeDir ".local/share/uv/tools/sudoplz/bin/askpass")) }}
+.local/bin/askpass
+{{ end }}
+
 # Flow Launcher: search history and per-plugin usage state, not config -
 # churns every time it's used, so don't track it at all.
 scoop/persist/flow-launcher/**
