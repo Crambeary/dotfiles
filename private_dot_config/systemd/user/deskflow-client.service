@@ -4,6 +4,11 @@ After=graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
+# The snap's mount namespace has no /usr/share/X11/xkb (that's host-only), but on
+# a Wayland session deskflow-core picks its ei/libei input backend, which needs
+# xkbcommon to resolve keymap rules there and SEGVs when the lookup comes up
+# empty. Point it at the copy the snap ships under $SNAP instead.
+Environment=XKB_CONFIG_ROOT=/snap/deskflow/current/usr/share/X11/xkb
 # The snap remaps HOME to ~/snap/deskflow/<rev>, so its default settings path is
 # revision-numbered and gets orphaned on every refresh. -s pins the config (and
 # with it Settings::tlsDir, i.e. tls/deskflow.pem + tls/trusted-servers) to the
