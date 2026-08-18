@@ -61,14 +61,6 @@ export VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d"
 export PKG_CONFIG_PATH="$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH"
 {{ end -}}
 {{ end }}
-# Targetprocess MCP auth via macOS Keychain
-export TP_BASE_URL=https://REDACTED.invalid
-if command -v security >/dev/null 2>&1; then
-  __tp_token=$(security find-generic-password -a "$USER" -s targetprocess_api_token -w 2>/dev/null)
-  [[ -n "$__tp_token" ]] && export TP_ACCESS_TOKEN="$__tp_token"
-  unset __tp_token
-fi
-
 # Antidote — static bundle pattern.
 # Regenerate the flat bundle only when the plugin list changes, then source it
 # directly. Faster than `antidote load` (no subprocess on normal startup) and
