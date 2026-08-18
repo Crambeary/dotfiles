@@ -155,3 +155,11 @@ if [[ "$XDG_CURRENT_DESKTOP" == "Hyprland" || -n "$HYPRLAND_INSTANCE_SIGNATURE" 
   [[ -f ~/.config/zshrc/30-autostart ]] && source ~/.config/zshrc/30-autostart
 fi
 {{- end }}
+
+# atuin shell history — the installer appends these unguarded to ~/.zshrc;
+# adopted here (guarded) so `chezmoi apply` stops reverting it. Sourced after
+# the fzf bindings above so atuin's Ctrl+R wins, which is the point of it.
+if [[ -r "$HOME/.atuin/bin/env" ]]; then
+  . "$HOME/.atuin/bin/env"
+fi
+if command -v atuin >/dev/null 2>&1; then eval "$(atuin init zsh)"; fi

@@ -129,3 +129,11 @@ set -x PATH $PATH $GOPATH/bin $GOROOT/bin
 
 # Added by Antigravity CLI installer
 set -gx PATH "$HOME/.local/bin" $PATH
+
+# atuin shell history — adopted from the installer's unguarded append so
+# `chezmoi apply` stops reverting it.
+if status is-interactive
+    if type -q atuin
+        atuin init fish | source
+    end
+end
