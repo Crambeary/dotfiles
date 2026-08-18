@@ -230,6 +230,33 @@ command = "tuicr -w"
 description = "review working tree with tuicr"
 width = "90%"
 height = "90%"
+
+# alt+shift+h/l/j/k: swap the focused pane with its left/right/down/up
+# neighbor, without moving focus — complements the alt+hjkl focus-move
+# bindings above. Plain herdr CLI call, so no OS branching needed.
+[[keys.command]]
+key = "alt+shift+h"
+type = "shell"
+command = "herdr pane swap --current --direction left"
+description = "swap pane left"
+
+[[keys.command]]
+key = "alt+shift+l"
+type = "shell"
+command = "herdr pane swap --current --direction right"
+description = "swap pane right"
+
+[[keys.command]]
+key = "alt+shift+j"
+type = "shell"
+command = "herdr pane swap --current --direction down"
+description = "swap pane down"
+
+[[keys.command]]
+key = "alt+shift+k"
+type = "shell"
+command = "herdr pane swap --current --direction up"
+description = "swap pane up"
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
 # [keys.indexed]
