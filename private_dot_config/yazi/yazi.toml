@@ -3,4 +3,6 @@ max_width=10000
 max_height=10000
 image_filter="lanczos3"
 
-
+[[plugin.prepend_previewers]]
+url = "*.md"
+run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s="$HOME/.config/glow/catppuccin-mocha.json" "$1"'

@@ -1,3 +1,8 @@
 [[mgr.prepend_keymap]]
 on  = "p"
 run = "shell '~/.config/yazi/scripts/play-video.sh %h'"
+
+[[mgr.prepend_keymap]]
+on = "M"
+run = 'shell --block -- glow --pager -s "$HOME/.config/glow/catppuccin-mocha.json" %h'
+desc = "Render hovered file with Glow"
