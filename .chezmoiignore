@@ -19,6 +19,11 @@ README.md
 # Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
 .config/secrets/**
 
+# CLAUDE.md is now managed by rulesync out of Crambeary/skills, not chezmoi.
+# The only CLAUDE.md/AGENTS.md left in this repo should be this repo's own
+# project-level file for working on the dotfiles themselves.
+.claude/CLAUDE.md
+
 # Mac and Linux only
 {{ if eq .chezmoi.os "windows" }}
 .config/herdr/**
