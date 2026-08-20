@@ -1,5 +1,6 @@
 
 [[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
+[[ -x /home/linuxbrew/.linuxbrew/bin/brew ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 
 # PATH setup moved to the top so it's fully in place even if a later
 # block (antidote/compinit/fzf init) stalls and gets Ctrl+C'd.
@@ -161,3 +162,7 @@ fi
 # zsh-vi-mode must init first or it clobbers atuin's keybindings.
 [[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
 [[ -r "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
+
+# atuin's pty-proxy wraps subshells so it can record scrollback from
+# non-atuin-aware TUIs. Another installer-appended line, adopted guarded.
+command -v atuin >/dev/null 2>&1 && eval "$(atuin pty-proxy init zsh)"
