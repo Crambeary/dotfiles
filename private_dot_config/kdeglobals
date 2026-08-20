@@ -1,166 +1,183 @@
-[ColorEffects:Disabled]
-ChangeSelectionColor=
-Color=30, 30, 46
-ColorAmount=0.30000000000000004
-ColorEffect=2
-ContrastAmount=0.1
-ContrastEffect=0
-Enable=
-IntensityAmount=-1
-IntensityEffect=0
-
-[ColorEffects:Inactive]
-ChangeSelectionColor=false
-Color=30, 30, 46
-ColorAmount=0.5
-ColorEffect=3
-ContrastAmount=0
-ContrastEffect=0
-Enable=true
-IntensityAmount=0
-IntensityEffect=0
-
-[Colors:Button]
-BackgroundAlternate=203, 166, 247
-BackgroundNormal=49, 50, 68
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
-
-[Colors:Complementary]
-BackgroundAlternate=17, 17, 27
-BackgroundNormal=24, 24, 37
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
-
 [Colors:Header]
-BackgroundAlternate=17, 17, 27
-BackgroundNormal=24, 24, 37
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
+ForegroundNeutral=249,226,175
+DecorationHover=203,166,247
+DecorationFocus=203,166,247
+ForegroundLink=203,166,247
+BackgroundNormal=30,30,46
+ForegroundPositive=166,227,161
+ForegroundNormal=255,255,255
+ForegroundInactive=232,232,234
+ForegroundNegative=243,139,168
+ForegroundVisited=203,166,247
+BackgroundAlternate=39,37,56
+ForegroundActive=203,166,247
 
-[Colors:Selection]
-BackgroundAlternate=203, 166, 247
-BackgroundNormal=203, 166, 247
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=17, 17, 27
-ForegroundInactive=17, 17, 27
-ForegroundLink=17, 17, 27
-ForegroundNegative=17, 17, 27
-ForegroundNeutral=17, 17, 27
-ForegroundNormal=17, 17, 27
-ForegroundPositive=17, 17, 27
-ForegroundVisited=17, 17, 27
-
-[Colors:Tooltip]
-BackgroundAlternate=17, 17, 27
-BackgroundNormal=30, 30, 46
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
-
-[Colors:View]
-BackgroundAlternate=24, 24, 37
-BackgroundNormal=30, 30, 46
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
+[ColorEffects:Disabled]
+ColorAmount=0
+Color=45,46,63
+IntensityEffect=2
+ContrastEffect=1
+ContrastAmount=0.65
+Enable=
+ColorEffect=0
+ChangeSelectionColor=
+IntensityAmount=0.1
 
 [Colors:Window]
-BackgroundAlternate=17, 17, 27
-BackgroundNormal=24, 24, 37
-DecorationFocus=203, 166, 247
-DecorationHover=69, 71, 90
-ForegroundActive=250, 179, 135
-ForegroundInactive=166, 173, 200
-ForegroundLink=203, 166, 247
-ForegroundNegative=243, 139, 168
-ForegroundNeutral=249, 226, 175
-ForegroundNormal=205, 214, 244
-ForegroundPositive=166, 227, 161
-ForegroundVisited=203, 166, 247
-
-[General]
-ColorSchemeHash=5189d572ac818e13a7bb240c2f307730f01ff45b
-TerminalApplication=kitty
-TerminalService=kitty.desktop
-font=Rubik,10,-1,5,50,0,0,0,0,0
-menuFont=Rubik,10,-1,5,50,0,0,0,0,0
-toolBarFont=Rubik,10,-1,5,50,0,0,0,0,0
-
-[Icons]
-Theme=Papirus-Dark
-
-[KDE]
-AnimationDurationFactor=0.17677669529663687
-LookAndFeelPackage=Catppuccin-Mocha-Mauve
-contrast=4
-frameContrast=0.2
-widgetStyle=kvantum
-
-[KFileDialog Settings]
-Allow Expansion=false
-Automatically select filename extension=true
-Breadcrumb Navigation=true
-Decoration position=2
-Show Full Path=false
-Show Inline Previews=true
-Show Preview=false
-Show Speedbar=true
-Show hidden files=false
-Sort by=Name
-Sort directories first=true
-Sort hidden files last=false
-Sort reversed=true
-Speedbar Width=140
-View Style=DetailTree
-
-[KScreen]
-ScreenScaleFactors=DP-0=1;DP-1=1;DP-2=1;DP-3=1;HDMI-0=1;DP-4=1;
+ForegroundLink=203,166,247
+ForegroundPositive=166,227,161
+BackgroundNormal=30,30,46
+DecorationHover=203,166,247
+DecorationFocus=203,166,247
+ForegroundVisited=203,166,247
+ForegroundNegative=243,139,168
+ForegroundNormal=255,255,255
+BackgroundAlternate=39,37,56
+ForegroundNeutral=249,226,175
+ForegroundInactive=232,232,234
+ForegroundActive=203,166,247
 
 [WM]
+inactiveBlend=203,166,247
 activeBackground=30,30,46
-activeBlend=205,214,244
+inactiveForeground=203,166,247
+inactiveBackground=30,30,46
 activeFont=Rubik,10,-1,5,50,0,0,0,0,0
-activeForeground=205,214,244
-inactiveBackground=17,17,27
-inactiveBlend=166,173,200
-inactiveForeground=166,173,200
+activeBlend=203,166,247
+activeForeground=203,166,247
+
+[KDE]
+contrast=4
+AnimationDurationFactor=0.17677669529663687
+LookAndFeelPackage=Catppuccin-Mocha-Mauve
+frameContrast=0.2
+widgetStyle=qt6ct-style
+
+[Colors:Selection]
+BackgroundNormal=203,166,247
+BackgroundAlternate=117,98,147
+ForegroundInactive=137,118,167
+ForegroundNormal=70,70,86
+ForegroundPositive=166,227,161
+ForegroundNegative=243,139,168
+ForegroundNeutral=249,226,175
+DecorationHover=203,166,247
+DecorationFocus=203,166,247
+ForegroundLink=30,30,46
+ForegroundActive=70,70,86
+ForegroundVisited=203,166,247
+
+[ColorEffects:Inactive]
+Color=24,24,37
+ColorEffect=2
+IntensityEffect=0
+ColorAmount=0.025
+ContrastEffect=2
+IntensityAmount=0
+Enable=false
+ContrastAmount=0.1
+ChangeSelectionColor=false
+
+[KFileDialog Settings]
+Sort hidden files last=false
+Show Full Path=false
+Automatically select filename extension=true
+View Style=DetailTree
+Breadcrumb Navigation=true
+Allow Expansion=false
+Show Speedbar=true
+Show hidden files=true
+Show Inline Previews=true
+Speedbar Width=140
+Show Preview=false
+Sort by=Name
+Sort reversed=true
+Sort directories first=true
+Decoration position=2
+
+[Colors:Button]
+BackgroundAlternate=203,166,247
+ForegroundNegative=243,139,168
+DecorationFocus=203,166,247
+ForegroundLink=203,166,247
+BackgroundNormal=61,62,80
+ForegroundInactive=232,232,234
+ForegroundNeutral=249,226,175
+DecorationHover=203,166,247
+ForegroundVisited=203,166,247
+ForegroundActive=203,166,247
+ForegroundNormal=255,255,255
+ForegroundPositive=166,227,161
+
+[KScreen]
+ScreenScaleFactors=DP-0=1
+
+[Colors:Tooltip]
+ForegroundNegative=243,139,168
+DecorationHover=203,166,247
+DecorationFocus=203,166,247
+ForegroundPositive=166,227,161
+ForegroundNormal=255,255,255
+ForegroundLink=203,166,247
+ForegroundInactive=232,232,234
+ForegroundActive=203,166,247
+BackgroundAlternate=57,56,76
+BackgroundNormal=49,50,67
+ForegroundNeutral=249,226,175
+ForegroundVisited=203,166,247
+
+[Colors:Header][Inactive]
+ForegroundVisited=203,166,247
+ForegroundNeutral=249,226,175
+ForegroundInactive=232,232,234
+BackgroundAlternate=39,37,56
+DecorationFocus=203,166,247
+BackgroundNormal=30,30,46
+ForegroundActive=203,166,247
+ForegroundLink=203,166,247
+DecorationHover=203,166,247
+ForegroundNegative=243,139,168
+ForegroundNormal=255,255,255
+ForegroundPositive=166,227,161
+
+[Colors:Complementary]
+BackgroundNormal=30,30,46
+ForegroundNormal=255,255,255
+ForegroundInactive=232,232,234
+ForegroundPositive=166,227,161
+ForegroundNegative=243,139,168
+ForegroundVisited=203,166,247
+BackgroundAlternate=203,166,247
+ForegroundLink=203,166,247
+DecorationFocus=203,166,247
+ForegroundNeutral=249,226,175
+DecorationHover=203,166,247
+ForegroundActive=203,166,247
+
+[Colors:View]
+ForegroundPositive=166,227,161
+ForegroundVisited=203,166,247
+ForegroundInactive=232,232,234
+ForegroundLink=203,166,247
+ForegroundNegative=243,139,168
+ForegroundNeutral=249,226,175
+ForegroundActive=203,166,247
+ForegroundNormal=255,255,255
+DecorationFocus=203,166,247
+BackgroundAlternate=57,56,76
+DecorationHover=203,166,247
+BackgroundNormal=49,50,67
+
+[General]
+toolBarFont=Rubik,10,-1,5,50,0,0,0,0,0
+ColorSchemeHash=5189d572ac818e13a7bb240c2f307730f01ff45b
+TerminalApplication=kitty
+ColorScheme=CosmicDark
+shadeSortColumn=true
+TerminalService=kitty.desktop
+Name=COSMIC Dark
+menuFont=Rubik,10,-1,5,50,0,0,0,0,0
+font=Rubik,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=breeze-dark
