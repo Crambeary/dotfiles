@@ -1,14 +1,27 @@
 # Shared PowerShell profile managed by chezmoi. PowerShell 7 loads this through
 # Documents\PowerShell\Microsoft.PowerShell_profile.ps1.
 $env:PROTO_HOME = Join-Path $HOME ".proto"
-$env:PATH = @(
+# Windows OpenSSH builds a session's environment from the machine PATH only, so
+# user-scoped tools (scoop, cargo, proto) are invisible over SSH. Re-merge the
+# user PATH, then dedupe case-insensitively with first-wins ordering.
+$candidates = @(
   (Join-Path $env:PROTO_HOME "shims"),
-  (Join-Path $env:PROTO_HOME "bin"),
-  $env:PATH
-) -join [IO.Path]::PathSeparator
+  (Join-Path $env:PROTO_HOME "bin")
+)
+$candidates += $env:PATH -split [IO.Path]::PathSeparator
+$candidates += [Environment]::GetEnvironmentVariable("Path", "User") -split [IO.Path]::PathSeparator
 
-Invoke-Expression (&starship init powershell)
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
+$seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$env:PATH = ($candidates | Where-Object { $_ -and $seen.Add($_.TrimEnd([char]0x5C)) }) -join [IO.Path]::PathSeparator
+
+# Prompt and shell integrations are optional. Initialise only what is actually
+# on PATH so a session without these tools still starts cleanly.
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&starship init powershell)
+}
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
 
 # Enable inline command predictions when the installed PSReadLine supports it.
 if (Get-Module -ListAvailable -Name PSReadLine) {
@@ -152,6 +165,12 @@ Set-Alias -Name zi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 function ezaGrid($a) { 
   eza --grid --icons --sort type $a
   }
-Set-Alias -Name ls -Value ezaGrid -Option AllScope -Scope Global -Force
-Set-Alias -Name cd -Value __zoxide_z -Option AllScope -Scope Global -Force
-Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
+# These alias over builtins (ls, cd), so only install them when the backing
+# tool exists -- otherwise a missing binary breaks basic navigation.
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+    Set-Alias -Name ls -Value ezaGrid -Option AllScope -Scope Global -Force
+}
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Set-Alias -Name cd -Value __zoxide_z -Option AllScope -Scope Global -Force
+    Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
+}
