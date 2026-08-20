@@ -29,13 +29,15 @@
   "image-visibility": "when-available",
   "transition-time": 200,
   "hide-on-clear": false,
-  "hide-on-action": true,
+  "hide-on-action": false,
   "text-empty": "No Notifications",
   "script-fail-notify": true,
   "widgets": [
+    "buttons-grid#close-row",
     "title",
     "dnd",
-    "notifications"
+    "notifications",
+    "buttons-grid#clear-row"
   ],
   "widget-config": {
     "notifications": {
@@ -43,11 +45,28 @@
     },
     "title": {
       "text": "Notifications",
-      "clear-all-button": true,
-      "button-text": "Clear All"
+      "clear-all-button": false
     },
     "dnd": {
       "text": "Do Not Disturb"
+    },
+    "buttons-grid#close-row": {
+      "actions": [
+        {
+          "label": "✕",
+          "command": "swaync-client -cp",
+          "type": "button"
+        }
+      ]
+    },
+    "buttons-grid#clear-row": {
+      "actions": [
+        {
+          "label": "Clear All",
+          "command": "swaync-client -C -sw",
+          "type": "button"
+        }
+      ]
     }
   }
 }

@@ -39,6 +39,70 @@
   color: var(--text-color);
 }
 
+/* Close (X): right-aligned, own thin row above the title.
+   NOTE: this used to overlap the title row via negative margin, but
+   GTK paints later siblings on top, so title's (invisible) hit-box
+   was swallowing clicks meant for this button. Keeping it as a
+   non-overlapping row instead so it's actually clickable. */
+.widget-buttons-grid.close-row {
+  margin: 4px 12px -6px 12px;
+  padding: 0;
+}
+
+.widget-buttons-grid.close-row flowbox {
+  min-height: 0;
+  /* GTK's FlowBox has no flex/justify-content, and GTK CSS doesn't
+     support "margin: auto" the way browser CSS does — so push the
+     single child to the right with a fixed offset instead.
+     control-center-width (380) - close-row's own l/r margin (12+12)
+     - button width (~26) ≈ 330 */
+  padding-left: 330px;
+}
+
+.widget-buttons-grid.close-row flowboxchild {
+  padding: 0;
+  margin: 0;
+}
+
+.widget-buttons-grid.close-row flowboxchild > button {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 15px;
+}
+
+.widget-buttons-grid.close-row flowboxchild > button:hover {
+  color: #fab387;
+  background: transparent;
+}
+
+/* Clear All: its own row at the bottom, left-aligned */
+.widget-buttons-grid.clear-row {
+  margin: 8px 12px;
+  padding: 0;
+}
+
+.widget-buttons-grid.clear-row flowboxchild {
+  padding: 0;
+  margin: 0;
+}
+
+.widget-buttons-grid.clear-row flowboxchild > button {
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  background: var(--noti-close-bg);
+  color: var(--text-color);
+  border: none;
+}
+
+.widget-buttons-grid.clear-row flowboxchild > button:hover {
+  background: var(--noti-close-bg-hover);
+}
+
 .floating-notifications {
   margin-top: 5px;
 }
