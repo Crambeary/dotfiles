@@ -75,6 +75,13 @@ if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
 fi
 source ${zsh_plugins}.zsh
 
+# zsh-vi-mode takes over zle on init and would clobber atuin's keybindings if
+# atuin were sourced normally, so its init is deferred via zvm's post-init
+# hook instead (see the plugin list for the load-order rationale).
+zvm_after_init_commands+=(
+  'eval "$(atuin init zsh)"'
+)
+
 # Our own completion overrides take precedence over site-functions (fpath
 # order determines which same-named function autoload finds first).
 fpath=(${ZDOTDIR:-$HOME}/.zsh/completions $fpath)
@@ -148,10 +155,9 @@ if [[ "$XDG_CURRENT_DESKTOP" == "Hyprland" || -n "$HYPRLAND_INSTANCE_SIGNATURE" 
 fi
 {{- end }}
 
-# atuin shell history — the installer appends these unguarded to ~/.zshrc;
-# adopted here (guarded) so `chezmoi apply` stops reverting it. Sourced after
-# the fzf bindings above so atuin's Ctrl+R wins, which is the point of it.
-if [[ -r "$HOME/.atuin/bin/env" ]]; then
-  . "$HOME/.atuin/bin/env"
-fi
-if command -v atuin >/dev/null 2>&1; then eval "$(atuin init zsh)"; fi
+# cargo/atuin installers append these unguarded to ~/.zshrc directly; adopted
+# here (guarded) so `chezmoi apply` stops reverting them. atuin's own init
+# happens above via zvm_after_init_commands instead of a raw eval here, since
+# zsh-vi-mode must init first or it clobbers atuin's keybindings.
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
+[[ -r "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"

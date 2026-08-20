@@ -1,7 +1,11 @@
 # add fish-like features
 # order matters: completions must load before compinit; syntax-highlighting
-# must load late; history-substring-search must load after syntax-highlighting.
+# must load late; history-substring-search must load after syntax-highlighting;
+# zsh-vi-mode must load last since it takes over zle/keybindings (its own docs
+# recommend this) — anything that needs to run after it inits (e.g. atuin)
+# goes in zvm_after_init_commands in dot_zshrc.tmpl instead of sourcing here.
 zsh-users/zsh-completions
 zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting
 zsh-users/zsh-history-substring-search
+jeffreytse/zsh-vi-mode
