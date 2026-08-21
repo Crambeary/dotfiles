@@ -37,6 +37,26 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
             }
         }
         Set-PSReadLineOption -HistorySaveStyle SaveIncrementally
+
+        # Vi editing mode -- PSReadLine's built-in equivalent of zsh's bindkey -v
+        # (what zsh-vi-mode wraps). Gives modes, hjkl/w/b/e, d/c/y operators,
+        # f/t motions and / history search. No surround or full text objects.
+        Set-PSReadLineOption -EditMode Vi
+
+        # Without a mode indicator there is no way to tell which mode you are in.
+        # Script mode lets us switch the cursor shape via DECSCUSR, which needs a
+        # real console -- reuse the prediction guard for that. Build the escape
+        # from [char]27 inline rather than `e, which Windows PowerShell cannot parse.
+        if ($canRenderPredictions -and
+            (Get-Command Set-PSReadLineOption).Parameters.ContainsKey('ViModeIndicator')) {
+            Set-PSReadLineOption -ViModeIndicator Script -ViModeChangeHandler {
+                if ($args[0] -eq 'Command') {
+                    [Console]::Write("$([char]27)[1 q")  # steady block: normal mode
+                } else {
+                    [Console]::Write("$([char]27)[5 q")  # blinking bar: insert mode
+                }
+            }
+        }
     }
 }
 
