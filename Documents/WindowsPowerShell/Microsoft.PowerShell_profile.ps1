@@ -197,3 +197,12 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     Set-Alias -Name cd -Value __zoxide_z -Option AllScope -Scope Global -Force
     Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 }
+
+# Atuin shell history. Must load after the PSReadLine EditMode call above, since
+# switching EditMode resets the keymap and would discard atuin's bindings. Atuin
+# binds Ctrl+r and UpArrow without -ViMode, so they apply to vi insert mode only.
+# For a multi-line prompt, set ATUIN_POWERSHELL_PROMPT_OFFSET (-1 for two lines);
+# left unset, atuin infers it from the prompt on first search.
+if (Get-Command atuin -ErrorAction SilentlyContinue) {
+    atuin init powershell | Out-String | Invoke-Expression
+}
