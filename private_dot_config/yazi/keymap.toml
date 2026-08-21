@@ -6,3 +6,14 @@ run = "shell '~/.config/yazi/scripts/play-video.sh %h'"
 on = "M"
 run = 'shell --block -- glow --pager -s "$HOME/.config/glow/catppuccin-mocha.json" %h'
 desc = "Render hovered file with Glow"
+for = "unix"
+
+# The unix binding above relies on $HOME, which only expands because the
+# "shell" action runs it through sh -c there. On Windows "shell" runs through
+# cmd.exe instead (see yazi-scheduler/src/process/shell.rs), which has no
+# concept of $HOME -- it needs cmd's own %USERPROFILE%.
+[[mgr.prepend_keymap]]
+on = "M"
+run = 'shell --block -- glow --pager -s "%USERPROFILE%\.config\glow\catppuccin-mocha.json" %h'
+desc = "Render hovered file with Glow"
+for = "windows"

@@ -7,6 +7,30 @@
 # the terminal.
 $env:EDITOR = "hx"
 
+# Yazi shells out to file(1) for mime-type detection, which Windows lacks.
+# Point it at Git for Windows' file.exe -- the Scoop/Chocolatey builds mangle
+# Unicode filenames and are missing flags yazi needs.
+$gitFileOne = "C:\Program Files\Git\usr\bin\file.exe"
+if (Test-Path $gitFileOne) {
+    $env:YAZI_FILE_ONE = $gitFileOne
+}
+
+# On Windows yazi always reads %AppData%\yazi\config, never ~/.config/yazi,
+# regardless of any XDG_CONFIG_HOME-style variable. Redirect it to the
+# chezmoi-managed config so the same yazi.toml/keymap.toml apply on every OS.
+$env:YAZI_CONFIG_HOME = Join-Path $HOME ".config\yazi"
+
+# The piper.yazi plugin (used for the glow markdown preview) hardcodes
+# Command("sh") to run its pipeline, with no Windows-specific fallback. Git's
+# usr\bin -- already on PATH via YAZI_FILE_ONE-adjacent tools -- doesn't cover
+# this; only Git\bin ships sh.exe, and only bash.exe/git.exe/sh.exe live there,
+# so adding it here doesn't risk shadowing other commands the way Git's
+# usr\bin (full unix toolset) would.
+$gitBin = "C:\Program Files\Git\bin"
+if ((Test-Path $gitBin) -and ($env:PATH -notlike "*$gitBin*")) {
+    $env:PATH = "$env:PATH$([IO.Path]::PathSeparator)$gitBin"
+}
+
 $env:PROTO_HOME = Join-Path $HOME ".proto"
 # Windows OpenSSH builds a session's environment from the machine PATH only, so
 # user-scoped tools (scoop, cargo, proto) are invisible over SSH. Re-merge the
