@@ -41,6 +41,9 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
         # Vi editing mode -- PSReadLine's built-in equivalent of zsh's bindkey -v
         # (what zsh-vi-mode wraps). Gives modes, hjkl/w/b/e, d/c/y operators,
         # f/t motions and / history search. No surround or full text objects.
+        # NOTE: setting EditMode resets the keymap to that mode's defaults, so it
+        # must stay ahead of anything that binds keys (atuin, PSFzf). A binding
+        # made before this line is silently reverted to the vi default.
         Set-PSReadLineOption -EditMode Vi
 
         # Without a mode indicator there is no way to tell which mode you are in.
