@@ -37,7 +37,11 @@ README.md
 # partial is laid down at three paths and each is gated to its own OS. All
 # three render from .chezmoitemplates/rtk-config.toml — edit that, not these.
 {{ if ne .chezmoi.os "darwin" }}
-Library/Application Support/rtk/**
+# Ignore the intermediate dirs too, not just the leaf: a `foo/**` pattern
+# still lets chezmoi create the empty parents, which left a stray ~/Library
+# and ~/Library/Application Support behind on Windows and Linux.
+Library
+Library/**
 {{ end }}
 {{ if ne .chezmoi.os "linux" }}
 .config/rtk/**
