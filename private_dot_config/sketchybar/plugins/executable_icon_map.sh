@@ -30,6 +30,9 @@ function __icon_map() {
    "Airmail")
         icon_result=":airmail:"
         ;;
+   "Alacritty")
+        icon_result=":alacritty:"
+        ;;
    "Alfred")
         icon_result=":alfred:"
         ;;

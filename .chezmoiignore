@@ -26,6 +26,7 @@ README.md
 
 # Mac and Linux only
 {{ if eq .chezmoi.os "windows" }}
+.config/alacritty/alacritty.toml
 .config/herdr/**
 # Ghostty has no stable Windows build
 .config/ghostty/**
@@ -46,6 +47,7 @@ Library/Application Support/rtk/**
 # still gets them â€” they're just not a target anywhere else.
 {{ if ne .chezmoi.os "windows" }}
 AppData/Roaming/rtk/**
+AppData/Roaming/alacritty/alacritty.toml
 AppData/Roaming/Zellij/**
 AppData/*
 scoop/*
