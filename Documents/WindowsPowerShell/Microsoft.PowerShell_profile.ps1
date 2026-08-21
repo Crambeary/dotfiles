@@ -14,6 +14,30 @@ $candidates += [Environment]::GetEnvironmentVariable("Path", "User") -split [IO.
 $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $env:PATH = ($candidates | Where-Object { $_ -and $seen.Add($_.TrimEnd([char]0x5C)) }) -join [IO.Path]::PathSeparator
 
+# Over SSH, pubkey auth yields a NETWORK logon token, and Windows refuses to
+# traverse symbolic links from such a session ("the path cannot be traversed
+# because it contains an untrusted mount point"). That hides every symlinked
+# PATH dir - herdr's bin, and every scoop apps\*\current junction - so tools
+# there vanish. Map each link to its target as well, which needs no change to
+# the machine-wide SymlinkEvaluation policy. Gated on the network-logon SID so
+# local shells pay nothing.
+$networkSid = [Security.Principal.SecurityIdentifier]"S-1-5-2"
+if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -contains $networkSid) {
+  $withTargets = foreach ($dir in $env:PATH -split [IO.Path]::PathSeparator) {
+    $dir
+    if ($dir) {
+      $item = Get-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
+      if ($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        # .Target is a collection on PowerShell 5.1, a string on 7+.
+        $target = @($item.Target)[0]
+        if ($target) { $target }
+      }
+    }
+  }
+  $seenTargets = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  $env:PATH = ($withTargets | Where-Object { $_ -and $seenTargets.Add($_.TrimEnd([char]0x5C)) }) -join [IO.Path]::PathSeparator
+}
+
 # Prompt and shell integrations are optional. Initialise only what is actually
 # on PATH so a session without these tools still starts cleanly.
 if (Get-Command starship -ErrorAction SilentlyContinue) {
