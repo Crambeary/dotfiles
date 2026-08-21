@@ -1,3 +1,20 @@
+[opener]
+edit = [
+  { run = 'hx "$@"', block = true, desc = "Edit with hx", for = "windows" },
+  { run = 'hx "$@"', block = true, desc = "Edit with hx", for = "unix" },
+]
+
+[open]
+prepend_rules = [
+  { mime = "text/*", use = "edit" },
+  { mime = "*/json", use = "edit" },
+  { mime = "*/xml", use = "edit" },
+  { mime = "*/toml", use = "edit" },
+  { mime = "*/x-yaml", use = "edit" },
+  { mime = "*/x-empty", use = "edit" },
+  { mime = "inode/x-empty", use = "edit" },
+]
+
 [preview]
 max_width=10000
 max_height=10000

@@ -1,5 +1,12 @@
 # Shared PowerShell profile managed by chezmoi. PowerShell 7 loads this through
 # Documents\PowerShell\Microsoft.PowerShell_profile.ps1.
+
+# Unlike zsh/fish, PowerShell has no rc-file convention that already sets this,
+# so tools that shell out to $EDITOR (yazi, git, etc.) fell back to whatever
+# Windows registers as the default file handler (Zed) instead of staying in
+# the terminal.
+$env:EDITOR = "hx"
+
 $env:PROTO_HOME = Join-Path $HOME ".proto"
 # Windows OpenSSH builds a session's environment from the machine PATH only, so
 # user-scoped tools (scoop, cargo, proto) are invisible over SSH. Re-merge the
