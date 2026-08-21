@@ -64,24 +64,64 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
 
         # Vi editing mode -- PSReadLine's built-in equivalent of zsh's bindkey -v
         # (what zsh-vi-mode wraps). Gives modes, hjkl/w/b/e, d/c/y operators,
-        # f/t motions and / history search. No surround or full text objects.
+        # f/t motions and / history search. No surround or full text objects,
+        # and no Visual/select mode -- only Insert and Command (Normal) exist.
         # NOTE: setting EditMode resets the keymap to that mode's defaults, so it
         # must stay ahead of anything that binds keys (atuin, PSFzf). A binding
         # made before this line is silently reverted to the vi default.
         Set-PSReadLineOption -EditMode Vi
 
         # Without a mode indicator there is no way to tell which mode you are in.
-        # Script mode lets us switch the cursor shape via DECSCUSR, which needs a
-        # real console -- reuse the prediction guard for that. Build the escape
-        # from [char]27 inline rather than `e, which Windows PowerShell cannot parse.
-        if ($canRenderPredictions -and
-            (Get-Command Set-PSReadLineOption).Parameters.ContainsKey('ViModeIndicator')) {
+        # -ViModeIndicator Prompt string-matches -PromptText inside the rendered
+        # prompt and swaps it out, which needs a literal stable suffix to match --
+        # starship's [character] symbols are empty here, so there's nothing to
+        # match. A DECSCUSR cursor-shape swap (the other built-in option) also
+        # doesn't render reliably over SSH. So track the mode in a global and have
+        # the prompt function itself emit a plain-text tag -- that works over any
+        # transport since it's just prompt text, not a terminal escape sequence.
+        $global:__viMode = 'Insert'
+        if ((Get-Command Set-PSReadLineOption).Parameters.ContainsKey('ViModeIndicator')) {
             Set-PSReadLineOption -ViModeIndicator Script -ViModeChangeHandler {
-                if ($args[0] -eq 'Command') {
-                    [Console]::Write("$([char]27)[1 q")  # steady block: normal mode
-                } else {
-                    [Console]::Write("$([char]27)[5 q")  # blinking bar: insert mode
+                $global:__viMode = $args[0]
+                # Setting the variable alone doesn't redraw anything -- the
+                # prompt line is already on screen and PSReadLine only edits
+                # the buffer after it. InvokePrompt() is the same call
+                # -ViModeIndicator Prompt uses internally to force a redraw.
+                # It throws "the handle is invalid" without a real attached
+                # console (e.g. some remote/redirected sessions) -- swallow
+                # that so a failed redraw never surfaces as a visible error;
+                # worst case the tag just catches up on the next Enter.
+                # Skip recomputing the underlying prompt (starship shells out
+                # and checks git status -- slow enough over SSH to flicker)
+                # since nothing it depends on changes mid-edit of one line;
+                # just redraw with the cached text and the new tag.
+                $global:__viModeSkipRecompute = $true
+                try { [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt() } catch {}
+                $global:__viModeSkipRecompute = $false
+            }
+
+            # Wrap whatever `prompt` currently resolves to (starship's, chained
+            # through zoxide's real init output above) with the mode tag. This
+            # must run after both of those have installed their own `prompt`,
+            # which they have by this point in the file.
+            $global:__viModePromptOld = $function:prompt
+            function global:prompt {
+                if (-not $global:__viModeSkipRecompute -or -not $global:__viModePromptCache) {
+                    # -join instead of Out-String -NoNewline: this profile is
+                    # shared with Windows PowerShell 5.1, whose Out-String
+                    # lacks -NoNewline.
+                    $global:__viModePromptCache = (& $global:__viModePromptOld) -join ''
                 }
+                $rendered = $global:__viModePromptCache
+                if ($global:__viMode -ne 'Command') { return $rendered }
+
+                # Bold yellow arrow right before the last line -- where the
+                # cursor actually sits -- not the whole (possibly multi-line)
+                # prompt, or it lands a line above the input instead of on it.
+                $viTag = "$([char]27)[1;33m$([char]10094) $([char]27)[0m"
+                $lines = $rendered -split "`n"
+                $lines[-1] = $viTag + $lines[-1]
+                $lines -join "`n"
             }
         }
     }
