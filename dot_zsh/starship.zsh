@@ -1,8 +1,7 @@
 # find out which distribution we are running on
-LFILE="/etc/*-release"
 MFILE="/System/Library/CoreServices/SystemVersion.plist"
-if [[ -f $LFILE ]]; then
-  _distro=$(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }')
+if [[ -f /etc/os-release ]]; then
+  _distro=$(awk -F'=' '/^ID=/{ print tolower($2) }' /etc/os-release | tr -d '"')
 elif [[ -f $MFILE ]]; then
   _distro="macos"
 fi
@@ -31,8 +30,18 @@ case $_distro in
     *devuan*)                ICON="";;
     *manjaro*)               ICON="";;
     *rhel*)                  ICON="";;
-    *macos*)                 ICON="";;
+    *macos*)                 ICON=$'\uf179';;
     *)                       ICON="";;
 esac
+
+# native Windows (not WSL): /etc/*-release and the macOS plist won't exist
+if [[ -z "$_distro" ]] && [[ -n "$WINDIR" || -n "$SYSTEMROOT" ]]; then
+  ICON=$'\uf17a'
+fi
+
+# append a badge when running inside WSL
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  ICON="${ICON} "$'\ue8e5'
+fi
 
 export STARSHIP_DISTRO="$ICON"

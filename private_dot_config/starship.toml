@@ -16,7 +16,7 @@ command_timeout = 1000
 # new config
 # format = """$env_var $all"""
 
-format = """$username$hostname$directory$cmd_duration$git_branch$git_status$python
+format = """$env_var $username$hostname$directory$cmd_duration$git_branch$git_status$python
 $character"""
 
 # Change the default prompt characters
