@@ -55,6 +55,13 @@ built in; `fzf` is available via `winget`/`scoop`).
 `stable` on Linux/macOS but `preview` on Windows — pinned so all three machines
 track the same release channel.
 
+The `[theme]` block is gated on `.chezmoi.hostname`: `tpw026` gets `gruvbox`
+plus a `[theme.custom]` warm `panel_bg`/`accent`, everything else stays on
+`catppuccin`. That's a "which box am I on" cue for SSH sessions, not a taste
+preference — if you retheme, keep the two visibly far apart. The gate uses the
+short hostname, so confirm with `chezmoi data | rg hostname` on the remote
+before assuming it matched.
+
 ## rtk (Rust Token Killer)
 
 A CLI proxy that compacts command output before it reaches Claude Code, wired
