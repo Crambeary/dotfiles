@@ -69,6 +69,11 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -contains $network
   $env:PATH = ($withTargets | Where-Object { $_ -and $seenTargets.Add($_.TrimEnd([char]0x5C)) }) -join [IO.Path]::PathSeparator
 }
 
+# Mirrors dot_zsh/starship.zsh's distro-icon detection for native Windows, so
+# starship.toml's env_var.STARSHIP_DISTRO segment isn't blank here. Windows
+# PowerShell only ever runs natively (no WSL badge case to cover).
+$env:STARSHIP_DISTRO = [char]0xf17a
+
 # Prompt and shell integrations are optional. Initialise only what is actually
 # on PATH so a session without these tools still starts cleanly.
 if (Get-Command starship -ErrorAction SilentlyContinue) {
