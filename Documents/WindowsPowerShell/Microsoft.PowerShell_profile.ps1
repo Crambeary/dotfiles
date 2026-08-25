@@ -82,6 +82,9 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     Invoke-Expression (& { (zoxide init powershell | Out-String) })
 }
+if (Get-Command mise -ErrorAction SilentlyContinue) {
+    (&mise activate pwsh) | Out-String | Invoke-Expression
+}
 
 # Enable inline command predictions when the installed PSReadLine supports it.
 if (Get-Module -ListAvailable -Name PSReadLine) {

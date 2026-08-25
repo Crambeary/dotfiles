@@ -26,7 +26,7 @@ onboarding = false
 # red = "#ff6188"
 # green = "#a6e3a1"
 
-{{ if eq .chezmoi.hostname "tpw026" -}}
+{{ if eq (.chezmoi.hostname | lower) "tpw026" -}}
 # tpw026 is only ever reached over SSH, so herdr there wears a deliberately
 # different skin: gruvbox's warm browns can't be mistaken for catppuccin's
 # blue-purple at a glance, and the lifted panel_bg makes it obvious in a
@@ -38,7 +38,7 @@ name = "catppuccin"
 {{ end -}}
 auto_switch = false
 
-{{ if eq .chezmoi.hostname "tpw026" -}}
+{{ if eq (.chezmoi.hostname | lower) "tpw026" -}}
 [theme.custom]
 panel_bg = "#3c3836"
 accent = "#fe8019"
