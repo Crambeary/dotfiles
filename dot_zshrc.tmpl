@@ -165,4 +165,14 @@ fi
 
 # atuin's pty-proxy wraps subshells so it can record scrollback from
 # non-atuin-aware TUIs. Another installer-appended line, adopted guarded.
-command -v atuin >/dev/null 2>&1 && eval "$(atuin pty-proxy init zsh)"
+#
+# Skipped inside herdr: pty-proxy execs itself over the pane's shell and gives
+# the real shell its own inner PTY, so the pane tty's foreground process is
+# "atuin" forever. herdr identifies a pane's agent from that process, so every
+# pane classified as unknown -- empty agent view, empty snapshot.agents (so
+# notify-watch and pick-attention-pane went silent too). Nothing is lost here
+# that we use: `atuin init zsh` above handles history and ctrl+r, and no
+# output-capture feature is enabled in atuin's config.
+if [[ "${HERDR_ENV:-}" != 1 ]]; then
+  command -v atuin >/dev/null 2>&1 && eval "$(atuin pty-proxy init zsh)"
+fi
