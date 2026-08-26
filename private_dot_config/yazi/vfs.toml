@@ -1,0 +1,17 @@
+# Browse TPW026 by running yazi *here* over SFTP, rather than running yazi on
+# the Windows box over SSH. Windows ConPTY swallows both halves of the image
+# path: terminal query replies never get back (`ya env` there reports
+# kgp: false, csi_16t: (0, 0), and a 0x0 dimension) and kitty graphics
+# sequences never reach the terminal, so remote-side previews are impossible.
+# Running locally keeps rendering on this machine, where kitty graphics work.
+#
+# This also avoids opening any listening socket or reverse channel: the
+# connection is outbound-only and authenticated by the ssh agent
+# ($SSH_AUTH_SOCK by default), so no key path or password is stored here.
+#
+# `host` must be the real hostname -- yazi's SFTP provider does not read
+# ~/.ssh/config, so the `tpw026` Host alias means nothing to it.
+[sftp.tpw026]
+host = "TPW026.amtec.org"
+user = "marc"
+port = 22
