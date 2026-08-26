@@ -163,16 +163,21 @@ fi
 [[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
 [[ -r "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
 
-# atuin's pty-proxy wraps subshells so it can record scrollback from
-# non-atuin-aware TUIs. Another installer-appended line, adopted guarded.
+# atuin's pty-proxy is deliberately NOT initialised here. The atuin installer
+# appends `eval "$(atuin pty-proxy init zsh)"` to ~/.zshrc unguarded; if it
+# reappears after an atuin upgrade, delete it again rather than re-adopting it.
 #
-# Skipped inside herdr: pty-proxy execs itself over the pane's shell and gives
-# the real shell its own inner PTY, so the pane tty's foreground process is
-# "atuin" forever. herdr identifies a pane's agent from that process, so every
-# pane classified as unknown -- empty agent view, empty snapshot.agents (so
-# notify-watch and pick-attention-pane went silent too). Nothing is lost here
-# that we use: `atuin init zsh` above handles history and ctrl+r, and no
-# output-capture feature is enabled in atuin's config.
-if [[ "${HERDR_ENV:-}" != 1 ]]; then
-  command -v atuin >/dev/null 2>&1 && eval "$(atuin pty-proxy init zsh)"
-fi
+# It wraps the shell in an inner PTY to record scrollback from non-atuin-aware
+# TUIs, and that inner PTY does not relay terminal query responses. Anything
+# that has to ask the terminal a question breaks: `kitten icat` and yazi's
+# image previews fail with "terminal does not support reporting screen sizes
+# in pixels" even in a real kitty tab, because the CSI 14 t reply never gets
+# back. It also broke herdr pane classification -- pty-proxy execs itself over
+# the pane's shell, so the pane tty's foreground process reads as "atuin"
+# forever, leaving every pane unknown (empty agent view and snapshot.agents,
+# which silenced notify-watch and pick-attention-pane). That case was handled
+# with a HERDR_ENV guard before; the terminal-query breakage applies
+# everywhere, so the whole thing is gone.
+#
+# Nothing we use is lost: `atuin init zsh` above handles history and ctrl+r,
+# and no output-capture feature is enabled in atuin's config.
