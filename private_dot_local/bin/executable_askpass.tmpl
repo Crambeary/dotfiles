@@ -26,6 +26,12 @@
 REAL_ASKPASS={{ .chezmoi.homeDir }}/.local/share/uv/tools/sudoplz/bin/askpass
 PING="${SUDOPLZ_PING_SOUND:-/usr/share/sounds/freedesktop/stereo/dialog-warning.oga}"
 
+# Fedora's agent is named ssh-agent.socket, while sudoplz only probes the
+# Debian-style openssh_agent path after sudo removes SSH_AUTH_SOCK.
+if [ -z "$SSH_AUTH_SOCK" ] && [ -S "/run/user/$(id -u)/ssh-agent.socket" ]; then
+	export SSH_AUTH_SOCK="/run/user/$(id -u)/ssh-agent.socket"
+fi
+
 # Only ping on the GUI path. No DISPLAY means the headless TOTP prompt, where
 # Marc is away from the machine and would never hear it.
 if [ -n "$DISPLAY" ] && [ "$PING" != "none" ] && [ -r "$PING" ]; then
