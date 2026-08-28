@@ -13,7 +13,7 @@ export ORANGE=0xff{{colors.on_secondary_container.default.hex_stripped}}
 export MAGENTA=0xff{{colors.secondary.default.hex_stripped}}
 export GREY=0xff{{colors.on_surface_variant.default.hex_stripped}}
 export TRANSPARENT=0x00000000
-export BG0=0xff{{colors.primary_container.default.hex_stripped}}
+export BG0=0xcc{{colors.primary_container.default.hex_stripped}}
 export BG1=0x60{{colors.secondary_container.default.hex_stripped}}
 export BG2=0x60{{colors.tertiary_container.default.hex_stripped}}
 
