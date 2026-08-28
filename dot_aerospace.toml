@@ -140,7 +140,7 @@ ctrl-s = 'layout v_accordion' # 'layout stacking' in i3
 ctrl-w = 'layout h_accordion' # 'layout tabbed' in i3
 ctrl-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
 
-ctrl-shift-space = 'layout floating tiling' # 'floating toggle' in i3
+ctrl-c = 'layout floating tiling' # Matches Hyprland's Super-C float toggle.
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
 #   'reload-config',  ]
 ctrl-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
@@ -188,8 +188,10 @@ ctrl-shift-k = 'move up'
 ctrl-shift-l = 'move right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#resize
-ctrl-shift-minus = 'resize smart -50'
-ctrl-shift-equal = 'resize smart +50'
+ctrl-minus = 'resize width -50'
+ctrl-equal = 'resize width +50'
+ctrl-shift-minus = 'resize height -50'
+ctrl-shift-equal = 'resize height +50'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
 ctrl-1 = 'workspace 1'
