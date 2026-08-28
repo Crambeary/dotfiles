@@ -1,0 +1,42 @@
+[config]
+
+[templates.herdr]
+input_path = "/home/marc/.config/matugen/templates/herdr.toml"
+output_path = "/home/marc/.config/herdr/matugen-theme.toml"
+post_hook = "/home/marc/.config/herdr/scripts/apply-matugen-theme.sh"
+
+[templates.obsidian-forge]
+input_path = '/home/marc/.config/matugen/templates/obsidian.css'
+output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
+
+[templates.opencode]
+input_path = '/home/marc/.config/matugen/templates/opencode.json'
+output_path = '/home/marc/.config/opencode/themes/matugen.json'
+
+[templates.vicinae]
+input_path = '/home/marc/.config/matugen/templates/vicinae.toml'
+output_path = '/home/marc/.local/share/vicinae/themes/matugen.toml'
+post_hook = '/home/marc/.config/matugen/scripts/apply-vicinae-theme.sh'
+
+# [templates.zen-forge]
+# input_path = '/home/marc/.config/matugen/templates/zen.css'
+# output_path = '/home/marc/.config/DankMaterialShell/zen.css'
+# Superseded 2026-08-28 by the zen-wabi templates below. Backup of this
+# entry's prior output lives in
+# ~/.config/matugen/backup-dms-zen-theme-2026-08-28/. May merge later.
+
+[templates.zen-wabi-userChrome]
+input_path = '/home/marc/.config/matugen/templates/zen-wabi-userChrome.css'
+output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/userChrome.css'
+
+[templates.zen-wabi-userContent]
+input_path = '/home/marc/.config/matugen/templates/zen-wabi-userContent.css'
+output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/userContent.css'
+
+[templates.zen-wabi-userstyles-global]
+input_path = '/home/marc/.config/matugen/templates/zen-wabi-userContent.css'
+output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-userstyles.css'
+
+[templates.zen-wabi-vars]
+input_path = '/home/marc/.config/matugen/templates/zen-wabi-vars.json'
+output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-vars.json'
