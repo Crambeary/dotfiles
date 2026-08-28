@@ -1,0 +1,55 @@
+#!/bin/bash
+# Fails loudly if a matugen template that's meant to work identically on
+# both platforms is registered in only one of the two matugen configs:
+#   - Linux: private_dot_config/matugen/config.toml -> ~/.config/matugen/config.toml
+#   - macOS: Library/Application Support/com.InioX.matugen/config.toml
+# Both files are deployed on every host regardless of OS, so this can always
+# check both sides.
+#
+# "Shared" isn't derivable from input_path -- most Linux-config templates
+# (millennium, opencode, obsidian, zen-wabi, ...) target apps that only
+# exist on Linux, and the mac config's own local templates (kitty,
+# sketchybar, aerospace-borders) are mac-only by nature. Only templates that
+# are genuinely platform-agnostic (just colors, no OS-specific paths baked
+# into the template content) belong in SHARED_TEMPLATES below -- add a name
+# here when you deliberately mirror a template across both configs, the way
+# herdr and helix already are.
+#
+# Re-runs via run_onchange whenever either config changes -- the hash below
+# just pins that dependency, chezmoi ignores its content.
+# script hash: {{ include "private_dot_config/matugen/config.toml" | sha256sum }} {{ include "Library/Application Support/com.InioX.matugen/config.toml" | sha256sum }}
+set -euo pipefail
+
+python3 - <<'PYEOF'
+import re
+import sys
+import pathlib
+
+SHARED_TEMPLATES = {"herdr", "helix"}
+
+linux_cfg = pathlib.Path.home() / ".config/matugen/config.toml"
+mac_cfg = pathlib.Path.home() / "Library/Application Support/com.InioX.matugen/config.toml"
+
+
+def template_names(path):
+    if not path.exists():
+        return set()
+    return set(re.findall(r'\[templates\.([\w-]+)\]', path.read_text()))
+
+
+linux = template_names(linux_cfg)
+mac = template_names(mac_cfg)
+
+missing_from_linux = SHARED_TEMPLATES - linux
+missing_from_mac = SHARED_TEMPLATES - mac
+
+if not missing_from_linux and not missing_from_mac:
+    sys.exit(0)
+
+print("matugen config drift: a shared template is missing from one platform", file=sys.stderr)
+for name in sorted(missing_from_mac):
+    print(f"  {name}: in {linux_cfg} but missing from {mac_cfg}", file=sys.stderr)
+for name in sorted(missing_from_linux):
+    print(f"  {name}: in {mac_cfg} but missing from {linux_cfg}", file=sys.stderr)
+sys.exit(1)
+PYEOF

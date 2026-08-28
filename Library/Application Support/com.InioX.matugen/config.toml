@@ -42,3 +42,11 @@ post_hook = "/Applications/Vicinae.app/Contents/MacOS/vicinae-cli theme set matu
 input_path = "~/.config/matugen/templates/herdr.toml"
 output_path = "~/.config/herdr/matugen-theme.toml"
 post_hook = "~/.config/herdr/scripts/apply-matugen-theme.sh"
+
+# --- Helix ---------------------------------------------------------------
+# Shares its input template with the Linux config
+# (private_dot_config/matugen/config.toml), same as Herdr above.
+[templates.helix]
+input_path = "~/.config/matugen/templates/helix.toml"
+output_path = "~/.config/helix/themes/matugen.toml"
+post_hook = "pkill -USR1 -x hx || true"

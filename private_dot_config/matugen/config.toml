@@ -9,6 +9,11 @@ post_hook = "/home/marc/.config/herdr/scripts/apply-matugen-theme.sh"
 input_path = '/home/marc/.config/matugen/templates/obsidian.css'
 output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
 
+[templates.helix]
+input_path = '/home/marc/.config/matugen/templates/helix.toml'
+output_path = '/home/marc/.config/helix/themes/matugen.toml'
+post_hook = 'pkill -USR1 -x hx || true'
+
 [templates.opencode]
 input_path = '/home/marc/.config/matugen/templates/opencode.json'
 output_path = '/home/marc/.config/opencode/themes/matugen.json'
