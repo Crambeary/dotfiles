@@ -38,6 +38,9 @@ name = "catppuccin"
 {{ end -}}
 auto_switch = false
 
+# BEGIN MATUGEN THEME
+# END MATUGEN THEME
+
 {{ if eq (.chezmoi.hostname | lower) "tpw026" -}}
 [theme.custom]
 panel_bg = "#3c3836"
