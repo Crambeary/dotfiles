@@ -12,6 +12,7 @@ output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
 [templates.opencode]
 input_path = '/home/marc/.config/matugen/templates/opencode.json'
 output_path = '/home/marc/.config/opencode/themes/matugen.json'
+post_hook = 'pkill -USR2 -x opencode || true'
 
 [templates.vicinae]
 input_path = '/home/marc/.config/matugen/templates/vicinae.toml'
