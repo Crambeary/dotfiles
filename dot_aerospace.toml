@@ -140,7 +140,7 @@ ctrl-f = 'fullscreen'
 
 ctrl-s = 'layout v_accordion' # 'layout stacking' in i3
 ctrl-w = 'layout h_accordion' # 'layout tabbed' in i3
-ctrl-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+ctrl-r = 'layout tiles horizontal vertical' # Matches Hyprland's Super-R toggle split.
 
 ctrl-c = 'layout floating tiling' # Matches Hyprland's Super-C float toggle.
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
@@ -227,7 +227,6 @@ ctrl-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
 ctrl-shift-semicolon = 'mode service'
 ctrl-shift-slash = 'mode join'
-ctrl-r = 'mode resize'
 ctrl-shift-p = 'mode ignoring'
 
 # 'service' binding mode declaration.
@@ -246,14 +245,6 @@ ctrl-shift-h = ['join-with left', 'mode main']
 ctrl-shift-j = ['join-with down', 'mode main']
 ctrl-shift-k = ['join-with up', 'mode main']
 ctrl-shift-l = ['join-with right', 'mode main']
-esc = 'mode main'
-
-[mode.resize.binding]
-h = 'resize width -50'
-j = 'resize height +50'
-k = 'resize height -50'
-l = 'resize width +50'
-enter = 'mode main'
 esc = 'mode main'
 
 [mode.ignoring.binding]
