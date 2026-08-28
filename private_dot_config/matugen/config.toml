@@ -1,5 +1,15 @@
 [config]
 
+# Anchored hues for roles where the semantic color matters more than harmony
+# with the wallpaper. herdr's status icons use green/yellow to mean
+# complete/in-progress; the generic Material primary/tertiary roles aren't
+# guaranteed to land anywhere near those hues (e.g. a warm wallpaper can put
+# primary on gold and tertiary on sage, silently swapping the two icons'
+# apparent meaning). blend = true still tints them to the theme.
+[config.custom_colors]
+green = { color = "#a6e3a1", blend = true }
+yellow = { color = "#f9e2af", blend = true }
+
 [templates.herdr]
 input_path = "/home/marc/.config/matugen/templates/herdr.toml"
 output_path = "/home/marc/.config/herdr/matugen-theme.toml"
@@ -13,6 +23,10 @@ output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
 input_path = '/home/marc/.config/matugen/templates/helix.toml'
 output_path = '/home/marc/.config/helix/themes/matugen.toml'
 post_hook = 'pkill -USR1 -x hx || true'
+
+[templates.glow]
+input_path = '/home/marc/.config/matugen/templates/glow.json'
+output_path = '/home/marc/.config/glow/matugen.json'
 
 [templates.opencode]
 input_path = '/home/marc/.config/matugen/templates/opencode.json'

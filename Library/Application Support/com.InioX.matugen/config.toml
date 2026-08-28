@@ -2,6 +2,16 @@
 fallback_color = "#8aadf4"
 prefer = "closest-to-fallback"
 
+# Anchored hues for roles where the semantic color matters more than harmony
+# with the wallpaper. Herdr's status icons use green/yellow to mean
+# complete/in-progress; the generic Material primary/tertiary roles aren't
+# guaranteed to land anywhere near those hues (e.g. a warm wallpaper can put
+# primary on gold and tertiary on sage, silently swapping the two icons'
+# apparent meaning). blend = true still tints them to the theme.
+[config.custom_colors]
+green = { color = "#a6e3a1", blend = true }
+yellow = { color = "#f9e2af", blend = true }
+
 [config.wallpaper]
 set = true
 command = "wallpaper set {{image}} --scale fill"
@@ -50,3 +60,12 @@ post_hook = "~/.config/herdr/scripts/apply-matugen-theme.sh"
 input_path = "~/.config/matugen/templates/helix.toml"
 output_path = "~/.config/helix/themes/matugen.toml"
 post_hook = "pkill -USR1 -x hx || true"
+
+# --- Glow ------------------------------------------------------------------
+# Shares its input template with the Linux config
+# (private_dot_config/matugen/config.toml), same as Herdr/Helix above. yazi's
+# glow-preview commands pick this file over the built-in catppuccin-mocha.json
+# style whenever `matugen` is on PATH (see private_dot_config/yazi/*.tmpl).
+[templates.glow]
+input_path = "~/.config/matugen/templates/glow.json"
+output_path = "~/.config/glow/matugen.json"

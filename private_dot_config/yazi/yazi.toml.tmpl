@@ -25,4 +25,4 @@ image_filter="lanczos3"
 
 [[plugin.prepend_previewers]]
 url = "*.md"
-run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s="$HOME/.config/glow/catppuccin-mocha.json" "$1"'
+run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s="$HOME/.config/glow/{{ if lookPath "matugen" }}matugen{{ else }}catppuccin-mocha{{ end }}.json" "$1"'

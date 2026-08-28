@@ -7,10 +7,15 @@ surface_dim = "{{colors.surface_container.default.hex}}"
 accent = "{{colors.primary.default.hex}}"
 blue = "{{colors.primary.default.hex}}"
 mauve = "{{colors.secondary.default.hex}}"
-green = "{{colors.primary.default.hex}}"
-yellow = "{{colors.tertiary.default.hex}}"
+# green/yellow are anchored custom colors (see matugen config.toml), not
+# primary/tertiary -- herdr uses them for complete/in-progress status icons,
+# and primary/tertiary aren't guaranteed to land on those hues.
+green = "{{colors.green.default.hex}}"
+yellow = "{{colors.yellow.default.hex}}"
 red = "{{colors.error.default.hex}}"
-teal = "{{colors.secondary.default.hex}}"
+# teal is herdr's "needs attention" (blocked/unread) icon color; anchored to
+# the same green as the complete icon per user preference, not secondary.
+teal = "{{colors.green.default.hex}}"
 peach = "{{colors.tertiary.default.hex}}"
 text = "{{colors.on_surface.default.hex}}"
 subtext0 = "{{colors.on_surface_variant.default.hex}}"
