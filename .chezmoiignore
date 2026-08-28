@@ -30,6 +30,8 @@ README.md
 .config/herdr/**
 # Ghostty has no stable Windows build
 .config/ghostty/**
+# Vicinae has no Windows build
+.config/vicinae/**
 {{ end }}
 
 # rtk resolves its config dir per platform (macOS Application Support, XDG on

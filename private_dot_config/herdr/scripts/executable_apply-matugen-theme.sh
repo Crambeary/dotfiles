@@ -36,7 +36,12 @@ awk -v theme="$theme" -v start_marker="$start_marker" -v end_marker="$end_marker
   END { if (!found || inside) exit 1 }
 ' "$config" > "$temporary_config"
 
-mv "$temporary_config" "$config"
+# Overwrite the existing file's contents in place instead of mv'ing the temp
+# file over it. mv swaps in mktemp's inode (mode 0600), silently dropping
+# whatever permissions chezmoi set (0644) -- which then makes every
+# `chezmoi apply` see the file as changed externally and prompt about it.
+cat "$temporary_config" > "$config"
+rm -f "$temporary_config"
 trap - EXIT
 
 herdr server reload-config >/dev/null 2>&1 || true

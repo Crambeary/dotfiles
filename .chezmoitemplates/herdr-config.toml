@@ -39,6 +39,9 @@ name = "catppuccin"
 auto_switch = false
 
 # BEGIN MATUGEN THEME
+{{ if stat (joinPath .chezmoi.homeDir ".config/herdr/matugen-theme.toml") -}}
+{{ include (joinPath .chezmoi.homeDir ".config/herdr/matugen-theme.toml") -}}
+{{ end -}}
 # END MATUGEN THEME
 
 {{ if eq (.chezmoi.hostname | lower) "tpw026" -}}
