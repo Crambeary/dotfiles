@@ -1,7 +1,9 @@
 [opener]
-# Windows only: yazi's built-in unix opener already uses $EDITOR (set to hx in
-# dot_zshrc.tmpl), but its built-in windows default is "code", not $EDITOR-aware.
+# yazi merges [opener] tables by fully replacing each key's rule array, not
+# appending to it -- so overriding "edit" here means we must restate the
+# built-in unix default too, or it silently disappears on macOS/Linux.
 edit = [
+  { run = '${EDITOR:-vi} %s', block = true, desc = "$EDITOR", for = "unix" },
   { run = 'hx %s', block = true, desc = "Edit with hx", for = "windows" },
 ]
 
