@@ -8,18 +8,18 @@ export WHITE=0xff{{colors.on_background.default.hex_stripped}}
 export RED=0xff{{colors.error.default.hex_stripped}}
 export GREEN=0xff{{colors.tertiary.default.hex_stripped}}
 export BLUE=0xff{{colors.primary.default.hex_stripped}}
-export YELLOW=0xff{{colors.tertiary_container.default.hex_stripped}}
-export ORANGE=0xff{{colors.secondary_container.default.hex_stripped}}
+export YELLOW=0xff{{colors.on_tertiary_container.default.hex_stripped}}
+export ORANGE=0xff{{colors.on_secondary_container.default.hex_stripped}}
 export MAGENTA=0xff{{colors.secondary.default.hex_stripped}}
 export GREY=0xff{{colors.on_surface_variant.default.hex_stripped}}
 export TRANSPARENT=0x00000000
-export BG0=0xff{{colors.background.default.hex_stripped}}
-export BG1=0x60{{colors.surface_container.default.hex_stripped}}
-export BG2=0x60{{colors.surface_container_high.default.hex_stripped}}
+export BG0=0xff{{colors.primary_container.default.hex_stripped}}
+export BG1=0x60{{colors.secondary_container.default.hex_stripped}}
+export BG2=0x60{{colors.tertiary_container.default.hex_stripped}}
 
 export BATTERY_1=0xff{{colors.tertiary.default.hex_stripped}}
-export BATTERY_2=0xff{{colors.tertiary_container.default.hex_stripped}}
-export BATTERY_3=0xff{{colors.secondary_container.default.hex_stripped}}
+export BATTERY_2=0xff{{colors.on_tertiary_container.default.hex_stripped}}
+export BATTERY_3=0xff{{colors.on_secondary_container.default.hex_stripped}}
 export BATTERY_4=0xff{{colors.secondary.default.hex_stripped}}
 export BATTERY_5=0xff{{colors.error.default.hex_stripped}}
 
