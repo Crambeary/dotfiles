@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.marctotaro.matugen-wallpaper-sync</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>{{ .chezmoi.homeDir }}/.local/bin/matugen-wallpaper-sync</string>
+	</array>
+	<key>WatchPaths</key>
+	<array>
+		<string>{{ .chezmoi.homeDir }}/Library/Application Support/com.apple.wallpaper/Store/Index.plist</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>{{ .chezmoi.homeDir }}/Library/Logs/matugen-wallpaper-sync.log</string>
+	<key>StandardErrorPath</key>
+	<string>{{ .chezmoi.homeDir }}/Library/Logs/matugen-wallpaper-sync.log</string>
+</dict>
+</plist>

@@ -1,0 +1,50 @@
+#!/bin/bash
+# Retheme kitty/Sketchybar/AeroSpace/Vicinae via matugen whenever the desktop
+# wallpaper changes. Run by the com.marctotaro.matugen-wallpaper-sync
+# LaunchAgent (Library/LaunchAgents), which uses WatchPaths on
+# com.apple.wallpaper's Store/Index.plist -- the only reliable local signal
+# for "the wallpaper changed", since matugen's own wallpaper-change
+# automation is Linux/NetBSD only.
+#
+# WatchPaths fires on ANY write to that plist, including ones unrelated to
+# the desktop picture (e.g. LastUse timestamps from the idle/screensaver
+# wallpaper), so this only re-runs matugen when the resolved image actually
+# differs from last time.
+set -euo pipefail
+
+export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:/Applications/kitty.app/Contents/MacOS:/usr/bin:/bin:$PATH"
+
+CACHE_DIR="$HOME/Library/Caches/matugen-wallpaper-sync"
+mkdir -p "$CACHE_DIR"
+STATE_FILE="$CACHE_DIR/last-source"
+PNG_FILE="$CACHE_DIR/current.png"
+
+# `System Events` resolves dynamic/gradient wallpapers (e.g. the "Radial"
+# style desktop pictures, which have no plain image file of their own) to
+# the actual rendered/cached asset, unlike the Index.plist file:// URL,
+# which can point at the (undecodable) source .madesktop bundle instead.
+source_path="$(osascript -e 'tell application "System Events" to get picture of desktop 1' 2>/dev/null || true)"
+
+if [[ -z "$source_path" || ! -f "$source_path" ]]; then
+  echo "matugen-wallpaper-sync: could not resolve current wallpaper (got: '$source_path')" >&2
+  exit 1
+fi
+
+if [[ -f "$STATE_FILE" && "$(cat "$STATE_FILE")" == "$source_path" ]]; then
+  exit 0
+fi
+
+case "$source_path" in
+  *.heic|*.HEIC|*.tiff|*.TIFF)
+    # matugen's image decoder doesn't support HEIC/TIFF.
+    sips -s format png "$source_path" --out "$PNG_FILE" >/dev/null
+    image_path="$PNG_FILE"
+    ;;
+  *)
+    image_path="$source_path"
+    ;;
+esac
+
+matugen image "$image_path" --source-color-index 0
+
+echo "$source_path" > "$STATE_FILE"
