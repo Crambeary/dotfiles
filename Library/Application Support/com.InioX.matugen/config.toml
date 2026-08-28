@@ -1,0 +1,31 @@
+[config]
+fallback_color = "#8aadf4"
+prefer = "closest-to-fallback"
+
+[config.wallpaper]
+set = true
+command = "wallpaper set {{image}} --scale fill"
+
+# --- kitty -------------------------------------------------------------
+[templates.kitty]
+input_path = "templates/kitty.conf"
+output_path = "~/.config/kitty/matugen-theme.conf"
+post_hook = "kitty @ set-colors -a ~/.config/kitty/matugen-theme.conf"
+
+# --- Sketchybar ----------------------------------------------------------
+[templates.sketchybar]
+input_path = "templates/sketchybar-colors.sh"
+output_path = "~/.config/sketchybar/colors-matugen.sh"
+post_hook = "sketchybar --reload"
+
+# --- AeroSpace (via the `borders` helper) --------------------------------
+[templates.aerospace-borders]
+input_path = "templates/aerospace-borders.sh"
+output_path = "~/.config/aerospace/borders.sh"
+post_hook = "chmod +x ~/.config/aerospace/borders.sh && ~/.config/aerospace/borders.sh"
+
+# --- Vicinae ---------------------------------------------------------------
+[templates.vicinae]
+input_path = "templates/vicinae.toml"
+output_path = "~/.local/share/vicinae/themes/matugen.toml"
+post_hook = "/Applications/Vicinae.app/Contents/MacOS/vicinae-cli theme set matugen"

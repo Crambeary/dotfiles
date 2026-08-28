@@ -2580,6 +2580,11 @@ font_size 16.0
 include current-theme.conf
 # END_KITTY_THEME
 
+# Matugen overrides current-theme.conf above with Material You colors
+# generated from the current wallpaper. Live reloads happen instantly via
+# `kitty @ set-colors`; this include just makes it survive a kitty restart.
+include matugen-theme.conf
+
 # Window Resizing
 map ctrl+left resize_window narrower
 map ctrl+right resize_window wider

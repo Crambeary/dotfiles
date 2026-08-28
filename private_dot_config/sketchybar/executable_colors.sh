@@ -47,3 +47,9 @@ export POPUP_BACKGROUND_COLOR=$BAR_COLOR
 export POPUP_BORDER_COLOR=$WHITE
 export SHADOW_COLOR=$BLACK
 
+# Matugen (Material You, generated from the current wallpaper) overrides the
+# palette above when present. Not chezmoi-tracked -- it's regenerated output,
+# not source. See ~/Library/Application Support/com.InioX.matugen/config.toml
+if [ -f "$CONFIG_DIR/colors-matugen.sh" ]; then
+  source "$CONFIG_DIR/colors-matugen.sh"
+fi
