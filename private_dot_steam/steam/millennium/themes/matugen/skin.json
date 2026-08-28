@@ -1,0 +1,8 @@
+{
+  "name": "Matugen",
+  "author": "Marc",
+  "description": "Dynamic Steam colors generated from the active wallpaper.",
+  "version": "1.0.0",
+  "Steam-WebKit": "webkit.css",
+  "UseDefaultPatches": true
+}

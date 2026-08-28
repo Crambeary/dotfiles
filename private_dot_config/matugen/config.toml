@@ -18,6 +18,26 @@ input_path = '/home/marc/.config/matugen/templates/vicinae.toml'
 output_path = '/home/marc/.local/share/vicinae/themes/matugen.toml'
 post_hook = '/home/marc/.config/matugen/scripts/apply-vicinae-theme.sh'
 
+[templates.millennium-library]
+input_path = '/home/marc/.config/matugen/templates/millennium.css'
+output_path = '/home/marc/.steam/steam/millennium/themes/matugen/libraryroot.custom.css'
+
+[templates.millennium-friends]
+input_path = '/home/marc/.config/matugen/templates/millennium.css'
+output_path = '/home/marc/.steam/steam/millennium/themes/matugen/friends.custom.css'
+
+[templates.millennium-bigpicture]
+input_path = '/home/marc/.config/matugen/templates/millennium.css'
+output_path = '/home/marc/.steam/steam/millennium/themes/matugen/bigpicture.custom.css'
+
+[templates.millennium-webkit]
+input_path = '/home/marc/.config/matugen/templates/millennium.css'
+output_path = '/home/marc/.steam/steam/millennium/themes/matugen/webkit.css'
+
+[templates.millennium-quick-css]
+input_path = '/home/marc/.config/matugen/templates/millennium.css'
+output_path = '/home/marc/.config/millennium/quick.css'
+
 # [templates.zen-forge]
 # input_path = '/home/marc/.config/matugen/templates/zen.css'
 # output_path = '/home/marc/.config/DankMaterialShell/zen.css'
