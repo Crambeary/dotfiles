@@ -170,3 +170,14 @@ scoop/persist/flow-launcher/**
 # Both blocked `chezmoi apply` with a TTY prompt on every run.
 .config/plasma-welcomerc
 .config/plasmanotifyrc
+
+# Zen browser matugen theme (zen-wabi templates): the output paths in
+# matugen/config.toml are hardcoded to this machine's Zen profile dir
+# (t5e4pcqh.Default (release)-1), so applying these elsewhere would write
+# nothing useful and could error out matugen's zen-wabi-* runs on a machine
+# with no matching profile. Tracked here for backup only, for now.
+{{ if ne .chezmoi.hostname "marc-fedora" }}
+.config/matugen/templates/zen-wabi-userChrome.css
+.config/matugen/templates/zen-wabi-userContent.css
+.config/matugen/templates/zen-wabi-vars.json
+{{ end }}
