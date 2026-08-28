@@ -1,0 +1,18 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Loads/reloads the matugen-wallpaper-sync LaunchAgent so wallpaper changes
+# made in System Settings retheme kitty/Sketchybar/AeroSpace/Vicinae
+# automatically. See Library/LaunchAgents/com.marctotaro.matugen-wallpaper-sync.plist.tmpl
+# and dot_local/bin/executable_matugen-wallpaper-sync.
+#
+# Re-runs (via run_onchange) whenever either of those files changes -- the
+# hash below is just to pin that dependency, chezmoi ignores its content.
+# script hash: {{ include "Library/LaunchAgents/com.marctotaro.matugen-wallpaper-sync.plist.tmpl" | sha256sum }} {{ include "private_dot_local/bin/executable_matugen-wallpaper-sync" | sha256sum }}
+set -euo pipefail
+
+plist="$HOME/Library/LaunchAgents/com.marctotaro.matugen-wallpaper-sync.plist"
+uid="$(id -u)"
+
+/bin/launchctl bootout "gui/$uid" "$plist" >/dev/null 2>&1 || true
+/bin/launchctl bootstrap "gui/$uid" "$plist"
+{{ end -}}

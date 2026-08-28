@@ -10,7 +10,7 @@ command = "wallpaper set {{image}} --scale fill"
 [templates.kitty]
 input_path = "templates/kitty.conf"
 output_path = "~/.config/kitty/matugen-theme.conf"
-post_hook = "kitty @ set-colors -a ~/.config/kitty/matugen-theme.conf"
+post_hook = 'for s in /tmp/kitty-*; do [ -S "$s" ] && kitty @ --to "unix:$s" set-colors -a ~/.config/kitty/matugen-theme.conf; done; true'
 
 # --- Sketchybar ----------------------------------------------------------
 [templates.sketchybar]
