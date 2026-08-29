@@ -27,6 +27,11 @@ post_hook = 'pkill -USR1 -x hx || true'
 [templates.glow]
 input_path = '/home/marc/.config/matugen/templates/glow.json'
 output_path = '/home/marc/.config/glow/matugen.json'
+# Glow's own "format" fields use Go template syntax ({{.text}}) that matugen
+# would otherwise try (and fail) to parse as its own expression syntax, so
+# this template uses non-default delimiters to avoid the collision.
+expr_prefix = '<{'
+expr_postfix = '}>'
 
 [templates.opencode]
 input_path = '/home/marc/.config/matugen/templates/opencode.json'
