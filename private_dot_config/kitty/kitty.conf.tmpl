@@ -1,4 +1,9 @@
-{{- if eq .chezmoi.hostname "marc-mac-fedora" -}}
+# Lets `kitten @ ...` control this instance from a shell running inside it
+# (e.g. ssh-invert in ~/.zsh/functions.zsh). No listen_on needed for that
+# in-instance case — only for controlling kitty from outside its own ptys.
+allow_remote_control yes
+
+{{ if eq .chezmoi.hostname "marc-mac-fedora" -}}
 #    __ ___ __  __
 #   / //_(_) /_/ /___ __
 #  / ,< / / __/ __/ // /
@@ -67,15 +72,16 @@ dynamic_background_opacity yes
 watcher focus-dim.py
 hide_window_decorations titlebar-only
 {{- else -}}
-background_opacity 0.85
-background_blur 32
-dynamic_background_opacity yes
 hide_window_decorations yes
 # NVIDIA's EGL implementation doesn't expose alpha-capable surfaces to
-# native Wayland clients, so background_opacity silently renders opaque
-# under Hyprland; running through XWayland gives kitty a GLX alpha
-# framebuffer that actually blends (confirmed working 2026-08-28).
-linux_display_server x11
+# native Wayland clients, so kitty's own background_opacity/background_blur
+# silently render opaque under Hyprland on this GPU. Forcing XWayland
+# (linux_display_server x11) worked around that but broke voxtype's wtype
+# driver, which can't deliver injected keystrokes to XWayland surfaces under
+# Hyprland (confirmed 2026-08-29: wtype exits 0 but nothing is typed).
+# Transparency/blur is instead applied compositor-side via a Hyprland
+# window_rule (opacity + blur) in hyprland.lua, which composites onto the
+# window's rendered output regardless of the client's own alpha support.
 {{- end }}
 # -1 warns before closing a window whose tabs have a running process (Claude)
 confirm_os_window_close -1

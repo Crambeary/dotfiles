@@ -37,6 +37,11 @@ hl.config({
 			offset = "0 5",
 			color = "rgba(00000070)",
 		},
+		blur = {
+			enabled = true,
+			size = 6,
+			passes = 3,
+		},
 	},
 	misc = {
 		disable_hyprland_logo = true,
@@ -78,6 +83,10 @@ hl.window_rule({
 	float = true,
 })
 hl.window_rule({ match = { class = "^(zoom)$" }, float = true })
+-- Compositor-side transparency for kitty (see kitty.conf.tmpl comment): same
+-- active/inactive opacity so it doesn't flatten to opaque on focus loss like
+-- kitty's own dynamic_background_opacity did.
+hl.window_rule({ match = { class = "^(kitty)$" }, opacity = "0.75 0.75" })
 hl.layer_rule({ match = { namespace = "^(quickshell)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^dms:.*" }, no_anim = true })
 
