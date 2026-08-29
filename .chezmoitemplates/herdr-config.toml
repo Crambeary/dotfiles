@@ -172,6 +172,54 @@ type = "shell"
 command = "~/.config/herdr/scripts/toggle-split-direction.sh"
 description = "flip split direction (vertical/horizontal)"
 
+# alt+r: direct alias for the binding above, mirroring Hyprland's Super+R
+# split-toggle (see dms/binds-user.lua and dot_aerospace.toml's ctrl-r).
+[[keys.command]]
+key = "alt+r"
+type = "shell"
+command = "~/.config/herdr/scripts/toggle-split-direction.sh"
+description = "flip split direction (vertical/horizontal)"
+
+# Resize the focused pane's width/height. Loosely mirrors Hyprland's
+# Super+-/= and Super+Shift+-/= resize bindings (see dot_aerospace.toml's
+# ctrl-minus/ctrl-equal), but herdr's key parser can't reach a working
+# grow binding on the -/= key: "equal" isn't a valid herdr key name, and
+# "plus" is really just an alias for shift+equal (confirmed live, and
+# matches upstream discussion
+# https://github.com/ogulcancelik/herdr/discussions/853, still open, no
+# fix). alt+shift+plus is therefore unreachable — it would need a second,
+# non-existent shift stacked on the shift "plus" already implies, so it
+# silently collapses onto alt+plus (width grow) instead of firing. No
+# named-punctuation key (bracket, period, semicolon, etc. — all tested
+# against `herdr config check`) reads naturally as "grow" either, so both
+# grow bindings use a plain "g" mnemonic instead, paired with minus for
+# shrink the same way Hyprland/aerospace pair -/= for shrink/grow.
+# resize-pane.sh works out which border to move so these keys always
+# grow/shrink regardless of which side of a split the pane sits.
+[[keys.command]]
+key = "alt+minus"
+type = "shell"
+command = "~/.config/herdr/scripts/resize-pane.sh width shrink"
+description = "shrink pane width"
+
+[[keys.command]]
+key = "alt+g"
+type = "shell"
+command = "~/.config/herdr/scripts/resize-pane.sh width grow"
+description = "grow pane width"
+
+[[keys.command]]
+key = "alt+shift+minus"
+type = "shell"
+command = "~/.config/herdr/scripts/resize-pane.sh height shrink"
+description = "shrink pane height"
+
+[[keys.command]]
+key = "alt+shift+g"
+type = "shell"
+command = "~/.config/herdr/scripts/resize-pane.sh height grow"
+description = "grow pane height"
+
 [[keys.command]]
 key = "prefix+shift+v"
 type = "popup"
