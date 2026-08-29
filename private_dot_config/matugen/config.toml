@@ -63,6 +63,16 @@ output_path = '/home/marc/.steam/steam/millennium/themes/matugen/webkit.css'
 input_path = '/home/marc/.config/matugen/templates/millennium.css'
 output_path = '/home/marc/.config/millennium/quick.css'
 
+[templates.millennium-material]
+input_path = '/home/marc/.config/matugen/templates/millennium-material.css'
+output_path = '/home/marc/.steam/steam/millennium/themes/Material-Theme/css/main/colors/matugen.css'
+# Material-Theme's own matugentemplate.css (kuska1/Material-Theme) uses a
+# `<* for name, value in colors *>` loop -- non-default block delimiters --
+# while its value interpolation stays on matugen's default {{ }}. Only the
+# block delimiters need overriding here.
+block_prefix = '<*'
+block_postfix = '*>'
+
 # [templates.zen-forge]
 # input_path = '/home/marc/.config/matugen/templates/zen.css'
 # output_path = '/home/marc/.config/DankMaterialShell/zen.css'
