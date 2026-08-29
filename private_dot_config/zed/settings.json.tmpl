@@ -1,0 +1,151 @@
+{{ if eq .chezmoi.os "darwin" -}}
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `zed: Open Default Settings` command
+// from the command palette
+{
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "format_on_save": "off",
+  "icon_theme": "Catppuccin Mocha",
+  "project_panel": {
+    "dock": "right"
+  },
+  "vim_mode": true,
+  "ui_font_size": 16,
+  "buffer_font_size": 16,
+  "theme": "Matugen Dynamic",
+  "experimental.theme_overrides": {
+    "background.appearance": "blurred"
+  }
+}
+
+// {
+// 	"vim_mode": true,
+//   "theme": "Catppuccin Frappé - No Italics",
+//   "buffer_font_size": null,
+//   "tab_size": 4,
+//   "buffer_font_family": "MonoLisa",
+//   "format_on_save": "off",
+//   "project_panel": { "dock": "right" },
+//   "git_panel": { "button": true, "dock": "right" },
+//   "outline_panel": { "dock": "right", "button": false },
+//   "notification_panel": { "button": false },
+//   "terminal": { "button": false },
+//   "collaboration_panel": { "button": false, "dock": "right" },
+
+//   "experimental.theme_overrides": {
+//     "background.appearance": "transparent",
+
+//     // Catppuccin Frappé dark translucent overrides
+//     "background": "#303446e0", // base
+//     "status_bar.background": "#303446e0",
+//     "title_bar.background": "#303446e0",
+//     "elevated_surface.background": "#303446e0",
+//     "surface.background": "#303446e0",
+//     "editor.background": "#00000000",
+//     "editor.gutter.background": "#00000000",
+//     "editor.line_number": "#b5bfe299",
+//     "editor.active_line_number": "#8caaee",
+//     "editor.active_line.background": "#51576d40",
+//     "editor.indent_guide": "#8caaee1a",
+//     "editor.indent_guide_active": "#8caaee33",
+
+//     "border": "#73799440",
+//     "border.variant": "#73799420",
+//     "hint.background": "#414559cc",
+
+//     "tab_bar.background": "#00000000",
+//     "tab.active_background": "#8caaee20",
+//     "tab.inactive_background": "#00000000",
+//     "element.selected": "#8caaee20",
+
+//     "panel.background": "#00000000",
+//     "panel.indent_guide": "#8caaee12",
+//     "panel.indent_guide_hover": "#8caaee16",
+//     "panel.indent_guide_active": "#8caaee1a",
+//     "panel.focused_border": "#00000000",
+
+//     "toolbar.background": "#00000000",
+//     "terminal.background": "#00000000",
+//     "scrollbar.track.background": "#00000000",
+//     "scrollbar.track.border": "#00000000",
+//     "scrollbar.thumb.background": "#8caaee20",
+
+//     "ghost_element.background": "#8caaee05",
+//     "ghost_element.hover": "#8caaee10",
+//     "ghost_element.active": "#8caaee15",
+//     "ghost_element.selected": "#8caaee20",
+//     "drop_target.background": "#8caaee20",
+//     "element.hover": "#8caaee10",
+//     "editor.highlighted_line.background": "#8caaee25"
+//   },
+
+//   "toolbar": {
+//     "breadcrumbs": false,
+//     "quick_actions": false
+//   },
+//   "tab_bar": {
+//     "show_nav_history_buttons": false
+//   },
+//   "features": {
+//     "edit_prediction_provider": "zed"
+//   },
+//   "hard_tabs": true,
+//   "languages": {
+//     "Vue.js": {
+//       "linked_edits": false
+//     }
+//   }
+// }
+{{ else -}}
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "terminal": {
+    "dock": "right"
+  },
+  "vim_mode": true,
+  "project_panel": {
+    "dock": "right"
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "system",
+    "light": "DankShell Light",
+    "dark": "DankShell Dark"
+  },
+  "relative_line_numbers": true,
+  "lsp": {
+    "slangd": {
+      "initialize_options": {
+        "additionalSearchPaths": ["./resources/shaders"]
+      }
+    }
+  },
+  "soft_wrap": "editor_width"
+}
+{{ end -}}
