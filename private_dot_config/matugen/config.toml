@@ -63,6 +63,11 @@ output_path = '/home/marc/.steam/steam/millennium/themes/matugen/webkit.css'
 input_path = '/home/marc/.config/matugen/templates/millennium.css'
 output_path = '/home/marc/.config/millennium/quick.css'
 
+[templates.rivalcfg]
+input_path = '/home/marc/.config/matugen/templates/rivalcfg.sh'
+output_path = '/home/marc/.config/rivalcfg/matugen-theme.sh'
+post_hook = '/home/marc/.config/matugen/scripts/apply-rivalcfg-theme.sh'
+
 [templates.millennium-material]
 input_path = '/home/marc/.config/matugen/templates/millennium-material.css'
 output_path = '/home/marc/.steam/steam/millennium/themes/Material-Theme/css/main/colors/matugen.css'
