@@ -115,6 +115,25 @@ map ctrl+down resize_window shorter
 # reset all windows in the tab to default sizes
 map ctrl+home resize_window reset
 
+{{ if eq .chezmoi.os "darwin" -}}
+# AeroSpace claims ctrl+b/e/f/h/j/k/l/r/s/slash and ctrl+shift+v/w globally
+# with a CGEvent tap for window-management chords, so no app -- including
+# kitty -- ever receives those combos. Remap the cmd equivalents to emit the
+# raw control byte directly, so cmd+<key> still reaches the shell/herdr as
+# ^<key>. See dot_aerospace.toml's [mode.main.binding] comment.
+map cmd+b send_text all \x02
+map cmd+e send_text all \x05
+map cmd+f send_text all \x06
+map cmd+h send_text all \x08
+map cmd+j send_text all \x0a
+map cmd+k send_text all \x0b
+map cmd+l send_text all \x0c
+map cmd+r send_text all \x12
+map cmd+s send_text all \x13
+map cmd+slash send_text all \x1f
+map cmd+shift+v send_text all \x16
+map cmd+shift+w send_text all \x17
+{{ end -}}
 # Tab configuration
 tab_bar_style powerline
 tab_bar_align left
