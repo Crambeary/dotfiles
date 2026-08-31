@@ -100,6 +100,7 @@ output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-users
 [templates.heroic]
 input_path = '/home/marc/.config/matugen/templates/heroic.css'
 output_path = '/home/marc/.config/matugen/themes/heroic/matugen.css'
+post_hook = '/home/marc/.config/matugen/scripts/apply-heroic-theme.sh'
 
 [templates.zen-wabi-vars]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-vars.json'
