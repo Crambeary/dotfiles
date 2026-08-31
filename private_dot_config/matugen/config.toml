@@ -97,6 +97,10 @@ output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/userContent.c
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-userContent.css'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-userstyles.css'
 
+[templates.heroic]
+input_path = '/home/marc/.config/matugen/templates/heroic.css'
+output_path = '/home/marc/.config/matugen/themes/heroic/matugen.css'
+
 [templates.zen-wabi-vars]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-vars.json'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-vars.json'
