@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Drives the matugen templates DMS doesn't natively cover (Obsidian, Zen,
+# Vicinae, ...) via our own ~/.config/matugen/config.toml. DMS's own
+# "dms matugen generate" already themes GTK/Qt/terminals/Hyprland/firefox
+# etc; this fills the gap for its zenbrowser detection (doesn't fire for
+# this Zen install) and "user templates" pass (not reliably triggered from
+# outside DMS's own process).
+#
+# Takes the wallpaper image path as $1. Called from two places whenever the
+# wallpaper actually changes:
+#   - waywallen-matugen-sync, for wallpapers set via waywallen
+#   - the WallpaperWatcherDaemon DMS plugin, for wallpapers set via DMS itself
+#
+# Mode/scheme are hardcoded to match current DMS settings (matugenScheme,
+# always-dark) -- update here if those are ever changed in DMS's settings UI.
+set -euo pipefail
+
+# Minimal PATH callers (systemd services, DMS's own Process invocation) don't
+# have linuxbrew on PATH, which is where sqlite3/matugen live for interactive
+# shells.
+export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
+source_path="${1:?usage: dms-matugen-extra-templates <image-path>}"
+
+matugen image "$source_path" \
+  -m dark \
+  -t scheme-tonal-spot \
+  --source-color-index 0 \
+  --config "$HOME/.config/matugen/config.toml"

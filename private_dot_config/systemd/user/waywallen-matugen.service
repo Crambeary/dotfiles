@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync matugen/DMS theme to the current waywallen wallpaper
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/waywallen-matugen-sync

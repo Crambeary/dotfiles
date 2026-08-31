@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Watches waywallen's own config.toml (rewritten on every wallpaper change) for
+# a change in last_wallpaper, resolves the id to a real file via waywallen's
+# sqlite library, extracts a frame if it's a video, and hands it to DMS's
+# matugen pipeline so the whole system re-themes automatically.
+#
+# This only covers wallpapers set through waywallen. Wallpapers set directly
+# through DMS's own picker go through the WallpaperWatcherDaemon DMS plugin
+# instead (~/.config/DankMaterialShell/plugins/WallpaperWatcherDaemon), which
+# also calls dms-matugen-extra-templates below.
+set -euo pipefail
+
+# systemd user services get a minimal PATH — sqlite3 here lives under linuxbrew,
+# which is only on PATH in interactive shells, so add it explicitly.
+export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
+CONFIG="$HOME/.config/waywallen/config.toml"
+DB="$HOME/.local/share/waywallen/waywallen-v2.db"
+CACHE_DIR="$HOME/.cache/waywallen-matugen"
+STATE="$CACHE_DIR/last_ids.tsv"
+FRAME="$CACHE_DIR/frame.png"
+LOG="$CACHE_DIR/sync.log"
+
+mkdir -p "$CACHE_DIR"
+exec >>"$LOG" 2>&1
+echo "--- $(date -Is) ---"
+
+[[ -f "$CONFIG" ]] || { echo "no waywallen config found, skipping"; exit 0; }
+
+current=$(awk '
+  /^\[display\./ { key=$0; gsub(/[][]/,"",key); next }
+  /^last_wallpaper/ && key {
+    val=$0; sub(/.*= *"/,"",val); sub(/".*/,"",val)
+    print key "\t" val
+    key=""
+  }
+' "$CONFIG")
+
+touch "$STATE"
+prev=$(cat "$STATE")
+
+new_id=""
+while IFS=$'\t' read -r key id; do
+  [[ -z "$key" ]] && continue
+  old_id=$(awk -F'\t' -v k="$key" '$1==k{print $2}' <<<"$prev")
+  if [[ "$id" != "$old_id" ]]; then
+    new_id="$id"
+  fi
+done <<<"$current"
+
+printf '%s\n' "$current" > "$STATE"
+
+if [[ -z "$new_id" ]]; then
+  echo "no wallpaper id change detected"
+  exit 0
+fi
+
+echo "changed wallpaper id: $new_id"
+
+row=$(sqlite3 -readonly -separator '|' "$DB" \
+  "SELECT library.path, item.path, item.type FROM item JOIN library ON item.library_id = library.id WHERE item.id = $new_id LIMIT 1;")
+
+if [[ -z "$row" ]]; then
+  echo "no db row for id $new_id, skipping"
+  exit 0
+fi
+
+IFS='|' read -r lib_path item_path item_type <<<"$row"
+full_path="$lib_path/$item_path"
+
+if [[ ! -f "$full_path" ]]; then
+  echo "resolved path does not exist: $full_path"
+  exit 1
+fi
+
+echo "resolved: $full_path ($item_type)"
+
+if [[ "$item_type" == "video" ]]; then
+  ffmpeg -y -ss 00:00:02 -i "$full_path" -frames:v 1 "$FRAME" -loglevel error
+  source_path="$FRAME"
+else
+  source_path="$full_path"
+fi
+
+echo "applying matugen theme from: $source_path"
+
+# dms matugen generate handles GTK/Qt/terminals/Hyprland/firefox etc. natively.
+dms matugen generate \
+  --value "$source_path" \
+  --kind image \
+  --state-dir "$HOME/.cache/DankMaterialShell" \
+  --shell-dir /usr/share/quickshell/dms \
+  --config-dir "$HOME/.config/DankMaterialShell"
+
+"$HOME/.local/bin/dms-matugen-extra-templates" "$source_path"
+
+echo "done"
