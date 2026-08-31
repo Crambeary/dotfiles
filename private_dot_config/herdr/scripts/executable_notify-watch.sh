@@ -81,11 +81,42 @@ raise_herdr_cosmic() {
   cos-cli activate -i "$idx" >/dev/null 2>&1
 }
 
+# Hyprland (Wayland-native, no XWayland fallback for xdotool either — same
+# reason as COSMIC above). Focusing the window also switches Hyprland to
+# whatever workspace it lives on, which xdotool windowactivate never did
+# even when it could see the window.
+#
+# This machine's `hyprctl dispatch` does NOT take the classic
+# "dispatch focuswindow address:0x..." string form — it evaluates its
+# argument as Lua (`return hl.dispatch(<arg>)`), per this build's Lua-based
+# hyprland.lua config (see /usr/share/hypr/stubs/hl.meta.lua and the
+# `hl.dsp.focus({ direction = ... })` calls in hyprland.lua). The
+# corresponding window-selector form, confirmed live 2026-08-30, is
+# hl.dsp.focus({ window = "address:0x..." }). A plain classic install
+# without this Lua layer would just use `hyprctl dispatch focuswindow
+# "address:$addr"` instead.
+raise_herdr_hyprland() {
+  local addr host
+  # Herdr's default ui.window_title template is "{hostname}: {workspace}",
+  # not the literal string "herdr" (confirmed against a live window on
+  # 2026-08-30: title was "marc-fedora: Forge") — match the fixed hostname
+  # prefix instead, since the workspace half varies per active workspace.
+  host=$(hostname)
+  addr=$(hyprctl clients -j 2>/dev/null | jq -r --arg prefix "$host: " \
+    '.[] | select(.title | startswith($prefix)) | .address' | head -1)
+  [[ -z "$addr" ]] && return 1
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null 2>&1
+}
+
 raise_herdr() {
   # cos-cli only exists/succeeds under COSMIC; KDE (and anything else) falls
   # straight through to the xdotool/X11 path below, unchanged.
   if [[ "${XDG_CURRENT_DESKTOP:-}" == "COSMIC" ]] && command -v cos-cli >/dev/null 2>&1 \
       && raise_herdr_cosmic; then
+    return 0
+  fi
+  if [[ "${XDG_CURRENT_DESKTOP:-}" == "Hyprland" ]] && command -v hyprctl >/dev/null 2>&1 \
+      && raise_herdr_hyprland; then
     return 0
   fi
   local wid
