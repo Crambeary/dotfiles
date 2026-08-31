@@ -71,6 +71,10 @@ dynamic_background_opacity yes
 # distinguish otherwise)
 watcher focus-dim.py
 hide_window_decorations titlebar-only
+# Without this, Option+<key> composes macOS's native accented/glyph
+# characters (e.g. alt+h -> ˙) instead of sending ESC+<key>, so herdr's
+# alt+hjkl pane-focus bindings never see the chord.
+macos_option_as_alt yes
 {{- else -}}
 hide_window_decorations yes
 # NVIDIA's EGL implementation doesn't expose alpha-capable surfaces to
