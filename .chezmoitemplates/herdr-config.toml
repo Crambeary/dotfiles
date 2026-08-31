@@ -193,7 +193,11 @@ description = "flip split direction (vertical/horizontal)"
 # named-punctuation key (bracket, period, semicolon, etc. — all tested
 # against `herdr config check`) reads naturally as "grow" either, so both
 # grow bindings use a plain "g" mnemonic instead, paired with minus for
-# shrink the same way Hyprland/aerospace pair -/= for shrink/grow.
+# shrink the same way Hyprland/aerospace pair -/= for shrink/grow. Plain
+# alt (not ctrl+alt) is used here: three-modifier chords (ctrl+alt+shift+...)
+# didn't survive the outer terminal at all, while plain alt+r turned out to
+# work fine once resize-pane.sh actually existed on disk (see git history) —
+# the earlier "alt does nothing" symptom was really the missing script.
 # resize-pane.sh works out which border to move so these keys always
 # grow/shrink regardless of which side of a split the pane sits.
 [[keys.command]]
