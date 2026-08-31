@@ -21,7 +21,7 @@ $character"""
 
 # Change the default prompt characters
 "$schema" = 'https://starship.rs/config-schema.json'
-palette = 'gruvbox_dark'
+palette = 'matugen'
 
 [character]
 # old config
@@ -121,6 +121,23 @@ disabled = true
 [ruby]
 format = "via [ $version]($style) "
 disabled = true
+
+# Colors this prompt actually uses (white/yellow/green/red/color_fg0/color_blue
+# override starship's builtin color names -- see the modules above). Values
+# below are a static gruvbox_dark-derived fallback for devices without matugen
+# running; on a matugen device, matugen/scripts/apply-starship-theme.sh
+# splices generated Material colors in between the markers, keyed to the same
+# green/yellow anchors herdr uses (see matugen/config.toml) so "branch/success"
+# and "duration/distro" stay the same hue across tools.
+[palettes.matugen]
+# BEGIN MATUGEN THEME
+color_fg0 = '#fbf1c7'
+color_blue = '#458588'
+white = '#ebdbb2'
+yellow = '#d79921'
+green = '#98971a'
+red = '#cc241d'
+# END MATUGEN THEME
 
 [palettes.gruvbox_dark]
 color_fg0 = '#fbf1c7'

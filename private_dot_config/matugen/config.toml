@@ -49,6 +49,11 @@ input_path = "/home/marc/.config/matugen/templates/herdr.toml"
 output_path = "/home/marc/.config/herdr/matugen-theme.toml"
 post_hook = "/home/marc/.config/herdr/scripts/apply-matugen-theme.sh"
 
+[templates.starship]
+input_path = "/home/marc/.config/matugen/templates/starship-palette.toml"
+output_path = "/home/marc/.config/starship-matugen-theme.toml"
+post_hook = "/home/marc/.config/matugen/scripts/apply-starship-theme.sh"
+
 [templates.obsidian-forge]
 input_path = '/home/marc/.config/matugen/templates/obsidian.css'
 output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
