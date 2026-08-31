@@ -1,0 +1,83 @@
+#!/bin/bash
+# Launch a URL as an isolated app window (no tabs/toolbar/URL bar).
+#
+# The default browser here is Zen (Firefox-based) and Firefox has no
+# built-in equivalent of Chromium's --app= flag, so webapp launches always
+# target a Chromium-family browser instead of whatever
+# `xdg-settings get default-web-browser` returns. Preference order:
+# an explicit override (~/.config/dms-webapp/browser), then known
+# Chromium-family desktop entries by name (Brave Origin/Brave first),
+# then the system default browser if it happens to be Chromium-family.
+#
+# dms:summary=Launch a URL as an isolated webapp window
+# dms:args=<url> [extra browser args...]
+set -euo pipefail
+shopt -s nullglob
+
+usage() { echo "usage: dms-launch-webapp <url> [extra browser args...]" >&2; exit 1; }
+(( $# >= 1 )) || usage
+
+url=$1
+shift
+
+CONFIG_FILE="$HOME/.config/dms-webapp/browser"
+APP_DIRS=("$HOME/.local/share/applications" "/usr/share/applications")
+
+find_desktop_file() {
+  local pattern=$1 dir f
+  for dir in "${APP_DIRS[@]}"; do
+    for f in "$dir"/$pattern; do
+      [[ -f $f ]] && { printf '%s\n' "$f"; return 0; }
+    done
+  done
+  return 1
+}
+
+resolve_exec_bin() {
+  # First whitespace-separated token of Exec=; desktop field codes
+  # (%u %U %f %F) trail it and are for the launcher grid, not us.
+  sed -n 's/^Exec=\([^ ]*\).*/\1/p' "$1" | head -1
+}
+
+desktop_file=""
+
+if [[ -f $CONFIG_FILE ]]; then
+  override=$(<"$CONFIG_FILE")
+  desktop_file=$(find_desktop_file "$override") || {
+    echo "dms-launch-webapp: configured browser '$override' (from $CONFIG_FILE) not found in applications dirs" >&2
+    exit 1
+  }
+fi
+
+if [[ -z $desktop_file ]]; then
+  for pattern in 'brave-origin*.desktop' 'brave-browser*.desktop' 'brave.desktop' \
+    'chromium*.desktop' 'google-chrome*.desktop' 'vivaldi*.desktop' \
+    'microsoft-edge*.desktop' 'opera*.desktop' 'helium*.desktop'; do
+    desktop_file=$(find_desktop_file "$pattern") && break
+  done
+fi
+
+if [[ -z $desktop_file ]]; then
+  default_browser=$(xdg-settings get default-web-browser 2>/dev/null || true)
+  case $default_browser in
+  google-chrome* | brave* | microsoft-edge* | opera* | vivaldi* | helium* | chromium*)
+    desktop_file=$(find_desktop_file "$default_browser") || true
+    ;;
+  esac
+fi
+
+if [[ -z $desktop_file ]]; then
+  echo "dms-launch-webapp: no Chromium-family browser found (checked Brave Origin/Brave/Chromium/Chrome/Vivaldi/Edge/Opera)." >&2
+  echo "Install one -- Brave Origin recommended (free on Linux, minimal build): https://brave.com/origin/" >&2
+  echo "Or point at a specific installed browser's .desktop file:" >&2
+  echo "  mkdir -p ~/.config/dms-webapp && echo brave-origin.desktop > $CONFIG_FILE" >&2
+  exit 1
+fi
+
+bin=$(resolve_exec_bin "$desktop_file")
+[[ -n $bin ]] || {
+  echo "dms-launch-webapp: could not resolve an Exec binary from $desktop_file" >&2
+  exit 1
+}
+
+exec setsid "$bin" --app="$url" "$@"

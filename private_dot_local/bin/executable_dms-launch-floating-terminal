@@ -1,0 +1,22 @@
+#!/bin/bash
+# Launch a command in a kitty window tagged with a distinct app-id, so a
+# Hyprland window rule (see ~/.config/hypr/dms/windowrules.lua) can float
+# and center it -- the same "console popout" trick omarchy uses for its
+# gum-based install prompts (bin/omarchy-launch-floating-terminal-with-
+# presentation, github.com/omacom/omarchy), minus the presentation/theming
+# wrapper that assumes omarchy's own gum-env plumbing.
+#
+# dms:summary=Launch a command in a floating, centered terminal window
+# dms:args=<command> [args...]
+set -euo pipefail
+
+(( $# >= 1 )) || {
+  echo "usage: dms-launch-floating-terminal <command> [args...]" >&2
+  exit 1
+}
+
+# No --hold: the command itself is responsible for a visible "done, press any
+# key to close" pause (omarchy's pattern -- see omarchy-show-done in
+# github.com/omacom/omarchy, bin/). --hold's own prompt was easy to miss and
+# meant closing the window took two keypresses instead of one.
+exec setsid kitty --class dms.floating-terminal --title "DMS" "$@"
