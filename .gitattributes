@@ -8,3 +8,11 @@
 # invents diffs against a bundle that never changed.
 dot_glzr/zebar/**/_app/**   linguist-generated -diff -text
 dot_glzr/zebar/**/index.html linguist-generated -text
+
+# Windows Terminal owns this file: it rewrites settings.json itself on every
+# settings change, always with LF. core.autocrlf=true was checking the source
+# copy out as CRLF, so chezmoi saw a whole-file diff against a target that was
+# byte-identical apart from line endings -- and re-writing it as CRLF just made
+# Terminal convert it straight back, so the drift never cleared. -text pins the
+# working copy to the LF the app actually writes.
+AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json -text

@@ -68,6 +68,46 @@ install-powershell7.cmd
 .config/zellij/**
 {{ end }}
 
+# Wayland/Hyprland desktop stack: Linux-only by construction, and previously
+# ungated, so a Windows `chezmoi apply` laid the whole tree into C:\Users\marc
+# (systemd units, QML shell plugins, matugen theming) where nothing reads any of
+# it. Intermediate dirs are listed alongside their `/**` pattern for the same
+# reason the Library entries above are: a bare `foo/**` still lets chezmoi
+# create the empty parent.
+#
+# matugen is included because, despite the config existing on macOS too (under
+# Library/Application Support), every template and script under .config/matugen
+# targets a Linux-only app or bakes in a Linux path, and its post-hooks are
+# bash. Windows gets no matugen pipeline at all.
+{{ if eq .chezmoi.os "windows" }}
+.config/DankMaterialShell
+.config/DankMaterialShell/**
+.config/hypr
+.config/hypr/**
+.config/matugen
+.config/matugen/**
+.config/swaync
+.config/swaync/**
+.config/systemd
+.config/systemd/**
+.config/waynergy
+.config/waynergy/**
+.local/bin/dms-*
+.local/bin/matugen-wallpaper-sync
+.local/bin/waywallen-matugen-sync
+# Steam's Linux compat symlink (~/.steam/steam -> ~/.local/share/Steam).
+# Windows Steam has no such layout, and creating a symlink here needs Developer
+# Mode or an elevated shell, so apply would prompt or fail for nothing.
+.steam
+.steam/**
+# Linux login shell: hardcodes /home/marc, sources ~/.cargo/env unguarded, and
+# exists mainly so Hyprland can push PATH into the systemd user environment.
+# Git Bash *does* read ~/.profile, which is exactly why this must not land here.
+# (.zshenv deliberately stays tracked on Windows -- it pairs with the .zshrc
+# already deployed here and guards its Linux-only branch at runtime.)
+.profile
+{{ end }}
+
 
 # macOS only files
 {{ if ne .chezmoi.os "darwin" }}
