@@ -26,11 +26,9 @@ eval "$(zoxide init zsh)"
 
 export EDITOR=hx
 export VISUAL=hx
-
-{{- if or (eq .chezmoi.hostname "marc-mac-fedora") (eq .chezmoi.hostname "marc-fedora") }}
+export HASS_SERVER="http://192.168.1.210"
 # sudoplz askpass helper — lets agents run `sudo -A` instead of failing on the password prompt
 command -v askpass >/dev/null 2>&1 && export SUDO_ASKPASS="$(command -v askpass)"
-{{- end }}
 
 HISTFILE=~/.zsh_history
 HISTSIZE=50000
@@ -53,15 +51,7 @@ setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY
 #     reliably short-circuit, so `and (hasKey . "x") .x` can still hit that.
 #   - non-empty: a blank answer is stored as "" rather than omitted, and would
 #     otherwise expand to the broken path ~/VulkanSDK//macOS.
-{{ if hasKey . "vulkan_sdk_version" -}}
-{{ if .vulkan_sdk_version -}}
-export VULKAN_SDK=~/VulkanSDK/{{ .vulkan_sdk_version }}/macOS
-export PATH="$VULKAN_SDK/bin:$PATH"
-export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
-export VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d"
-export PKG_CONFIG_PATH="$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH"
-{{ end -}}
-{{ end }}
+
 # Antidote — static bundle pattern.
 # Regenerate the flat bundle only when the plugin list changes, then source it
 # directly. Faster than `antidote load` (no subprocess on normal startup) and
@@ -138,23 +128,10 @@ fi
 # back into this template; adopted here so `chezmoi apply` stops reverting it.
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
-{{- if or (eq .chezmoi.hostname "marc-fedora") (eq .chezmoi.hostname "marc-mac-fedora") }}
-
 # Audio: wine and yabridge (personal Linux machines only)
 export WINEESYNC=1
 export WINEFSYNC=1
 export PATH="$PATH:$HOME/.local/share/yabridge"
-{{- end }}
-{{- if eq .chezmoi.hostname "marc-mac-fedora" }}
-
-# ML4W Hyprland integration aliases/scripts (merged in, not the full ML4W
-# zshrc stack). This host dual-boots KDE and Hyprland, so it's gated on the
-# running session — the files exist on disk either way.
-if [[ "$XDG_CURRENT_DESKTOP" == "Hyprland" || -n "$HYPRLAND_INSTANCE_SIGNATURE" ]]; then
-  [[ -f ~/.config/zshrc/25-aliases ]] && source ~/.config/zshrc/25-aliases
-  [[ -f ~/.config/zshrc/30-autostart ]] && source ~/.config/zshrc/30-autostart
-fi
-{{- end }}
 
 # cargo/atuin installers append these unguarded to ~/.zshrc directly; adopted
 # here (guarded) so `chezmoi apply` stops reverting them. atuin's own init
