@@ -1,0 +1,6 @@
+# Zebar widgets are committed as prebuilt SvelteKit output — there is no source
+# in this repo to rebuild them from, so the bundles have to be tracked. Their
+# filenames are content hashes, so every upstream rebuild deletes and re-adds
+# the whole tree; collapse that noise instead of trying to diff it.
+dot_glzr/zebar/**/_app/**   linguist-generated -diff
+dot_glzr/zebar/**/index.html linguist-generated
