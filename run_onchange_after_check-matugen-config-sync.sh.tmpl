@@ -3,8 +3,11 @@
 # both platforms is registered in only one of the two matugen configs:
 #   - Linux: private_dot_config/matugen/config.toml -> ~/.config/matugen/config.toml
 #   - macOS: Library/Application Support/com.InioX.matugen/config.toml
-# Both files are deployed on every host regardless of OS, so this can always
-# check both sides.
+# Only one of the two is deployed on any given host (.chezmoiignore gates
+# Library off non-darwin, and .config/matugen off Windows), so a cross-config
+# comparison is only meaningful where both files happen to be present -- in
+# practice a mac that also keeps a Linux-side config around. Everywhere else
+# this is a no-op; see the both-present guard below.
 #
 # "Shared" isn't derivable from input_path -- most Linux-config templates
 # (millennium, opencode, obsidian, zen-wabi, ...) target apps that only
@@ -31,9 +34,15 @@ linux_cfg = pathlib.Path.home() / ".config/matugen/config.toml"
 mac_cfg = pathlib.Path.home() / "Library/Application Support/com.InioX.matugen/config.toml"
 
 
+# Nothing to compare unless both configs are on this host. Absence is the
+# normal case, not drift: treating a missing config as "zero templates" made
+# every shared name look missing and failed `chezmoi apply` outright on both
+# Linux and Windows.
+if not (linux_cfg.exists() and mac_cfg.exists()):
+    sys.exit(0)
+
+
 def template_names(path):
-    if not path.exists():
-        return set()
     return set(re.findall(r'\[templates\.([\w-]+)\]', path.read_text()))
 
 
