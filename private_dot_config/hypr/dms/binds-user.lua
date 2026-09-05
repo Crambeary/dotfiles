@@ -1,5 +1,25 @@
 -- Optional per-user keybind overrides (managed by DMS). Loaded after default binds.
 
+-- Per-monitor workspaces (awesome/dwm-style): SUPER+N focuses/moves to
+-- workspace N *on the currently active monitor* instead of a single global
+-- workspace N. Overrides the SUPER+1..9 binds from dms/binds.lua below,
+-- since this file loads after it. https://github.com/shezdy/hyprsplit
+local hyprsplit = require("hyprsplit")
+hyprsplit.config({ num_workspaces = 10, persistent_workspaces = false })
+-- Explicit order avoids hyprsplit falling back to raw monitor-id-based
+-- blocks (id 3 would've meant workspaces 31-40) before settling here.
+hyprsplit.monitor_priority({ "HDMI-A-1", "DP-2" })
+for i = 1, 10 do
+	local key = i % 10 -- 10 maps to key 0
+	hl.bind("SUPER + " .. key, hyprsplit.dsp.focus({ workspace = i }))
+	hl.bind("SUPER + SHIFT + " .. key, hyprsplit.dsp.window.move({ workspace = i, follow = false }))
+end
+-- Recover windows stranded on another monitor's now-invalid workspace
+-- (e.g. after unplugging a monitor).
+hl.bind("SUPER + CTRL + G", hyprsplit.dsp.grab_rogue_windows())
+-- Swap all windows between the active workspaces of two monitors.
+hl.bind("SUPER + D", hyprsplit.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }))
+
 hl.bind("CTRL + space", hl.dsp.exec_cmd("vicinae toggle"))
 
 -- Launch default browser (mirrors Omarchy's SUPER+SHIFT+B, via xdg-settings

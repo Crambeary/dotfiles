@@ -9,3 +9,7 @@
   url = "https://github.com/alacritty/alacritty-theme.git"
 {{ end }}
 
+[".config/hypr/hyprsplit"]
+  type = "git-repo"
+  url = "https://github.com/shezdy/hyprsplit.git"
+
