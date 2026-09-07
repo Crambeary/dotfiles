@@ -41,8 +41,17 @@ compare_to = "{{ colors.primary.default.hex }}"
 # Sudoers drop-in (/etc/sudoers.d/papirus-folders) pins the NOPASSWD rule to
 # this exact absolute path, so this must match where papirus-folders is
 # installed (/usr/local/bin, installed system-wide from upstream's
-# install.sh with PREFIX=/usr/local).
-post_hook = 'nohup sudo -n /usr/local/bin/papirus-folders -C {{ closest_color }} -u > /dev/null 2>&1 &'
+# install.sh with PREFIX=/usr/local). A symlink at that path currently
+# points at the AUR package's binary (/usr/bin/papirus-folders) -- keep
+# that symlink in place, since re-installing papirus-folders from AUR does
+# not recreate it.
+#
+# The trailing dbus-send call emits KIconLoader's live-reload signal so
+# already-running KDE/Qt apps (Dolphin, etc.) pick up the recolored folders
+# immediately, matching how System Settings' own icon picker behaves --
+# papirus-folders' own -u only rebuilds the on-disk icon cache, it doesn't
+# notify running apps.
+post_hook = 'nohup sh -c "sudo -n /usr/local/bin/papirus-folders -C {{ closest_color }} -u && dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0" > /dev/null 2>&1 &'
 
 [templates.herdr]
 input_path = "/home/marc/.config/matugen/templates/herdr.toml"
@@ -149,3 +158,50 @@ post_hook = '/home/marc/.config/matugen/scripts/apply-heroic-theme.sh'
 [templates.zen-wabi-vars]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-vars.json'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-vars.json'
+
+[templates.claude-desktop]
+input_path = '/home/marc/.config/matugen/templates/claude-desktop.jsonc'
+output_path = '/home/marc/.config/Claude/claude-desktop-extra.jsonc'
+# claude-desktop-extra reads this file at APP STARTUP ONLY (not live) -
+# hand-edits (which is what matugen's overwrite looks like to it) need a
+# restart to take effect. This template owns the whole file: it always writes
+# activeTheme="matugen" and a single "matugen" theme entry, so switching
+# themes by hand in the app's own picker (Ctrl+Shift+T) will be reverted on
+# the next wallpaper change. post_hook just notifies rather than
+# force-restarting the app, since that would kill window state / in-flight
+# chats without asking first.
+post_hook = 'notify-send -a matugen "Claude theme updated" "Restart Claude Desktop to apply the new colors" 2>/dev/null || true'
+
+[templates.t3code]
+input_path = '/home/marc/.config/matugen/templates/t3code-theme.json'
+output_path = '/home/marc/.t3/userdata/themes/wallpaper.json'
+# T3 Code supports this natively as an "environment theme" (see
+# https://github.com/pingdotgg/t3code/issues/10448) -- it watches
+# userdata/themes/ and retints connected clients within ~100ms of the file
+# being rewritten. No re-import needed after the one-time setup below;
+# a VS-Code-style token theme (the old approach here, requiring manual
+# re-import every regen) was explicitly declined upstream.
+#
+# One-time setup: in T3 Code, Settings > Appearance, select the "Wallpaper"
+# theme card once. Every regeneration after that retints it live.
+post_hook = 'notify-send -a matugen "T3 Code theme updated" "First time only: select \"Wallpaper\" in Settings > Appearance" 2>/dev/null || true'
+
+[templates.vesktop]
+input_path = '/home/marc/.config/matugen/templates/vesktop.css'
+output_path = '/home/marc/.config/vesktop/settings/quickCss.css'
+# Vesktop watches quickCss.css and hot-reloads it live, no restart or
+# post_hook needed -- useQuickCss is already true in settings/settings.json.
+
+[templates.spicetify-sleek]
+input_path = '/home/marc/.config/matugen/templates/spicetify-sleek.ini'
+output_path = '/home/marc/.config/spicetify/Themes/Sleek/color.ini'
+# post_hook does a live, no-flicker colors.css swap over Spotify's CDP port
+# (see apply-spicetify-theme.sh) instead of a full spicetify "watch" reload,
+# which resets the client back to Home. This REQUIRES Spotify to be running
+# with --remote-debugging-port=9222 --remote-allow-origins=*, baked into
+# ~/.local/share/applications/spotify.desktop (a user override of
+# /usr/share/applications/spotify.desktop, which has no debug flags). If that
+# override is ever lost (Spotify reinstalled, override file deleted), the
+# script silently falls back to the flicker-y full reload -- restore the
+# override to get the smooth path back.
+post_hook = '/home/marc/.config/matugen/scripts/apply-spicetify-theme.sh'
