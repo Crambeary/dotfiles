@@ -85,6 +85,13 @@ channel = "stable"
 # Most reliable direct bindings are ctrl+letter, function keys, and explicit modified chords.
 # alt+..., cmd/super, and punctuation-with-modifiers may depend on your terminal/tmux setup.
 # prefix = "ctrl+b"
+# Leader is cmd+space on macOS (Raycast's launcher hotkey is remapped to
+# ctrl+space there to free this up) and ctrl+space elsewhere.
+{{ if eq .chezmoi.os "darwin" -}}
+prefix = "cmd+space"
+{{ else -}}
+prefix = "ctrl+space"
+{{ end -}}
 
 # Prefix-mode actions
 # help = "prefix+?"
@@ -106,9 +113,9 @@ open_notification_target = ""
 # close_workspace = "prefix+shift+d"
 # previous_workspace = "" # optional, unset by default
 # next_workspace = ""     # optional, unset by default
-# previous_agent = ""     # optional, unset by default
-# next_agent = ""         # optional, unset by default
-# focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
+previous_agent = "prefix+shift+k"
+next_agent = "prefix+shift+j"
+focus_agent = "prefix+alt+1..9"
 # remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
 # new_tab = "prefix+c"
 # rename_tab = "prefix+shift+t"
@@ -441,6 +448,7 @@ copy_on_select = true
 # Background notification popup delivery
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "spaces"
+status_indicators = "symbols"
 [ui.toast]
 # off = disable pop-up notifications
 # herdr = show in-app toasts
