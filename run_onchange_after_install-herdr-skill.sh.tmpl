@@ -1,0 +1,30 @@
+#!/bin/bash
+# Installs herdr's agent skill (`herdr --skill`) into the user-level skill
+# directories for Claude Code, Codex (~/.agents/skills), and opencode. The
+# skill text ships with the herdr binary; the hash below is rendered from
+# `herdr --skill` at apply time, so `chezmoi apply` reinstalls the skill only
+# when a herdr update changes it.
+# Best-effort: a machine without herdr installed just skips it.
+{{- if lookPath "herdr" }}
+# herdr skill sha256: {{ output "herdr" "--skill" | sha256sum }}
+{{- end }}
+set -uo pipefail
+
+if ! command -v herdr >/dev/null 2>&1; then
+  echo "herdr: not installed — skipping skill install" >&2
+  exit 0
+fi
+
+skill="$(herdr --skill)" || {
+  echo "herdr: --skill failed — skipping skill install" >&2
+  exit 0
+}
+
+for dir in \
+  "$HOME/.claude/skills" \
+  "$HOME/.agents/skills" \
+  "$HOME/.config/opencode/skills"; do
+  mkdir -p "$dir/herdr"
+  printf '%s\n' "$skill" >"$dir/herdr/SKILL.md"
+  echo "herdr: installed skill to $dir/herdr"
+done
