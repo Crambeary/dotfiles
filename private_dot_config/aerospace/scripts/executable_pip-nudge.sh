@@ -26,17 +26,25 @@ NEXT=$(( (CORNER + 1) % 4 ))
 echo "$NEXT" > "$STATE_FILE"
 
 SCREEN_CACHE="${TMPDIR:-/tmp}/aerospace-screen-size"
-if [ ! -s "$SCREEN_CACHE" ]; then
+# Regenerate if missing/empty, or a stale cache from an older 2-field version
+# of this script (width,height) is sitting there instead of the current
+# 3-field one (width,visibleHeight,fullHeight).
+if [ ! -s "$SCREEN_CACHE" ] || [ "$(tr -dc ',' < "$SCREEN_CACHE" | wc -c)" -ne 2 ]; then
+    # visibleFrame's height excludes the Dock's reserved strip, which pushed
+    # the bottom corners up above it. We're fine going behind an auto-hidden
+    # Dock, so bottom corners use the full screen frame height instead.
     osascript -e '
 use framework "AppKit"
 use scripting additions
-set screenFrame to (current application'"'"'s NSScreen'"'"'s mainScreen()'"'"'s visibleFrame())
-set frameSize to item 2 of screenFrame
-return ((item 1 of frameSize) as integer as string) & "," & ((item 2 of frameSize) as integer as string)
+set aScreen to (current application'"'"'s NSScreen'"'"'s mainScreen())
+set visSize to item 2 of (aScreen'"'"'s visibleFrame())
+set fullSize to item 2 of (aScreen'"'"'s frame())
+return ((item 1 of visSize) as integer as string) & "," & ((item 2 of visSize) as integer as string) & "," & ((item 2 of fullSize) as integer as string)
 ' > "$SCREEN_CACHE"
 fi
 SCREEN_W=$(cut -d, -f1 "$SCREEN_CACHE")
 SCREEN_H=$(cut -d, -f2 "$SCREEN_CACHE")
+SCREEN_H_FULL=$(cut -d, -f3 "$SCREEN_CACHE")
 
 # Known browsers that spawn a "Picture-in-Picture"-titled window. Add more
 # process names here (as they'd appear in `osascript -e 'tell application
@@ -52,15 +60,22 @@ tell application "System Events"
         set pipWin to window "Picture-in-Picture"
         set {winW, winH} to size of pipWin
         set margin to 20
+        -- Window position is in absolute screen coordinates, but SCREEN_W/H
+        -- come from NSScreen visibleFrame, which already excludes the
+        -- sketchybar strip at the top. A plain margin from y=0 would sit
+        -- under (or through) the bar, so top corners get their own margin
+        -- that clears the 32pt bar plus a bit of breathing room, landing
+        -- just below it, in line with the AeroSpace top gap.
+        set topMargin to 45
 
         if $CORNER is 0 then
-            set targetPos to {margin, margin}
+            set targetPos to {margin, topMargin}
         else if $CORNER is 1 then
-            set targetPos to {$SCREEN_W - winW - margin, margin}
+            set targetPos to {$SCREEN_W - winW - margin, topMargin}
         else if $CORNER is 2 then
-            set targetPos to {$SCREEN_W - winW - margin, $SCREEN_H - winH - margin}
+            set targetPos to {$SCREEN_W - winW - margin, $SCREEN_H_FULL - winH - margin}
         else
-            set targetPos to {margin, $SCREEN_H - winH - margin}
+            set targetPos to {margin, $SCREEN_H_FULL - winH - margin}
         end if
 
         set position of pipWin to targetPos
