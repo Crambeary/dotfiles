@@ -10,6 +10,14 @@
 # First run will prompt macOS to grant /usr/bin/osascript Accessibility
 # access under System Settings > Privacy & Security > Accessibility.
 #
+# Two things made this slow enough to notice (~0.85s, sometimes 1.5s+):
+# System Events enumerating every running process's windows to find the PIP
+# one, and loading the AppKit framework every run just to read the screen
+# size. Querying a specific process's windows directly is ~0.1s regardless
+# of total process count, so we try a short list of known PIP-hosting
+# browsers by name instead of scanning everything. Screen size is cached to
+# disk since it doesn't change between runs.
+#
 # Bound to ctrl-p in ~/.aerospace.toml.
 
 STATE_FILE="${TMPDIR:-/tmp}/aerospace-pip-corner"
@@ -17,44 +25,49 @@ CORNER=$(cat "$STATE_FILE" 2>/dev/null || echo 0)
 NEXT=$(( (CORNER + 1) % 4 ))
 echo "$NEXT" > "$STATE_FILE"
 
-osascript <<EOF
+SCREEN_CACHE="${TMPDIR:-/tmp}/aerospace-screen-size"
+if [ ! -s "$SCREEN_CACHE" ]; then
+    osascript -e '
 use framework "AppKit"
 use scripting additions
-
-set screenFrame to (current application's NSScreen's mainScreen()'s visibleFrame())
+set screenFrame to (current application'"'"'s NSScreen'"'"'s mainScreen()'"'"'s visibleFrame())
 set frameSize to item 2 of screenFrame
-set screenW to (item 1 of frameSize) as integer
-set screenH to (item 2 of frameSize) as integer
-set margin to 20
+return ((item 1 of frameSize) as integer as string) & "," & ((item 2 of frameSize) as integer as string)
+' > "$SCREEN_CACHE"
+fi
+SCREEN_W=$(cut -d, -f1 "$SCREEN_CACHE")
+SCREEN_H=$(cut -d, -f2 "$SCREEN_CACHE")
 
+# Known browsers that spawn a "Picture-in-Picture"-titled window. Add more
+# process names here (as they'd appear in `osascript -e 'tell application
+# "System Events" to get name of every process'`) if you pick up another one.
+CANDIDATES="zen Safari"
+
+for PROC in $CANDIDATES; do
+    RESULT=$(osascript <<EOF
 tell application "System Events"
-    set pipWin to missing value
-    repeat with proc in processes
-        try
-            repeat with w in windows of proc
-                if name of w contains "Picture-in-Picture" then
-                    set pipWin to w
-                    exit repeat
-                end if
-            end repeat
-        end try
-        if pipWin is not missing value then exit repeat
-    end repeat
+    if not (exists process "$PROC") then return "notfound"
+    tell process "$PROC"
+        if not (exists window "Picture-in-Picture") then return "notfound"
+        set pipWin to window "Picture-in-Picture"
+        set {winW, winH} to size of pipWin
+        set margin to 20
 
-    if pipWin is missing value then return
+        if $CORNER is 0 then
+            set targetPos to {margin, margin}
+        else if $CORNER is 1 then
+            set targetPos to {$SCREEN_W - winW - margin, margin}
+        else if $CORNER is 2 then
+            set targetPos to {$SCREEN_W - winW - margin, $SCREEN_H - winH - margin}
+        else
+            set targetPos to {margin, $SCREEN_H - winH - margin}
+        end if
 
-    set {winW, winH} to size of pipWin
-
-    if $CORNER is 0 then
-        set targetPos to {margin, margin}
-    else if $CORNER is 1 then
-        set targetPos to {screenW - winW - margin, margin}
-    else if $CORNER is 2 then
-        set targetPos to {screenW - winW - margin, screenH - winH - margin}
-    else
-        set targetPos to {margin, screenH - winH - margin}
-    end if
-
-    set position of pipWin to targetPos
+        set position of pipWin to targetPos
+        return "found"
+    end tell
 end tell
 EOF
+)
+    [ "$RESULT" = "found" ] && break
+done
