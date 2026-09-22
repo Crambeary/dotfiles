@@ -144,6 +144,7 @@ ctrl-r = 'layout tiles horizontal vertical' # Matches Hyprland's Super-R toggle 
 
 ctrl-o = 'layout floating tiling' # Matches Hyprland's Super-C float toggle. Moved off ctrl-c: it collided with the terminal's cancel combo on Windows.
 ctrl-p = 'exec-and-forget ~/.config/aerospace/scripts/pip-nudge.sh' # Cycles a PIP window (Zen/Safari) between screen corners; AeroSpace can't manage it directly, see scripts/pip-nudge.sh.
+alt-p = ['mode pip', 'exec-and-forget sketchybar --set pip_mode_icon drawing=on'] # Enter freeform move/resize mode for the PIP window; see [mode.pip.binding] and scripts/pip-control.sh.
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
 #   'reload-config',  ]
 ctrl-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
@@ -250,6 +251,24 @@ esc = 'mode main'
 
 [mode.ignoring.binding]
 ctrl-shift-esc = 'mode main'
+
+# 'pip' binding mode declaration: freeform move/resize of a Picture-in-
+# Picture window (Zen/Safari), entered with alt-p. Separate from ctrl-p's
+# corner-cycle, which stays a single unmoded tap. hjkl moves 20px at a time,
+# shift-hjkl resizes freeform (h/k shrink, l/j grow), minus/equal scale by
+# 10% while keeping the current aspect ratio. See scripts/pip-control.sh.
+[mode.pip.binding]
+h = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh move -20 0'
+l = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh move 20 0'
+k = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh move 0 -20'
+j = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh move 0 20'
+shift-h = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh resize -20 0'
+shift-l = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh resize 20 0'
+shift-k = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh resize 0 -20'
+shift-j = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh resize 0 20'
+minus = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh scale -10'
+equal = 'exec-and-forget ~/.config/aerospace/scripts/pip-control.sh scale 10'
+esc = ['exec-and-forget sketchybar --set pip_mode_icon drawing=off', 'mode main']
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.teams2'

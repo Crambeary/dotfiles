@@ -9,6 +9,9 @@ LOCK=􀒳
 BELL=􀋚
 BELL_DOT=􀝗
 
+# AeroSpace pip-mode Icons
+PIP_ENTER=􀑨
+
 # Homebrew Icons
 BREW=􀐛
 
