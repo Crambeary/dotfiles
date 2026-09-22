@@ -142,7 +142,8 @@ ctrl-s = 'layout v_accordion' # 'layout stacking' in i3
 ctrl-w = 'layout h_accordion' # 'layout tabbed' in i3
 ctrl-r = 'layout tiles horizontal vertical' # Matches Hyprland's Super-R toggle split.
 
-ctrl-c = 'layout floating tiling' # Matches Hyprland's Super-C float toggle.
+ctrl-o = 'layout floating tiling' # Matches Hyprland's Super-C float toggle. Moved off ctrl-c: it collided with the terminal's cancel combo on Windows.
+ctrl-p = 'exec-and-forget ~/.config/aerospace/scripts/pip-nudge.sh' # Cycles a PIP window (Zen/Safari) between screen corners; AeroSpace can't manage it directly, see scripts/pip-nudge.sh.
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
 #   'reload-config',  ]
 ctrl-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
