@@ -98,4 +98,4 @@ require("dms.binds")
 require("dms.binds-user")
 require("dms.windowrules")
 pcall(require, "/home/marc/.config/hypr/openwhispr-binds.lua")
-require("dms.voxtype")
+-- require("dms.voxtype") -- disabled: voxtype plugin isn't installed on this machine
