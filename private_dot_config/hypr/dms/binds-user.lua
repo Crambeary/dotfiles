@@ -23,11 +23,17 @@ hl.bind("SUPER + CTRL + G", hyprsplit.dsp.grab_rogue_windows(), { description = 
 -- Swap all windows between the active workspaces of two monitors.
 hl.bind("SUPER + D", hyprsplit.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }), { description = "Swap workspaces between this monitor and the next" })
 
-hl.bind("CTRL + space", hl.dsp.exec_cmd("vicinae toggle"), { description = "Toggle Vicinae launcher" })
+-- Vicinae takes SUPER+space over from DMS spotlight (binds.lua, loaded
+-- first), freeing CTRL+space for herdr's leader. DMS spotlight-bar stays
+-- on ALT+space for now. Lua binds stack rather than replace, so the DMS one
+-- has to be unbound explicitly or both launchers fire.
+hl.unbind("SUPER + space")
+hl.bind("SUPER + space", hl.dsp.exec_cmd("vicinae toggle"), { description = "Toggle Vicinae launcher" })
 
--- Terminal on SUPER+RETURN, browser on SUPER+SHIFT+RETURN (replaces the old
--- SUPER+T / SUPER+B binds from binds.lua below, which loads first).
-hl.bind("SUPER + T", function() end, { description = "Unbound (moved to SUPER+RETURN)" })
+-- Terminal on SUPER+RETURN, browser on SUPER+SHIFT+RETURN. DMS's binds.lua
+-- (loaded first) still puts kitty on SUPER+T, so drop it; SUPER+B has no
+-- DMS default to remove.
+hl.unbind("SUPER + T")
 hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("kitty"), { description = "Open terminal" })
 
 -- Launch default browser (mirrors Omarchy's SUPER+SHIFT+B, via xdg-settings
@@ -143,7 +149,9 @@ hl.bind("SUPER + CTRL + PRINT", hl.dsp.exec_cmd("/home/marc/.local/bin/capture-t
 -- Marc's fuller version of Omarchy's SUPER+O "pop window out (float & pin)".
 -- Note: this Hyprland build parses `hyprctl dispatch <text>` as Lua
 -- (hl.dispatch(<text>)), so dispatchers must use hl.dsp.* calls, not the
--- classic "dispatcher arg1 arg2" string syntax.
+-- classic "dispatcher arg1 arg2" string syntax. DMS binds SUPER+O to its
+-- overview in binds.lua; unbind it so only this fires.
+hl.unbind("SUPER + O")
 hl.bind("SUPER + O", hl.dsp.exec_cmd([[
   hyprctl dispatch 'hl.dsp.window.float({action = "toggle"})'
   sleep 0.1
