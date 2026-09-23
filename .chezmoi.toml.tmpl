@@ -8,12 +8,17 @@ so re-running `chezmoi init` on a configured machine is a no-op rather than a
 re-interrogation. Non-interactive runs (`--no-tty`) fall through to the default.
 */ -}}
 {{ $vulkan := promptStringOnce . "vulkan_sdk_version" "Vulkan SDK version installed here (blank if none, e.g. 1.4.350.1)" "" -}}
+{{ $millennium := promptBoolOnce . "has_steam_millennium" "Does this machine have Steam + the Millennium theme loader installed" false -}}
 
 [data]
   # Consumed by dot_zshrc.tmpl. Blank means "no SDK on this machine", which
   # renders no Vulkan environment at all — correct for the Linux hosts.
   # After installing a new SDK: edit this value, then `chezmoi apply ~/.zshrc`.
   vulkan_sdk_version = {{ $vulkan | quote }}
+  # Consumed by matugen/config.toml.tmpl. False disables the millennium-*
+  # matugen templates, which otherwise fail (matugen can't resolve their
+  # input/output paths on a machine with no ~/.steam/steam/millennium dir).
+  has_steam_millennium = {{ $millennium }}
 
 {{ if eq .chezmoi.os "windows" }}
 # Windows can't execute .sh scripts directly (no shebang support). Claude

@@ -72,9 +72,11 @@ input_path = "/home/marc/.config/matugen/templates/starship-palette.toml"
 output_path = "/home/marc/.config/starship-matugen-theme.toml"
 post_hook = "/home/marc/.config/matugen/scripts/apply-starship-theme.sh"
 
+{{ if and (stat (joinPath .chezmoi.homeDir "Documents/Forge/.obsidian")) (stat (joinPath .chezmoi.homeDir ".config/matugen/templates/obsidian.css")) -}}
 [templates.obsidian-forge]
 input_path = '/home/marc/.config/matugen/templates/obsidian.css'
 output_path = '/home/marc/Documents/Forge/.obsidian/snippets/matugen.css'
+{{ end -}}
 
 [templates.helix]
 input_path = '/home/marc/.config/matugen/templates/helix.toml'
@@ -100,6 +102,7 @@ input_path = '/home/marc/.config/matugen/templates/vicinae.toml'
 output_path = '/home/marc/.local/share/vicinae/themes/matugen.toml'
 post_hook = '/home/marc/.config/matugen/scripts/apply-vicinae-theme.sh'
 
+{{ if .has_steam_millennium -}}
 [templates.millennium-library]
 input_path = '/home/marc/.config/matugen/templates/millennium.css'
 output_path = '/home/marc/.steam/steam/millennium/themes/matugen/libraryroot.custom.css'
@@ -119,6 +122,7 @@ output_path = '/home/marc/.steam/steam/millennium/themes/matugen/webkit.css'
 [templates.millennium-quick-css]
 input_path = '/home/marc/.config/matugen/templates/millennium.css'
 output_path = '/home/marc/.config/millennium/quick.css'
+{{ end -}}
 
 [templates.voyager]
 input_path = '/home/marc/.config/matugen/templates/voyager.sh'
@@ -147,6 +151,7 @@ block_postfix = '*>'
 # entry's prior output lives in
 # ~/.config/matugen/backup-dms-zen-theme-2026-08-28/. May merge later.
 
+{{ if eq .chezmoi.hostname "marc-fedora" -}}
 [templates.zen-wabi-userChrome]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-userChrome.css'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/userChrome.css'
@@ -158,15 +163,18 @@ output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/userContent.c
 [templates.zen-wabi-userstyles-global]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-userContent.css'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-userstyles.css'
+{{ end -}}
 
 [templates.heroic]
 input_path = '/home/marc/.config/matugen/templates/heroic.css'
 output_path = '/home/marc/.config/matugen/themes/heroic/matugen.css'
 post_hook = '/home/marc/.config/matugen/scripts/apply-heroic-theme.sh'
 
+{{ if eq .chezmoi.hostname "marc-fedora" -}}
 [templates.zen-wabi-vars]
 input_path = '/home/marc/.config/matugen/templates/zen-wabi-vars.json'
 output_path = '/home/marc/.zen/t5e4pcqh.Default (release)-1/chrome/matugen-vars.json'
+{{ end -}}
 
 [templates.claude-desktop]
 input_path = '/home/marc/.config/matugen/templates/claude-desktop.jsonc'
