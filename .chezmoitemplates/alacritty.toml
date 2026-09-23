@@ -4,6 +4,15 @@ bindings = [{ key = "N", mods = "Control|Shift", action = "CreateNewWindow" }]
 [general]
 import = ["./themes/themes/catppuccin_mocha.toml"]
 
+{{- if eq .chezmoi.os "windows" }}
+
+# Left unset, Alacritty launches Windows PowerShell 5.1 (powershell.exe), which
+# lacks the LocationChangedAction hook mise's activation needs.
+[terminal.shell]
+program = "pwsh"
+args = ["-NoLogo"]
+{{- end }}
+
 [font]
 normal = { family = "Hack Nerd Font", style = "Regular" }
 
