@@ -11,7 +11,7 @@ local hyprsplit = require("hyprsplit")
 hyprsplit.config({ num_workspaces = 10, persistent_workspaces = false })
 -- Explicit order avoids hyprsplit falling back to raw monitor-id-based
 -- blocks (id 3 would've meant workspaces 31-40) before settling here.
-hyprsplit.monitor_priority({ "HDMI-A-1", "DP-2" })
+hyprsplit.monitor_priority({ "eDP-1", "HDMI-A-1", "DP-2" })
 for i = 1, 10 do
 	local key = i % 10 -- 10 maps to key 0
 	hl.bind("SUPER + " .. key, hyprsplit.dsp.focus({ workspace = i }), { description = "Focus workspace " .. i .. " (this monitor)" })
