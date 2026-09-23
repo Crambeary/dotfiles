@@ -22,11 +22,16 @@ hl.bind("SUPER + D", hyprsplit.dsp.workspace.swap_monitors({ monitor1 = "current
 
 hl.bind("CTRL + space", hl.dsp.exec_cmd("vicinae toggle"), { description = "Toggle Vicinae launcher" })
 
+-- Terminal on SUPER+RETURN, browser on SUPER+SHIFT+RETURN (replaces the old
+-- SUPER+T / SUPER+B binds from binds.lua below, which loads first).
+hl.bind("SUPER + T", function() end, { description = "Unbound (moved to SUPER+RETURN)" })
+hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("kitty"), { description = "Open terminal" })
+
 -- Launch default browser (mirrors Omarchy's SUPER+SHIFT+B, via xdg-settings
 -- default-web-browser instead of a hardcoded desktop id, so it stays correct
 -- if the default browser changes).
 hl.bind(
-	"SUPER + B",
+	"SUPER + SHIFT + RETURN",
 	hl.dsp.exec_cmd([[gtk-launch "$(xdg-settings get default-web-browser)"]]),
 	{ description = "Open default browser" }
 )
