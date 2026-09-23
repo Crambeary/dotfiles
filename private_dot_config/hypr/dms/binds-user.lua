@@ -222,3 +222,6 @@ hl.bind("SUPER + Backspace", hl.dsp.exec_cmd([[
     touch "$state_file"
   fi
 ]]), { description = "Toggle transparency on active window" })
+
+-- Toggle Wallpaper Carousel
+hl.bind("SUPER + ALT + W", hl.dsp.exec_cmd("dms ipc call wallpaperCarousel toggle"))
