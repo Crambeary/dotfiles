@@ -90,6 +90,11 @@ local function universal_clipboard_shortcut(default_mods, default_key, terminal_
 	end
 end
 
+-- DMS puts its clipboard manager on SUPER+V (binds.lua); move it to
+-- SUPER+SHIFT+V so SUPER+V is only the universal paste below.
+hl.unbind("SUPER + V")
+hl.bind("SUPER + SHIFT + V", hl.dsp.exec_cmd("dms ipc call clipboard toggle"), { description = "Toggle DMS clipboard manager" })
+
 hl.bind("SUPER + C", universal_clipboard_shortcut("CTRL", "C", "CTRL + SHIFT", "C"), { description = "Copy (universal, works in terminals too)" })
 hl.bind("SUPER + V", universal_clipboard_shortcut("CTRL", "V", "CTRL + SHIFT", "V"), { description = "Paste (universal, works in terminals too)" })
 hl.bind("SUPER + X", send_key_once("CTRL", "X"), { description = "Cut (universal)" })
