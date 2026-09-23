@@ -108,7 +108,9 @@ hl.bind("SUPER + CTRL + V", hl.dsp.exec_cmd("dms ipc call clipboard toggle"), { 
 hl.bind("SUPER + ESCAPE", hl.dsp.exec_cmd("dms ipc call powermenu toggle"), { description = "Toggle power menu" })
 
 -- Window grouping moves off SUPER+W (now just closes, like SUPER+Q) onto
--- SUPER+G, matching Omarchy.
+-- SUPER+G, matching Omarchy. DMS's binds.lua (loaded first) still has
+-- SUPER+W toggling groups, so drop it; Lua binds stack rather than replace.
+hl.unbind("SUPER + W")
 hl.bind("SUPER + G", hl.dsp.group.toggle(), { description = "Toggle window group" })
 hl.bind("SUPER + W", hl.dsp.window.close(), { description = "Close window" })
 
