@@ -301,6 +301,20 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     Set-Alias -Name cdi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 }
 
+# yazi's recommended shell wrapper: `y` launches yazi and, on quit, cds the
+# shell into the directory yazi was last in. Plain `yazi` still leaves the cwd
+# alone. See https://yazi-rs.github.io/docs/quick-start#shell-wrapper
+if (Get-Command yazi -ErrorAction SilentlyContinue) {
+    function global:y {
+        $tmp = (New-TemporaryFile).FullName
+        yazi.exe $args --cwd-file="$tmp"
+        $cwd = Get-Content -Path $tmp -Encoding UTF8
+        if ($cwd -and $cwd -ne $PWD.Path -and (Test-Path -LiteralPath $cwd -PathType Container)) {
+            Set-Location -LiteralPath (Resolve-Path -LiteralPath $cwd).Path
+        }
+        Remove-Item -Path $tmp
+    }
+}
 # Atuin shell history. Must load after the PSReadLine EditMode call above, since
 # switching EditMode resets the keymap and would discard atuin's bindings. Atuin
 # binds Ctrl+r and UpArrow without -ViMode, so they apply to vi insert mode only.
