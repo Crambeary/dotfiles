@@ -20,7 +20,7 @@
 #
 # Re-runs via run_onchange whenever either config changes -- the hash below
 # just pins that dependency, chezmoi ignores its content.
-# script hash: {{ include "private_dot_config/matugen/config.toml" | sha256sum }} {{ include "Library/Application Support/com.InioX.matugen/config.toml" | sha256sum }}
+# script hash: {{ include "private_dot_config/matugen/config.toml.tmpl" | sha256sum }} {{ include "Library/Application Support/com.InioX.matugen/config.toml" | sha256sum }}
 set -euo pipefail
 
 python3 - <<'PYEOF'

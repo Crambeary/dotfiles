@@ -37,7 +37,7 @@ colors_to_compare = [
     { name = "yaru",       color = "#676767" },
     { name = "yellow",     color = "#f9bd30" },
 ]
-compare_to = "{{ colors.primary.default.hex }}"
+compare_to = "{{ "{{ colors.primary.default.hex }}" }}"
 # Sudoers drop-in (/etc/sudoers.d/papirus-folders) pins the NOPASSWD rule to
 # this exact absolute path, so this must match where papirus-folders is
 # installed (/usr/local/bin, installed system-wide from upstream's
@@ -51,7 +51,7 @@ compare_to = "{{ colors.primary.default.hex }}"
 # immediately, matching how System Settings' own icon picker behaves --
 # papirus-folders' own -u only rebuilds the on-disk icon cache, it doesn't
 # notify running apps.
-post_hook = 'nohup sh -c "sudo -n /usr/local/bin/papirus-folders -C {{ closest_color }} -u && dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0" > /dev/null 2>&1 &'
+post_hook = 'nohup sh -c "sudo -n /usr/local/bin/papirus-folders -C {{ "{{ closest_color }}" }} -u && dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0" > /dev/null 2>&1 &'
 
 [templates.herdr]
 input_path = "/home/marc/.config/matugen/templates/herdr.toml"
@@ -86,7 +86,7 @@ post_hook = 'pkill -USR1 -x hx || true'
 [templates.glow]
 input_path = '/home/marc/.config/matugen/templates/glow.json'
 output_path = '/home/marc/.config/glow/matugen.json'
-# Glow's own "format" fields use Go template syntax ({{.text}}) that matugen
+# Glow's own "format" fields use Go template syntax ({{ "{{.text}}" }}) that matugen
 # would otherwise try (and fail) to parse as its own expression syntax, so
 # this template uses non-default delimiters to avoid the collision.
 expr_prefix = '<{'
@@ -139,7 +139,7 @@ input_path = '/home/marc/.config/matugen/templates/millennium-material.css'
 output_path = '/home/marc/.steam/steam/millennium/themes/Material-Theme/css/main/colors/matugen.css'
 # Material-Theme's own matugentemplate.css (kuska1/Material-Theme) uses a
 # `<* for name, value in colors *>` loop -- non-default block delimiters --
-# while its value interpolation stays on matugen's default {{ }}. Only the
+# while its value interpolation stays on matugen's default {{ "{{ }}" }}. Only the
 # block delimiters need overriding here.
 block_prefix = '<*'
 block_postfix = '*>'

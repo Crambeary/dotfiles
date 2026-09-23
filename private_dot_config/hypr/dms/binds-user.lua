@@ -1,5 +1,8 @@
 -- Optional per-user keybind overrides (managed by DMS). Loaded after default binds.
 
+-- Launch hints (keyboard-driven GUI navigation overlay)
+hl.bind("SUPER + ALT + H", hl.dsp.exec_cmd("hints"))
+
 -- Per-monitor workspaces (awesome/dwm-style): SUPER+N focuses/moves to
 -- workspace N *on the currently active monitor* instead of a single global
 -- workspace N. Overrides the SUPER+1..9 binds from dms/binds.lua below,
