@@ -1,0 +1,21 @@
+# Global mise tools. Project mise.toml files (agent-dev, Crambeary/skills)
+# override these per directory; installs are shared, so a version installed for
+# one is reused by the other.
+#
+# node and python are deliberately absent: nvm and pyenv/uv own those, and
+# activating mise's copies would shadow them (see notes/mise-vs-uv-nvm.md).
+# npm:rulesync is pinned per project instead of globally.
+#
+# herdr comes from mise on every OS. Don't run `herdr update` -- on Windows it
+# reinstalls herdr's self-managed preview build under
+# %LOCALAPPDATA%\Programs\Herdr and puts it on PATH ahead of this one. Use
+# `mise upgrade herdr`.
+[tools]
+herdr = "latest"
+fd = "latest"
+fnox = "latest"
+jq = "latest"
+ripgrep = "latest"
+rtk = "latest"
+sd = "latest"
+uv = "latest"

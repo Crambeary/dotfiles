@@ -66,7 +66,10 @@ accent = "#fe8019"
 [update]
 # Update channel used by background version checks and `herdr update`.
 # Defaults to "stable" on Linux/macOS and "preview" on Windows — pinned
-# explicitly here so all platforms track the same channel.
+# explicitly here so all platforms track the same channel. herdr itself is
+# installed by mise (~/.config/mise/config.toml), so upgrade with
+# `mise upgrade herdr`; `herdr update` would install a self-managed copy
+# that shadows it.
 channel = "stable"
 
 # Check herdr.dev for new Herdr versions in the background.

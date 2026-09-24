@@ -16,6 +16,9 @@ README.md
 # happily sync to every machine.
 **/__pycache__/**
 
+# Cygwin/MSYS crash dumps (bash.exe.stackdump) land in whatever dir was cwd.
+*.stackdump
+
 # Secrets: never let chezmoi track/add this, regardless of `chezmoi add` habits
 .config/secrets/**
 
