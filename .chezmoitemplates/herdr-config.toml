@@ -88,13 +88,9 @@ channel = "stable"
 # Most reliable direct bindings are ctrl+letter, function keys, and explicit modified chords.
 # alt+..., cmd/super, and punctuation-with-modifiers may depend on your terminal/tmux setup.
 # prefix = "ctrl+b"
-# Leader is cmd+space on macOS (Raycast's launcher hotkey is remapped to
-# ctrl+space there to free this up) and ctrl+space elsewhere.
-{{ if eq .chezmoi.os "darwin" -}}
-prefix = "cmd+space"
-{{ else -}}
+# Leader is ctrl+space everywhere, including macOS (Raycast keeps
+# cmd+space; it's a global hotkey so it never reaches herdr regardless).
 prefix = "ctrl+space"
-{{ end -}}
 
 # Prefix-mode actions
 # help = "prefix+?"
@@ -268,14 +264,14 @@ description = "review diff in a picked directory"
 width = "90%"
 height = "90%"
 
-# prefix+o: takes over from the built-in open_notification_target (unbound
-# above). Jumps straight to the most recently notifying agent — the highest
-# state_change_seq among blocked/done — with no picker.
+# prefix+o: cycle through blocked/done agents newest-first, wrapping around.
+# The script remembers the last jump so a still-blocked agent doesn't cause
+# repeated presses to bounce between the same two panes.
 [[keys.command]]
 key = "prefix+o"
 type = "shell"
 command = "~/.config/herdr/scripts/pick-attention-pane.sh"
-description = "jump to most recent agent notification"
+description = "next agent needing attention (newest first)"
 
 {{ end -}}
 # alt+h/alt+l/alt+j/alt+k: focus the neighboring pane, or wrap to the
