@@ -10,4 +10,4 @@ alias ll="eza --icons --group-directories-first -l"
 alias res="toggle-panel-res"
 alias bat="bat --theme=ansi"
 alias audio-separator="$HOME/tools/audio-separator/.venv/bin/audio-separator"
-
+alias mup="mise upgrade"

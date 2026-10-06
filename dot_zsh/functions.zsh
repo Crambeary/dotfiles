@@ -18,3 +18,15 @@ function ssh-invert() {
   ssh "$@"
   kitten @ set-colors --reset
 }
+
+# yazi's own process can't change the parent shell's directory, so it writes
+# its exit cwd to a tempfile that this wrapper cd's into after it quits.
+function y() {
+  local tmp cwd
+  tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+  yazi "$@" --cwd-file="$tmp"
+  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+    builtin cd -- "$cwd"
+  fi
+  rm -f -- "$tmp"
+}
