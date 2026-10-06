@@ -1,0 +1,301 @@
+#!/usr/bin/python3
+"""Gate Karabiner's Space exceptions using the macOS Deskflow server's INFO log.
+
+Deskflow 1.26 emits `switch from` for normal transitions and `jump from` when
+the active client disconnects. No keyboard events or clipboard contents are
+needed. Settings, log location, and screen name come from Deskflow's own config.
+"""
+
+import configparser
+import datetime
+import json
+import os
+from pathlib import Path
+import re
+import signal
+import subprocess
+import time
+
+
+HOME = Path.home()
+SETTINGS = HOME / "Library/Deskflow/Deskflow.conf"
+CACHE = HOME / "Library/Caches/deskflow-karabiner/state.json"
+CLI = "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli"
+LOG_LINE = re.compile(r"^\[([^]]+)\] [A-Z0-9]+: (.*)$")
+TRANSITION = re.compile(r'^(?:switch|jump) from "([^"]+)" to "([^"]+)" at ')
+
+
+def settings():
+    config = configparser.ConfigParser(interpolation=None, strict=False)
+    config.read(SETTINGS)
+    if config.get("core", "coreMode", fallback="") != "2":
+        raise ValueError("Deskflow is not configured as a server")
+    if not config.getboolean("log", "toFile", fallback=False):
+        raise ValueError("Enable Deskflow's Log to file setting, then restart Deskflow")
+    # Deskflow 1.26 stores INFO as index 4; DEBUG levels also include INFO.
+    if config.getint("log", "level", fallback=4) < 4:
+        raise ValueError("Set Deskflow's log level to INFO or more verbose, then restart it")
+    name = config.get("core", "computerName")
+    filename = config.get("log", "file", fallback=str(HOME / "deskflow.log"))
+    return name, Path(filename).expanduser()
+
+
+def server_session():
+    """PID plus birth time disambiguates old log entries and reused PIDs."""
+    pids = subprocess.run(
+        ["/usr/bin/pgrep", "-u", str(os.getuid()), "-x", "deskflow-core"],
+        capture_output=True, text=True, check=False,
+    ).stdout.split()
+    if not pids:
+        return None
+    result = subprocess.run(
+        ["/bin/ps", "-p", ",".join(pids), "-o", "pid=,lstart=,command="],
+        capture_output=True, text=True, check=False, env={**os.environ, "LC_ALL": "C"},
+    )
+    for line in result.stdout.splitlines():
+        fields = line.split(None, 6)
+        if len(fields) == 7 and re.search(r"/deskflow-core server(?:\s|$)", fields[6]):
+            born = datetime.datetime.strptime(" ".join(fields[1:6]), "%a %b %d %H:%M:%S %Y")
+            return [int(fields[0]), born.timestamp()]
+    return None
+
+
+class Tracker:
+    def __init__(self, name, started):
+        self.name = name.casefold()
+        self.started = started
+        self.remote = False
+        self.previous = False
+
+    def feed(self, line):
+        match = LOG_LINE.match(line)
+        if not match:
+            return
+        try:
+            stamp = datetime.datetime.fromisoformat(match[1]).timestamp()
+        except ValueError:
+            return
+        if stamp < self.started:
+            return
+        message = match[2]
+        transition = TRANSITION.match(message)
+        if transition:
+            self.previous = transition[1].casefold() != self.name
+            self.remote = transition[2].casefold() != self.name
+        elif message in ("can't leave screen", "can't leave computer"):
+            # Deskflow logs the attempted transition before canLeave().
+            self.remote = self.previous
+        elif message in ("started server, waiting for clients", "stopped server", "suspend"):
+            self.remote = self.previous = False
+
+
+class LogReader:
+    """Follow complete lines, surviving replacement, truncation and partial writes."""
+    def __init__(self, path):
+        self.path = path
+        self.inode = None
+        self.offset = 0
+        self.anchor = b""
+        self.discarding = False
+        self.stream = None
+
+    def close(self):
+        if self.stream is not None:
+            self.stream.close()
+            self.stream = None
+
+    def open_current(self):
+        try:
+            stream = self.path.open("rb")
+        except FileNotFoundError:
+            return False
+        info = os.fstat(stream.fileno())
+        inode = [info.st_dev, info.st_ino]
+        if self.stream is not None and inode == self.inode:
+            stream.close()
+            return False
+        self.close()
+        self.stream = stream
+        if inode != self.inode:
+            self.offset, self.anchor, self.discarding = 0, b"", False
+        self.inode = inode
+        return True
+
+    def read(self):
+        if self.stream is None and not self.open_current():
+            return []
+        while True:
+            stream = self.stream
+            info = os.fstat(stream.fileno())
+            stream.seek(max(0, self.offset - len(self.anchor)))
+            anchor = stream.read(len(self.anchor))
+            if info.st_size < self.offset or anchor != self.anchor:
+                self.offset, self.anchor, self.discarding = 0, b"", False
+            stream.seek(self.offset)
+            chunk = stream.read(256 * 1024)
+            end = chunk.rfind(b"\n") + 1
+            if not end:
+                if chunk and (len(chunk) == 256 * 1024 or self.discarding):
+                    # Skip pathological oversized lines in bounded chunks;
+                    # otherwise one long line would stall the follower forever.
+                    end = len(chunk)
+                    self.discarding = True
+                else:
+                    # Hold the descriptor open and drain it before following a
+                    # replacement: Deskflow 1.26 unlinks its log at 1 MiB.
+                    if self.open_current():
+                        continue
+                    return []
+            self.offset += end
+            stream.seek(max(0, self.offset - 128))
+            self.anchor = stream.read(min(128, self.offset))
+            complete = chunk[:end]
+            if self.discarding:
+                _, newline, complete = complete.partition(b"\n")
+                self.discarding = not bool(newline)
+            if complete:
+                return complete.decode("utf-8", errors="replace").splitlines()
+
+
+class Watcher:
+    def __init__(self, name, path, session, cache=CACHE):
+        self.session = session
+        self.cache = cache
+        self.tracker = Tracker(name, session[1])
+        self.reader = LogReader(path)
+        self.identity = {"session": session, "name": name, "log": str(path)}
+        self.saved = None
+        self.cache_retry_after = 0
+        self.cache_error = None
+        try:
+            saved = json.loads(cache.read_text())
+            if isinstance(saved, dict) and saved.get("identity") == self.identity:
+                offset = saved["offset"]
+                anchor = bytes.fromhex(saved["anchor"])
+                if not isinstance(offset, int) or offset < 0 or len(anchor) > min(128, offset):
+                    raise ValueError("invalid log checkpoint")
+                if not isinstance(saved["remote"], bool) or not isinstance(saved["previous"], bool):
+                    raise ValueError("invalid destination checkpoint")
+                self.tracker.remote = saved["remote"]
+                self.tracker.previous = saved["previous"]
+                self.reader.inode = saved["inode"]
+                self.reader.offset = offset
+                self.reader.anchor = anchor
+                self.reader.discarding = bool(saved.get("discarding", False))
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+
+    def poll(self):
+        # Catch up before publishing, so startup does not briefly replay old
+        # destinations to Karabiner when there is more than one chunk of log.
+        while True:
+            lines = self.reader.read()
+            if not lines:
+                break
+            for line in lines:
+                self.tracker.feed(line)
+        state = {
+            "identity": self.identity,
+            "remote": self.tracker.remote, "previous": self.tracker.previous,
+            "inode": self.reader.inode, "offset": self.reader.offset,
+            "anchor": self.reader.anchor.hex(),
+            "discarding": self.reader.discarding,
+        }
+        if state != self.saved and time.monotonic() >= self.cache_retry_after:
+            try:
+                self.cache.parent.mkdir(parents=True, exist_ok=True)
+                temporary = self.cache.with_suffix(".tmp")
+                temporary.write_text(json.dumps(state) + "\n")
+                temporary.replace(self.cache)
+            except OSError as error:
+                # Persistence is optional: a full disk must not override the
+                # destination we just observed in Deskflow's log.
+                if str(error) != self.cache_error:
+                    print("Checkpoint failed: {}".format(error), flush=True)
+                    self.cache_error = str(error)
+                self.cache_retry_after = time.monotonic() + 1
+            else:
+                self.saved = state
+                self.cache_error = None
+        return self.tracker.remote
+
+
+class Publisher:
+    def __init__(self):
+        self.last_value = None
+        self.last_success = 0
+        self.retry_after = 0
+
+    def sync(self, remote, force=False):
+        now = time.monotonic()
+        if not force and (now < self.retry_after or (
+            remote == self.last_value and now - self.last_success < 5
+        )):
+            return
+        try:
+            subprocess.run(
+                [CLI, "--set-variables", json.dumps({"deskflow_remote": int(remote)})],
+                check=True, capture_output=True, timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            if now >= self.retry_after:
+                print("Karabiner update failed: {}".format(error), flush=True)
+            self.retry_after = now + 2
+            return
+        if remote != self.last_value:
+            print("{} deskflow_remote={} ({})".format(
+                datetime.datetime.now().isoformat(timespec="milliseconds"),
+                int(remote), "remote" if remote else "Mac",
+            ), flush=True)
+        self.last_value = remote
+        self.last_success = now
+        # Periodic refresh restores the variable after a Karabiner restart.
+
+
+def main():
+    publisher = Publisher()
+    watcher = None
+    identity = None
+    next_check = 0
+    last_error = None
+    running = True
+
+    def stop(_signum, _frame):
+        nonlocal running
+        running = False
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    try:
+        while running:
+            try:
+                if time.monotonic() >= next_check:
+                    next_check = time.monotonic() + 1
+                    session = server_session()
+                    name, path = settings() if session else (None, None)
+                    current = (session, name, path)
+                    if current != identity:
+                        if watcher:
+                            watcher.reader.close()
+                        watcher = Watcher(name, path, session) if session else None
+                        identity = current
+                remote = watcher.poll() if watcher else False
+                publisher.sync(remote)
+                last_error = None
+            except (OSError, ValueError, configparser.Error) as error:
+                # Missing config/log at startup is retried; no remote keyboard
+                # is usable when the server is stopped, so restore local rules.
+                if str(error) != last_error:
+                    print(str(error), flush=True)
+                    last_error = str(error)
+                publisher.sync(False)
+                time.sleep(1)
+            time.sleep(0.05)
+    finally:
+        if watcher:
+            watcher.reader.close()
+        publisher.sync(False, force=True)
+
+
+if __name__ == "__main__":
+    main()

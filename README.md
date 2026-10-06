@@ -267,6 +267,57 @@ fan-not-spinning/thermal issue) *and* an effective 1.333x
 UI/font scale-up, achieved with one `kscreen-doctor output.eDP-1.mode.<id>`
 call instead of per-toolkit Qt/GTK scaling hacks.
 
+## macOS: Deskflow and the Voyager Space shortcuts
+
+Karabiner swaps the Voyager's left Ctrl/Cmd keys. Its two Space exceptions
+undo that swap **only on the Mac**. On a Deskflow client, Space follows the
+normal modifier mapping, including that client's existing Deskflow mapping.
+
+`~/.local/bin/deskflow-karabiner` follows the Deskflow server's INFO log and sets
+Karabiner's `deskflow_remote` variable: `0` locally, `1` on any remote computer.
+It reads the screen name and log filename from
+`~/Library/Deskflow/Deskflow.conf`; those machine-specific values are not tracked.
+The helper requires Python 3 (`/usr/bin/python3`, provided by Apple's Command
+Line Tools), Karabiner-Elements, and Deskflow's normal macOS GUI configuration.
+
+### Setup
+
+1. In Deskflow settings, enable **Log to file** and use **INFO** log level.
+   Restart Deskflow so its core process picks up the logging settings.
+2. Run `chezmoi apply`. The macOS-only
+   `com.marctotaro.deskflow-karabiner` LaunchAgent starts the helper at login;
+   the `run_onchange` script reloads it after helper/agent changes.
+3. Test Ctrl+Space and Super+Space on the Mac and a remote computer, then return
+   to the Mac. The Mac keeps its Space exceptions; remote input uses the normal
+   swap. This is scoped to the Voyager and the existing left-modifier rules.
+
+Transitions are polled every 50 ms, plus the time to call `karabiner_cli`.
+Server exits are detected within roughly one second. Forced returns after a
+client disconnect, suspend/resume, log replacement/truncation, and helper
+restarts are handled. A session-scoped checkpoint in
+`~/Library/Caches/deskflow-karabiner/state.json` preserves the destination and
+log position across helper restarts, including after Deskflow discards its log.
+The variable is refreshed every five seconds to recover from Karabiner restarts.
+
+Diagnostics: `~/Library/Logs/deskflow-karabiner.log` records variable changes
+and errors. The parser is based on Deskflow **1.26.0**'s `switch from`, `jump
+from`, and server lifecycle messages. If a future Deskflow version changes its
+logging format, update the parser and its fixtures in
+`tests/deskflow/test_deskflow_karabiner.py`.
+
+To disable the integration and restore the original always-local exceptions:
+
+```sh
+launchctl bootout "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.marctotaro.deskflow-karabiner.plist"
+"/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli" --set-variables '{"deskflow_remote":0}'
+```
+
+Run its automated checks with:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s tests/deskflow -v
+```
+
 ## macOS: SketchyBar and AeroSpace
 
 The macOS bar and window-manager configuration is managed by chezmoi. Run

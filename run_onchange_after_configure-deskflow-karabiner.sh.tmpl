@@ -1,0 +1,16 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Reload when the helper or LaunchAgent changes.
+# helper: {{ include "private_dot_local/bin/executable_deskflow-karabiner" | sha256sum }}
+# agent: {{ include "Library/LaunchAgents/com.marctotaro.deskflow-karabiner.plist.tmpl" | sha256sum }}
+set -euo pipefail
+
+[[ -x /Applications/Deskflow.app/Contents/MacOS/deskflow-core ]] || exit 0
+[[ -x "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli" ]] || exit 0
+
+plist="$HOME/Library/LaunchAgents/com.marctotaro.deskflow-karabiner.plist"
+uid="$(id -u)"
+mkdir -p "$HOME/Library/Logs"
+/bin/launchctl bootout "gui/$uid" "$plist" >/dev/null 2>&1 || true
+/bin/launchctl bootstrap "gui/$uid" "$plist"
+{{ end -}}
