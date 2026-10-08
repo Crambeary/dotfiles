@@ -39,12 +39,20 @@ launchctl unload -F /System/Library/LaunchAgents/com.apple.OSDUIHelper.plist > /
 #   notch_display_height - bar height on the notched display. NOT a gate/filter:
 #                          whatever value you set becomes the bar's height there,
 #                          so a display-sized value blanks the whole screen.
-#   notch_width          - centre region kept free of items
+#   notch_width          - centre region kept free of items, on the notched
+#                          display only; no effect on an external monitor
+#                          (see items/calendar.sh for how that case is
+#                          handled instead)
 #
-# margin/corner_radius start flush (native-display baseline); items/
-# display_geometry.sh flips them to a floating look once it detects an
-# external monitor attached, since sketchybar has no per-display override for
-# those two properties (unlike height/y_offset, which do have notch variants).
+# notch_width is wider than the physical notch (185pt) because Vorssaint's
+# Dynamic Island expands beyond the notch bounds when showing active content
+# (now playing, timers, etc), not just when idle over the camera cutout.
+# Retune by eye if an expanded island still clips against bar items.
+#
+# margin/corner_radius/y_offset stay flush on every display, including an
+# external monitor -- Vorssaint's simulated Dynamic Island is itself anchored
+# flush to the true top edge, so a floating/inset bar left a gap between the
+# two instead of sharing an edge with it.
 bar=(
   height=32
   notch_display_height=32
@@ -62,7 +70,7 @@ bar=(
   y_offset=0
   margin=0
   blur_radius=20
-  notch_width=200
+  notch_width=260
   topmost=window
 )
 

@@ -1,15 +1,13 @@
 #!/bin/bash
 
-# sketchybar's --bar margin/corner_radius have no per-notch override (only
-# height/notch_display_height and y_offset/notch_offset do), and there is no
-# display-connect/disconnect event, so this polls for an external monitor and
-# reissues --bar only when the monitor state actually changed: flush to the
-# screen edges on the native display alone, floating with a top gap once an
-# external monitor joins.
-#
-# margin only insets the bar horizontally (reduces width, shifts x) for a
-# position=top bar -- it does not add vertical clearance. The top gap comes
-# from y_offset instead, which is why floating mode sets both.
+# The bar stays flush to the screen edge on every display (set once in
+# bar=() in sketchybarrc, never overridden here) so it sits inline with
+# Vorssaint's simulated Dynamic Island, which is itself anchored flush to
+# the true top edge. This script's only remaining job is calendar.sh's
+# q-vs-right placement, which depends on whether an external monitor is
+# attached (q has no reserved centre gap on a non-notched display) and has
+# no display-connect/disconnect event to key off, so this polls and
+# re-runs that placement only when the monitor topology actually changed.
 #
 # Can't just count connected displays: in clamshell mode (lid closed, only
 # the external monitor active) system_profiler reports exactly one display,
@@ -22,18 +20,10 @@ external_displays=$(system_profiler SPDisplaysDataType -json 2>/dev/null \
   | jq '[.SPDisplaysDataType[] | (.spdisplays_ndrvs // [])[]
          | select(has("_spdisplays_display-vendor-id"))] | length')
 
-if [ "${external_displays:-0}" -ge 1 ]; then
-  target_margin=6
-  target_corner=9
-  target_yoffset=6
-else
-  target_margin=0
-  target_corner=0
-  target_yoffset=0
-fi
+state_file="/tmp/sketchybar_external_displays"
+previous=$(cat "$state_file" 2>/dev/null)
 
-current_margin=$(sketchybar --query bar | jq '.margin')
+[ "$previous" = "${external_displays:-0}" ] && exit 0
+echo "${external_displays:-0}" > "$state_file"
 
-[ "$current_margin" = "$target_margin" ] && exit 0
-
-sketchybar --bar margin=$target_margin corner_radius=$target_corner y_offset=$target_yoffset
+"$CONFIG_DIR/items/calendar.sh"
