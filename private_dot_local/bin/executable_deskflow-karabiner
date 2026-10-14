@@ -32,8 +32,14 @@ def settings():
         raise ValueError("Deskflow is not configured as a server")
     if not config.getboolean("log", "toFile", fallback=False):
         raise ValueError("Enable Deskflow's Log to file setting, then restart Deskflow")
-    # Deskflow 1.26 stores INFO as index 4; DEBUG levels also include INFO.
-    if config.getint("log", "level", fallback=4) < 4:
+    # Deskflow 1.26 stores INFO as index 4; 1.27 stores the name ("Info").
+    # DEBUG levels also include INFO.
+    level = config.get("log", "level", fallback="4").strip().casefold()
+    if level.isdigit():
+        verbose = int(level) >= 4
+    else:
+        verbose = level in ("info", "debug", "debug1", "debug2")
+    if not verbose:
         raise ValueError("Set Deskflow's log level to INFO or more verbose, then restart it")
     name = config.get("core", "computerName")
     filename = config.get("log", "file", fallback=str(HOME / "deskflow.log"))

@@ -26,6 +26,28 @@ def event(message, second=1):
     return "[{}] INFO: {}\n".format(stamp, message)
 
 
+class SettingsTests(unittest.TestCase):
+    def settings_for(self, level):
+        with tempfile.TemporaryDirectory() as temp:
+            conf = Path(temp) / "Deskflow.conf"
+            conf.write_text(
+                "[core]\ncoreMode=2\ncomputerName=mac\n"
+                "[log]\ntoFile=true\nfile={}/d.log\n{}".format(
+                    temp, "" if level is None else "level={}\n".format(level))
+            )
+            with patch.object(helper, "SETTINGS", conf):
+                return helper.settings()
+
+    def test_accepts_numeric_and_named_info_or_more_verbose_levels(self):
+        for level in (None, "4", "5", "Info", "info", "Debug", "Debug2"):
+            self.assertEqual(self.settings_for(level)[0], "mac", level)
+
+    def test_rejects_quieter_levels(self):
+        for level in ("3", "Warning", "Error", "Note"):
+            with self.assertRaises(ValueError, msg=level):
+                self.settings_for(level)
+
+
 class WatcherTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
