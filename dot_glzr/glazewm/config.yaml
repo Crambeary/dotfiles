@@ -172,7 +172,9 @@ keybindings:
     bindings: ['lwin+u']
   - commands: ['resize --width +2%']
     bindings: ['lwin+p']
-  - commands: ['resize --height +2%']
+  # Pop window out (Hyprland's SUPER+O): float, centered, kept on top.
+  # Toggles back to tiling on a second press.
+  - commands: ['toggle-floating --centered --shown-on-top']
     bindings: ['lwin+o']
   - commands: ['resize --height -2%']
     bindings: ['lwin+i']
