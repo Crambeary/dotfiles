@@ -86,6 +86,21 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     (&mise activate pwsh) | Out-String | Invoke-Expression
 }
 
+# herdr comes from mise (~/.config/mise/config.toml), but on Windows herdr
+# doesn't recognise the mise install and `herdr update` curls down its
+# self-managed build under %LOCALAPPDATA%\Programs\Herdr, which then shadows
+# mise's on PATH (herdrdev/herdr#5446). Route `herdr update` to mise;
+# everything else passes through.
+if (Get-Command mise -ErrorAction SilentlyContinue) {
+    function herdr {
+        if ($args.Count -gt 0 -and $args[0] -eq 'update') {
+            mise upgrade herdr
+            return
+        }
+        & (Get-Command herdr -CommandType Application | Select-Object -First 1).Source @args
+    }
+}
+
 # Enable inline command predictions when the installed PSReadLine supports it.
 if (Get-Module -ListAvailable -Name PSReadLine) {
     Import-Module PSReadLine -ErrorAction SilentlyContinue
