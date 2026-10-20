@@ -1,5 +1,12 @@
 [keyboard]
-bindings = [{ key = "N", mods = "Control|Shift", action = "CreateNewWindow" }]
+bindings = [
+  { key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
+{{- if eq .chezmoi.os "windows" }}
+  # On Windows Alacritty sends ctrl+space as a bare space, so herdr's
+  # ctrl+space prefix never fires. NUL is what other terminals send for it.
+  { key = "Space", mods = "Control", chars = "\u0000" },
+{{- end }}
+]
 
 [general]
 import = ["./themes/themes/catppuccin_mocha.toml"]
