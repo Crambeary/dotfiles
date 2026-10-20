@@ -87,8 +87,13 @@ channel = "stable"
 version_check = false
 {{ end }}
 # Check herdr.dev for remote agent-detection manifest updates in the background.
+# Off on Windows: the fetch shells out to curl.exe, which endpoint protection
+# blocks and reports to IT. The cached manifest keeps detection working.
+{{ if ne .chezmoi.os "windows" -}}
 # manifest_check = true
-
+{{ else -}}
+manifest_check = false
+{{ end }}
 [keys]
 # Prefix key to enter prefix mode (default: "ctrl+b")
 # Examples: "ctrl+b", "f12", "esc", "-"
