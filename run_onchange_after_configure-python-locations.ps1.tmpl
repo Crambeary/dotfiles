@@ -1,0 +1,56 @@
+{{ if eq .chezmoi.os "windows" -}}
+# Keep every Python interpreter on this machine under C:\tecdev, never under the
+# user profile. uv and mise are the only things allowed to install Python, and
+# both are pointed there; pyenv-win, proto's python and the python.org per-user
+# installer were removed and their PATH entries are stripped here.
+#
+# These are persistent User variables rather than profile $env: lines because
+# uv and mise also run from Git Bash, editors and herdr panes that never load
+# the PowerShell profile. New values reach a process only once its parent
+# re-reads the environment: restart herdr/the terminal after a change.
+#
+# UV_PYTHON_PREFERENCE=only-managed makes uv refuse any interpreter it didn't
+# install itself, so a stray python.exe elsewhere can't sneak into a venv.
+# UV_CACHE_DIR moves too: uvx's ephemeral envs live in the cache and each one
+# carries its own python.exe.
+
+$root = 'C:\tecdev'
+$uvBin = "$root\uv\bin"
+
+$vars = [ordered]@{
+    UV_PYTHON_INSTALL_DIR = "$root\uv\python"
+    UV_PYTHON_BIN_DIR     = $uvBin
+    UV_TOOL_DIR           = "$root\uv\tools"
+    UV_TOOL_BIN_DIR       = $uvBin
+    UV_CACHE_DIR          = "$root\uv\cache"
+    UV_PYTHON_PREFERENCE  = 'only-managed'
+    MISE_DATA_DIR         = "$root\mise"
+}
+foreach ($name in $vars.Keys) {
+    [Environment]::SetEnvironmentVariable($name, $vars[$name], 'User')
+}
+New-Item -ItemType Directory -Force $uvBin | Out-Null
+
+foreach ($name in 'PYENV', 'PYENV_ROOT', 'PYENV_HOME') {
+    [Environment]::SetEnvironmentVariable($name, $null, 'User')
+}
+
+# Put uv's bin dir first and drop every entry pointing at a retired install.
+$retired = '\\Programs\\Python\\|\\\.pyenv\\'
+$path = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';' |
+    Where-Object { $_ -and $_ -notmatch $retired -and $_.TrimEnd('\') -ne $uvBin }
+[Environment]::SetEnvironmentVariable('Path', (@($uvBin) + $path) -join ';', 'User')
+
+# Anything here means an interpreter came back outside C:\tecdev.
+$stray = @(
+    "$env:LOCALAPPDATA\Programs\Python",
+    "$env:APPDATA\uv\python",
+    "$env:APPDATA\uv\tools",
+    "$env:LOCALAPPDATA\mise\installs\python",
+    "$HOME\.pyenv",
+    "$HOME\.proto\tools\python"
+) | Where-Object { Test-Path $_ }
+foreach ($dir in $stray) {
+    Write-Warning "Python install outside $root`: $dir"
+}
+{{ end -}}

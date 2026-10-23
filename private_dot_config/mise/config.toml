@@ -2,7 +2,7 @@
 # override these per directory; installs are shared, so a version installed for
 # one is reused by the other.
 #
-# node and python are deliberately absent: nvm and pyenv/uv own those, and
+# node and python are deliberately absent: nvm and uv own those, and
 # activating mise's copies would shadow them (see notes/mise-vs-uv-nvm.md).
 # npm:rulesync is pinned per project instead of globally.
 #
