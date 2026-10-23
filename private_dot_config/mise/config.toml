@@ -19,3 +19,7 @@ ripgrep = "latest"
 rtk = "latest"
 sd = "latest"
 uv = "latest"
+# Not in the mise registry. The release also ships tuios-web_* and
+# tuios-ghostty_* archives; pin the plain build. asset_pattern replaces
+# autodetection, so it has to spell out the platform itself.
+"github:Gaurav-Gosain/tuios" = { version = "latest", asset_pattern = "tuios_*_{{ os(macos=\"Darwin\", linux=\"Linux\", windows=\"Windows\") }}_{{ arch(x64=\"x86_64\") }}.tar.gz" }
