@@ -17,16 +17,46 @@ export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:/Applications/kitty.app/Contents
 CACHE_DIR="$HOME/Library/Caches/matugen-wallpaper-sync"
 mkdir -p "$CACHE_DIR"
 STATE_FILE="$CACHE_DIR/last-source"
-PNG_FILE="$CACHE_DIR/current.png"
+PNG_FILE="$CACHE_DIR/converted.png"
+INDEX_PLIST="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
-# `System Events` resolves dynamic/gradient wallpapers (e.g. the "Radial"
-# style desktop pictures, which have no plain image file of their own) to
-# the actual rendered/cached asset, unlike the Index.plist file:// URL,
-# which can point at the (undecodable) source .madesktop bundle instead.
-source_path="$(osascript -e 'tell application "System Events" to get picture of desktop 1' 2>/dev/null || true)"
+# Resolve the current desktop image straight from Index.plist. The earlier
+# `System Events` lookup returns '' / 'missing value' when run from launchd.
+# Among all displays (and the all-spaces entry), take the Desktop choice with
+# the newest LastSet that points at a real file outside our own cache dir
+# (so a stale converted image can never become the "source").
+source_path="$(/usr/bin/python3 - "$INDEX_PLIST" "$CACHE_DIR" <<'PY'
+import os, plistlib, sys, urllib.parse
+index, cache = sys.argv[1:3]
+with open(index, "rb") as f:
+    root = plistlib.load(f)
+entries = [root.get("AllSpacesAndDisplays", {})]
+entries += root.get("Displays", {}).values()
+best = None
+for e in entries:
+    d = e.get("Desktop") or {}
+    content = d.get("Content") or {}
+    for choice in content.get("Choices", []):
+        if choice.get("Provider") != "com.apple.wallpaper.choice.image":
+            continue
+        try:
+            cfg = plistlib.loads(choice["Configuration"])
+            url = cfg["url"]["relative"]
+        except Exception:
+            continue
+        path = urllib.parse.unquote(urllib.parse.urlparse(url).path)
+        if not os.path.isfile(path) or path.startswith(cache + "/"):
+            continue
+        ts = d.get("LastSet")
+        if best is None or (ts and ts > best[0]):
+            best = (ts, path)
+if best:
+    print(best[1])
+PY
+)"
 
-if [[ -z "$source_path" || ! -f "$source_path" ]]; then
-  echo "matugen-wallpaper-sync: could not resolve current wallpaper (got: '$source_path')" >&2
+if [[ -z "$source_path" ]]; then
+  echo "matugen-wallpaper-sync: no image-file wallpaper found in Index.plist (dynamic/aerial, or wallpaper still points at the cache dir)" >&2
   exit 1
 fi
 
