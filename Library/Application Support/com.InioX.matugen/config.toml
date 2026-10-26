@@ -12,15 +12,17 @@ prefer = "closest-to-fallback"
 green = { color = "#a6e3a1", blend = true }
 yellow = { color = "#f9e2af", blend = true }
 
+# matugen-wallpaper-sync themes from whatever wallpaper macOS already shows.
+# If matugen also set the wallpaper it would overwrite the user's pick with
+# its own cached copy of the image.
 [config.wallpaper]
-set = true
-command = "wallpaper set {{image}} --scale fill"
+set = false
 
 # --- kitty -------------------------------------------------------------
 [templates.kitty]
 input_path = "templates/kitty.conf"
 output_path = "~/.config/kitty/matugen-theme.conf"
-post_hook = 'for s in /tmp/kitty-*; do [ -S "$s" ] && kitty @ --to "unix:$s" set-colors -a ~/.config/kitty/matugen-theme.conf; done; true'
+post_hook = 'find /tmp -maxdepth 1 -name "kitty-*" -type s -exec kitty @ --to "unix:{}" set-colors -a ~/.config/kitty/matugen-theme.conf \; ; true'
 
 # --- Sketchybar ----------------------------------------------------------
 [templates.sketchybar]

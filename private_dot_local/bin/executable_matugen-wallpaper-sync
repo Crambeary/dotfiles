@@ -45,6 +45,14 @@ for e in entries:
         except Exception:
             continue
         path = urllib.parse.unquote(urllib.parse.urlparse(url).path)
+        if path.endswith(".madesktop") and os.path.isfile(path):
+            # Built-in Apple wallpapers are a small plist whose
+            # thumbnailPath is a decodable HEIC render of the same image.
+            try:
+                with open(path, "rb") as f:
+                    path = plistlib.load(f)["thumbnailPath"]
+            except Exception:
+                continue
         if not os.path.isfile(path) or path.startswith(cache + "/"):
             continue
         ts = d.get("LastSet")
