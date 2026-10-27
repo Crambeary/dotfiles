@@ -113,11 +113,15 @@ window_rules:
       # Ignore fullscreen games
       - window_process: { regex: 'cyberpunk' }
 
+      # Ignore FieldView (fvbin, fvsrvbin, ...). Managing it breaks the Qt 6
+      # off-screen pre-show of its dialogs: GlazeWM re-shows the hidden
+      # Flipbook Exit Confirmation box as a blank window at startup.
+      - window_process: { regex: '^fv' }
+
   - commands: ['set-floating']
     match:
       - window_process: { equals: 'godot' }
       - window_process: { regex: 'tec*' }
-      - window_process: { regex: 'fv*' }
 
   - commands: ['set-tiling']
     match:
