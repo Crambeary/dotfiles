@@ -1,7 +1,7 @@
 # TUIOS Configuration File
 # This file allows you to customize appearance and keybindings
 #
-# Configuration location: /Users/marc/Library/Application Support/tuios/config.toml
+# Configuration location: macOS ~/Library/Application Support/tuios, Linux ~/.config/tuios
 # Documentation: https://github.com/Gaurav-Gosain/tuios
 # For keybindings documentation, run: tuios keybinds list
 #
@@ -127,7 +127,7 @@ border_style = "rounded"
 
 [appearance.sidebar.left]
 enabled = true
-sections = "terminals,sessions,spacer,agents"
+sections = "sessions,terminals,spacer,agents"
 
 [appearance.sidebar]
 enabled = true
