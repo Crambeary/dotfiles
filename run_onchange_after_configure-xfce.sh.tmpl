@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Reapply when preferences change, as well as at each Xfce login.
+# configure-xfce: {{ include "private_dot_local/bin/executable_configure-xfce" | sha256sum }}
+set -euo pipefail
+[[ $(uname -s) == Linux ]] || exit 0
+helper="$HOME/.local/bin/configure-xfce"
+[[ ! -x "$helper" ]] || "$helper"

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Apply preferences through xfconf instead of syncing session-generated XML.
+set -euo pipefail
+[[ $(uname -s) == Linux && -n ${DISPLAY:-} ]] || exit 0
+command -v xfconf-query >/dev/null || exit 0
+# Desktop variables can be stale after switching from GNOME/Hyprland.
+pgrep -u "$(id -u)" -x xfwm4 >/dev/null || exit 0
+
+set_pref() {
+  local channel=$1 property=$2 value=$3 type=${4:-string}
+  if xfconf-query -c "$channel" -p "$property" >/dev/null 2>&1; then
+    xfconf-query -c "$channel" -p "$property" -s "$value"
+  else
+    xfconf-query -c "$channel" -p "$property" -n -t "$type" -s "$value"
+  fi
+}
+command_pref() { set_pref xfce4-keyboard-shortcuts "/commands/custom/$1" "$2"; }
+window_pref() { set_pref xfce4-keyboard-shortcuts "/xfwm4/custom/$1" "$2"; }
+
+if command -v vicinae >/dev/null; then
+  command_pref '<Super>space' 'env QT_QPA_PLATFORM=xcb vicinae toggle'
+else
+  command_pref '<Super>space' 'xfce4-appfinder'
+fi
+if command -v kitty >/dev/null; then
+  command_pref '<Super>Return' kitty
+else
+  command_pref '<Super>Return' 'exo-open --launch TerminalEmulator'
+fi
+command_pref '<Super><Shift>Return' 'exo-open --launch WebBrowser'
+for ((i=1; i<=10; i++)); do
+  key=$((i % 10))
+  window_pref "<Super>$key" "workspace_${i}_key"
+  window_pref "<Super><Shift>$key" "move_window_workspace_${i}_key"
+done
+window_pref '<Super>q' close_window_key
+window_pref '<Super>f' maximize_window_key
+window_pref '<Super><Shift>f' fullscreen_key
+window_pref '<Super>Left' tile_left_key
+window_pref '<Super>Right' tile_right_key
+window_pref '<Super>Up' tile_up_key
+window_pref '<Super>Down' tile_down_key
+# Xfwm workspaces span all monitors; Hyprsplit's per-monitor sets do not port.
+set_pref xfwm4 /general/workspace_count 10 int
+if [[ -d /usr/share/themes/Greybird-dark/gtk-3.0 ]]; then
+  set_pref xsettings /Net/ThemeName Greybird-dark
+fi
+if [[ -d /usr/share/themes/Greybird-dark/xfwm4 ]]; then
+  set_pref xfwm4 /general/theme Greybird-dark
+fi
+if [[ -d /usr/share/icons/Yaru ]]; then
+  set_pref xsettings /Net/IconThemeName Yaru
+fi

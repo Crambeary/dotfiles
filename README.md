@@ -379,3 +379,30 @@ chezmoi apply
 aerospace reload-config
 sketchybar --reload
 ```
+
+
+## Xfce: shortcuts, theme, and Deskflow
+
+On Linux, `chezmoi apply` installs `configure-xfce` and an Xfce-only autostart
+entry. Preferences are applied through `xfconf-query` when Xfwm is running,
+both after changes and at login. No generated Xfce XML is tracked.
+
+- Super+Space opens Vicinae (or Xfce Appfinder if Vicinae is absent).
+- Super+1–9/0 selects one of ten workspaces; adding Shift moves the window.
+- Super+Enter opens Kitty (or the default terminal); adding Shift opens the browser.
+- Super+Q closes, Super+F maximizes, Super+Shift+F toggles fullscreen.
+- Super+arrows tile windows. Workspaces span all monitors.
+- Greybird-dark and Yaru are selected when installed; packages are not installed
+  by this setup. Xfce supplies the fallback launcher and terminal command.
+
+The autostart supervisor starts Vicinae when available. If the Deskflow snap
+and `~/.config/Deskflow/Deskflow.conf` exist, it starts the client with X11
+explicitly selected and the snap's XKB data path. The config and TLS material
+remain local: install the snap and configure/pair Deskflow on a fresh machine.
+The Control_R workaround is deployed only to `marc-Ubuntu-TPL071`.
+
+These use transient user services (`vicinae-xfce`, `deskflow-xfce`, and
+`deskflow-rctrl-xfce`), stopped when the Xfce session exits. Do not enable the
+older `deskflow-client.service` alongside this Xfce startup path.
+Run `~/.local/bin/configure-xfce` to restore preferences manually;
+`journalctl --user -u deskflow-xfce -u vicinae-xfce` shows startup diagnostics.

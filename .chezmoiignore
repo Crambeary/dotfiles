@@ -249,3 +249,14 @@ scoop/persist/flow-launcher/**
 .config/matugen/templates/zen-wabi-userContent.css
 .config/matugen/templates/zen-wabi-vars.json
 {{ end }}
+
+# Xfce's X11 desktop helpers: no files on macOS or Windows.
+{{ if ne .chezmoi.os "linux" }}
+.local/bin/configure-xfce
+.local/bin/xfce-desktop-start
+.config/autostart/xfce-desktop-start.desktop
+{{ end }}
+# This modifier workaround is specific to the Mac -> Ubuntu Deskflow pair.
+{{ if or (ne .chezmoi.os "linux") (ne .chezmoi.hostname "marc-Ubuntu-TPL071") }}
+.local/bin/deskflow-rctrl-guard.sh
+{{ end }}

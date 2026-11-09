@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Start the existing launcher and Deskflow with Xfce's X11 session environment.
+set -euo pipefail
+[[ $(uname -s) == Linux && -n ${DISPLAY:-} ]] || exit 0
+pgrep -u "$(id -u)" -x xfwm4 >/dev/null || exit 0
+"$HOME/.local/bin/configure-xfce"
+for dependency in systemctl systemd-run flock pgrep tail; do
+  command -v "$dependency" >/dev/null || exit 0
+done
+# Keep one supervisor per Xfce login, and stop these services at logout.
+exec 9>"${XDG_RUNTIME_DIR:?}/xfce-desktop-start.lock"
+flock -n 9 || exit 0
+xfce_pid=$(pgrep -u "$(id -u)" -x xfce4-session)
+[[ -n "$xfce_pid" ]] || exit 1
+units=()
+cleanup() {
+  if (( ${#units[@]} )); then
+    systemctl --user stop "${units[@]}" || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 0' TERM INT
+session_env=(
+  --setenv="DISPLAY=${DISPLAY:-:0.0}"
+  --setenv="XAUTHORITY=${XAUTHORITY-}"
+  --setenv=XDG_SESSION_TYPE=x11
+  --setenv=WAYLAND_DISPLAY=
+  --setenv=QT_QPA_PLATFORM=xcb
+)
+start_service() {
+  local unit=$1
+  shift
+  if ! systemctl --user is-active --quiet "$unit"; then
+    systemd-run --user --collect --unit="$unit" \
+      --property=Restart=on-failure --property=RestartSec=5 \
+      "${session_env[@]}" "$@"
+  fi
+  units+=("${unit}.service")
+}
+if [[ -x /snap/bin/deskflow.deskflow-core && -f "$HOME/.config/Deskflow/Deskflow.conf" ]]; then
+  start_service deskflow-xfce \
+    /usr/bin/env XKB_CONFIG_ROOT=/snap/deskflow/current/usr/share/X11/xkb \
+    /snap/bin/deskflow.deskflow-core client -s "$HOME/.config/Deskflow/Deskflow.conf"
+  if [[ -x "$HOME/.local/bin/deskflow-rctrl-guard.sh" ]] && command -v xmodmap >/dev/null; then
+    start_service deskflow-rctrl-xfce "$HOME/.local/bin/deskflow-rctrl-guard.sh"
+  fi
+fi
+if command -v vicinae >/dev/null; then
+  start_service vicinae-xfce "$(command -v vicinae)" server
+fi
+
+# GNU tail waits efficiently for the desktop session to exit.
+tail --pid="$xfce_pid" -f /dev/null
