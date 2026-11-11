@@ -142,6 +142,12 @@ install-powershell7.cmd
 .config/marcs_sketchybar/**
 {{ end }}
 
+# herdr-app keys.json is merged by a bash+jq modify_ script (no Windows equivalent
+# yet); the mod and layouts under .config/herdr-app are portable and still apply.
+{{ if eq .chezmoi.os "windows" }}
+.config/herdr-app/keys.json
+{{ end }}
+
 # Optional per-machine SketchyBar settings
 .config/sketchybar/local.sh
 

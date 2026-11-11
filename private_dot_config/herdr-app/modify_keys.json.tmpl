@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Merge my binds into whatever keys.json the app already wrote, instead of
+# owning the whole file: herdr-app seeds it with the platform's default
+# shortcuts (cmd- on macOS, ctrl-shift- elsewhere) and treats any edit as
+# "the whole file is mine", so a full copy from one OS would strip another
+# OS's defaults. chezmoi pipes the current file in on stdin.
+#
+# A modify *template* reading .chezmoi.stdin would need chezmoi newer than the
+# installed v2.48.1, so this is a plain script (bash + jq; skipped on Windows
+# in .chezmoiignore). On a fresh machine the file doesn't exist yet: launch
+# herdr-app once, then `chezmoi apply`. With no input this emits nothing and
+# creates no file.
+set -euo pipefail
+
+existing=$(cat)
+[[ -n "$existing" ]] || exit 0
+
+printf '%s' "$existing" | jq '
+  .global += {
+    "alt-h": "pane.go:left",
+    "alt-j": "pane.go:down",
+    "alt-k": "pane.go:up",
+    "alt-l": "pane.go:right",
+    "alt-shift-h": "pane.swap:left",
+    "alt-shift-j": "pane.swap:down",
+    "alt-shift-k": "pane.swap:up",
+    "alt-shift-l": "pane.swap:right",
+    "alt-r": "pane-ops.flip",
+    "ctrl-space f": "pane-ops.flip",
+    "ctrl-space d": "pane-ops.review"{{ if eq .chezmoi.os "darwin" }},
+    "cmd-alt-r": "pane-ops.review"{{ end }}
+  }'
