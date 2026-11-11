@@ -27,6 +27,11 @@ printf '%s' "$existing" | jq '
     "alt-shift-l": "pane.swap:right",
     "alt-r": "pane-ops.flip",
     "ctrl-space f": "pane-ops.flip",
-    "ctrl-space d": "pane-ops.review"{{ if eq .chezmoi.os "darwin" }},
+    "ctrl-space d": "pane-ops.review",
+    "ctrl-space alt-h": "pane-ops.review-wt",
+    "ctrl-space shift-d": "pane-ops.review-dir",
+    "ctrl-space shift-m": "pane-ops.break",
+    "ctrl-space shift-v": "pane-ops.move",
+    "ctrl-space o": "pane-ops.attention"{{ if eq .chezmoi.os "darwin" }},
     "cmd-alt-r": "pane-ops.review"{{ end }}
   }'
