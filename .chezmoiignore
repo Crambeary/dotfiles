@@ -31,6 +31,8 @@ tests/**
 
 # Mac and Linux only
 {{ if eq .chezmoi.os "windows" }}
+.config/tuicr
+.config/tuicr/**
 .config/alacritty/alacritty.toml
 .config/herdr/**
 # Ghostty has no stable Windows build
@@ -80,7 +82,8 @@ Library/Application Support/tuios/**
 AppData/Roaming/rtk/**
 AppData/Roaming/alacritty/alacritty.toml
 AppData/Roaming/Zellij/**
-AppData/*
+AppData
+AppData/**
 scoop/*
 Documents/WindowsPowerShell/**
 Documents/PowerShell/**
@@ -100,10 +103,9 @@ install-powershell7.cmd
 # reason the Library entries above are: a bare `foo/**` still lets chezmoi
 # create the empty parent.
 #
-# matugen is included because, despite the config existing on macOS too (under
-# Library/Application Support), every template and script under .config/matugen
-# targets a Linux-only app or bakes in a Linux path, and its post-hooks are
-# bash. Windows gets no matugen pipeline at all.
+# matugen's shared templates also serve macOS via its Application Support
+# config. Its hooks require Unix tools, so Windows gets no matugen pipeline;
+# tuicr instead receives a static palette under AppData/Roaming/tuicr.
 {{ if eq .chezmoi.os "windows" }}
 .config/DankMaterialShell
 .config/DankMaterialShell/**

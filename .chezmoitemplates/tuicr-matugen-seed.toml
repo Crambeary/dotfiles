@@ -1,0 +1,51 @@
+# Initial dark Matugen palette, also used as the static Windows theme.
+# macOS/Linux seed this only once; Matugen owns subsequent wallpaper updates.
+panel_bg = "#111318"
+bg_highlight = "#282a2f"
+fg_primary = "#e2e2e9"
+fg_secondary = "#c4c6d0"
+fg_dim = "#8e9099"
+
+diff_add = "#91d5ad"
+diff_del = "#ffb4ab"
+diff_add_bg = "#1c2c22"
+diff_del_bg = "#2c1e1c"
+syntax_add_bg = "#1c2c22"
+syntax_del_bg = "#2c1e1c"
+
+diff_context = "#e2e2e9"
+diff_hunk_header = "#acc7ff"
+expanded_context_fg = "#8e9099"
+
+file_added = "#91d5ad"
+file_modified = "#d5c871"
+file_deleted = "#ffb4ab"
+file_renamed = "#bec6dc"
+
+reviewed = "#91d5ad"
+pending = "#d5c871"
+
+comment_note = "#acc7ff"
+comment_suggestion = "#bec6dc"
+comment_issue = "#ffb4ab"
+comment_praise = "#91d5ad"
+
+border_focused = "#acc7ff"
+border_unfocused = "#44474e"
+status_bar_bg = "#1e2025"
+cursor_color = "#acc7ff"
+cursor_line_bg = "#282a2f"
+branch_name = "#bec6dc"
+help_indicator = "#8e9099"
+
+message_info_fg = "#0e2f60"
+message_info_bg = "#acc7ff"
+message_warning_fg = "#111318"
+message_warning_bg = "#d5c871"
+message_error_fg = "#690005"
+message_error_bg = "#ffb4ab"
+update_badge_fg = "#111318"
+update_badge_bg = "#d5c871"
+
+mode_fg = "#0e2f60"
+mode_bg = "#acc7ff"

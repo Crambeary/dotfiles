@@ -102,6 +102,25 @@ preference — if you retheme, keep the two visibly far apart. The gate uses the
 short hostname, so confirm with `chezmoi data | rg hostname` on the remote
 before assuming it matched.
 
+## tuicr
+
+The shared `.chezmoitemplates/tuicr-config.toml` selects the Matugen theme and
+transparent panels. Chezmoi installs it at `~/.config/tuicr/config.toml` on
+macOS/Linux and `%APPDATA%\tuicr\config.toml` on Windows.
+
+`.chezmoitemplates/tuicr-matugen-seed.toml` carries the initial dark palette,
+including muted green/red diff backgrounds. On macOS/Linux, `create_` installs
+it only when the theme is missing; later applies preserve wallpaper-generated
+colors. Both Matugen configs register the shared generator at
+`private_dot_config/matugen/templates/tuicr.toml`, which handles dark and light
+modes. Windows has no Matugen pipeline here, so chezmoi manages the seed palette
+as a static theme. WSL follows the Linux setup.
+
+Run `chezmoi apply` after syncing the repo. Tuicr itself must be installed
+separately. Transparency also depends on the terminal. In tuicr 0.28.0,
+`:theme` makes panels opaque again; restart tuicr to restore transparency.
+Colored diff rows retain their muted fills.
+
 ## rtk (Rust Token Killer)
 
 A CLI proxy that compacts command output. This repository tracks its shared

@@ -1,0 +1,3 @@
+# Shared tuicr settings for macOS, Linux, and Windows.
+theme = "matugen"
+transparent_background = true
