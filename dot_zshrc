@@ -16,6 +16,8 @@ fi
 [[ -f ~/.zsh/starship.zsh ]] && source ~/.zsh/starship.zsh
 [[ -f ~/.zsh/nvm.zsh ]] && source ~/.zsh/nvm.zsh
 [[ -f ~/.zsh/wsl2fix.zsh ]] && source ~/.zsh/wsl2fix.zsh
+# Machine-local, unmanaged: aliases that name work hosts or repos stay out of this public repo.
+[[ -f ~/.zsh/private.zsh ]] && source ~/.zsh/private.zsh
 [[ -f ~/.config/secrets/.env ]] && set -a && source ~/.config/secrets/.env
 set +a
 
