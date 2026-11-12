@@ -122,13 +122,14 @@ if (( $+commands[fzf] )); then
   fi
 fi
 
-# opencode — the installer appends a hardcoded absolute path to ~/.zshrc;
-# kept portable and guarded so it's a no-op where opencode isn't installed.
-[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
-
 # wt (worktree) shell init — was a local edit in ~/.zshrc that never made it
 # back into this template; adopted here so `chezmoi apply` stops reverting it.
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+
+# Claude Code is mise-managed (see ~/.config/mise/config.toml) — its own
+# built-in auto-updater would fight mise for the install and print an
+# "update available" nag; `mise upgrade` is the one true update path.
+export DISABLE_AUTOUPDATER=1
 
 # Audio: wine and yabridge (personal Linux machines only)
 export WINEESYNC=1
@@ -160,3 +161,14 @@ export PATH="$PATH:$HOME/.local/share/yabridge"
 #
 # Nothing we use is lost: `atuin init zsh` above handles history and ctrl+r,
 # and no output-capture feature is enabled in atuin's config.
+
+# yazi: `y` opens the file manager and, on quit, changes the shell's cwd to
+# wherever yazi ended up navigating (yazi itself only changes its own view).
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}

@@ -10,4 +10,7 @@ alias ll="eza --icons --group-directories-first -l"
 alias res="toggle-panel-res"
 alias bat="bat --theme=ansi"
 alias audio-separator="$HOME/tools/audio-separator/.venv/bin/audio-separator"
+
+# mup — Omarchy's alias for `mise upgrade`, adopted globally so it works
+# outside Omarchy too (all CLI tools here are mise-managed, see ~/.config/mise/config.toml).
 alias mup="mise upgrade"
