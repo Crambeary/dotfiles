@@ -1,6 +1,6 @@
 import { div, svg, image } from "gpui-kit";
 import { v_flex, h_flex, Input } from "gpui-base";
-import { run, themes, fonts, settings, layouts, shared } from "herdr";
+import { run, themes, fonts, settings, layouts, shared, props, closeOverlay } from "herdr";
 import { heading, row, button, stepper } from "./controls.js";
 
 const I = (name) => `mods/omarchy-settings/${name}.svg`;
@@ -73,9 +73,12 @@ function layoutPicker(view, t, cx) {
           .bg(on ? t.raised : "#00000000")
           .cursor_pointer()
           .hover((s) => s.bg(t.raised))
-          .on_click((_e, cx) => {
+          // Close first: the switch reloads the mods, and a redraw of this
+          // dialog caught mid-switch fails with "interrupted".
+          .on_click(() => {
+            if (on) return;
+            closeOverlay(props()?.overlay);
             run("layout.switch", { name });
-            cx.notify();
           })
           .child(
             div()
