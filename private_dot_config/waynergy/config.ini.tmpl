@@ -1,8 +1,14 @@
 host = 10.77.77.1
 port = 24800
 name = bagend
-backend = uinput
+{{ if eq .chezmoi.hostname "bagend" -}}
+backend = wlr
 
+[wlr]
+wheel_mult = -1
+{{ else -}}
+backend = uinput
+{{ end }}
 [tls]
 enable = true
 tofu = true
@@ -12,6 +18,22 @@ level = 3
 mode = a
 path = /home/marc/.local/state/waynergy/waynergy.log
 
+{{ if eq .chezmoi.hostname "bagend" -}}
+# Synergy semantic KeyIDs (from Deskflow's src/lib/deskflow/KeyTypes.h) -> local xkb keycodes.
+# waynergy defaults to syn_raw_key_codes=true, which prefers the native/button field over
+# these IDs unless an explicit mapping exists here. macOS media keys arrive via NX_KEYTYPE,
+# not a real hardware scancode, so their native field is a placeholder that either no-ops or
+# collides with an unrelated [raw-keymap] entry. Mapping the real KeyID here avoids that path
+# entirely. See deskflow/deskflow#6275, #9709 and r-c-f/waynergy#35 for the upstream flakiness.
+[id-keymap]
+0xE0AD = 121 # kKeyAudioMute    -> KEY_MUTE
+0xE0AE = 122 # kKeyAudioDown    -> KEY_VOLUMEDOWN
+0xE0AF = 123 # kKeyAudioUp      -> KEY_VOLUMEUP
+0xE0B0 = 171 # kKeyAudioNext    -> KEY_NEXTSONG
+0xE0B1 = 173 # kKeyAudioPrev    -> KEY_PREVIOUSSONG
+0xE0B2 = 174 # kKeyAudioStop    -> KEY_STOPCD
+0xE0B3 = 172 # kKeyAudioPlay    -> KEY_PLAYPAUSE
+{{ end }}
 # Mac host keycodes -> local keycodes
 # remote = mac keycode + 1; local = xkb keycode (compositor applies no +8 here)
 [raw-keymap]
