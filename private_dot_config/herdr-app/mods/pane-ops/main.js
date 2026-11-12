@@ -129,7 +129,7 @@ export default class PaneOps extends View {
     if (!space) { info("Focus a terminal in a space first."); return; }
     openOverlay({
       mod: "worktree-wt", kind: "dialog",
-      ...(action === "open" ? { width: 560, height: 480 } : action === "new" ? { width: 520, height: 480 } : { width: 440, height: 260 }),
+      ...(action === "open" ? { width: 560, height: 480 } : action === "new" ? { width: 520, height: 560 } : { width: 440, height: 260 }),
       props: { space: space.id, folder: f.cwd, action },
     });
   }

@@ -173,14 +173,23 @@ export default class Worktree extends View {
     this.input.on("change", (_e, cx) => { this.text = this.input.value(); this.error = ""; this.at = 0; this.schedulePreview(cx); cx.notify(); });
     this.input.on("submit", (_e, cx) => this.go(cx));
     // New: what the branch starts from, and the name the space shows.
-    this.baseInput = InputState.new({ value: props()?.base ?? "", placeholder: "base branch or commit" });
+    // Base is picked from the branches that exist: the input filters the
+    // list, Enter or a click picks, and leaving it restores the pick.
+    this.baseInput = InputState.new({ value: "", placeholder: "search branches" });
     this.labelInput = InputState.new({ value: props()?.label ?? "", placeholder: "space name (blank: folder name)" });
-    this.baseInput.on("change", (_e, cx) => { this.error = ""; this.schedulePreview(cx); cx.notify(); });
+    this.baseInput.on("change", (_e, cx) => { this.error = ""; this.baseAt = 0; cx.notify(); });
     this.labelInput.on("change", (_e, cx) => { cx.notify(); });
-    this.baseInput.on("submit", (_e, cx) => this.go(cx));
+    this.baseInput.on("submit", (_e, cx) => this.pickBase(this.shownBases()[this.baseAt], cx));
     this.labelInput.on("submit", (_e, cx) => this.go(cx));
+    this.baseInput.on("blur", (_e, cx) => { if (this.baseInput.value() !== this.baseSel) this.baseInput.set_value(this.baseSel); cx.notify(); });
+    this.branches = []; // [{ name, remote }] local then remote-tracking, newest first
+    this.locals = new Set(); // local branch names
+    this.remotes = new Map(); // branch name -> "origin/name", for names with no local branch
+    this.worktreeOf = new Map(); // branch -> checkout path, for branches already in a worktree
+    this.baseSel = ""; // the picked base
+    this.baseAt = 0; // highlighted row in the base list
     this.template = null; // wt's worktree-path, once read
-    this.preview = null; // { branch, base, exists, refOk, baseOk, path }
+    this.preview = null; // { branch, refOk, path }
     this.previewSeq = 0;
     // Which field has the keyboard, for its accent border.
     this.field = "branch";
@@ -218,10 +227,12 @@ export default class Worktree extends View {
         }
         if (repo && this.opening) this.list = await checkouts(repo, this.on);
         if (repo && props().action === "new") {
-          // Start from this checkout's branch (detached: its commit), shown so it can be changed.
+          await this.loadBranches(repo);
+          // Start from this checkout's branch (detached: the default branch), changeable.
           const head = await git(repo.top, ["rev-parse", "--abbrev-ref", "HEAD"], this.on);
-          const current = head.ok && head.out !== "HEAD" ? head.out : (await git(repo.top, ["rev-parse", "--short", "HEAD"], this.on)).out;
-          if (!this.baseInput.value() && current) this.baseInput.set_value(current);
+          const want = props()?.base ?? (head.ok && head.out !== "HEAD" ? head.out : "");
+          this.baseSel = this.branches.some((b) => b.name === want) ? want : (this.branches[0]?.name ?? "");
+          this.baseInput.set_value(this.baseSel);
           this.template = await wtTemplate(repo, this.on);
         }
         this.repo = repo;
@@ -246,33 +257,81 @@ export default class Worktree extends View {
     closeOverlay(props().overlay);
   }
 
+  // Local and remote-tracking branches, newest commit first, and which
+  // branches already have a worktree.
+  async loadBranches(repo) {
+    const refs = await git(repo.main, ["for-each-ref", "--sort=-committerdate", "--format=%(refname)%09%(refname:short)", "refs/heads", "refs/remotes"], this.on);
+    const locals = [], remotes = [];
+    for (const line of refs.out.split("\n").filter(Boolean)) {
+      const [full, short] = line.split("\t");
+      if (full.startsWith("refs/heads/")) locals.push({ name: short, remote: false });
+      else if (!full.endsWith("/HEAD")) remotes.push({ name: short, remote: true });
+    }
+    this.locals = new Set(locals.map((b) => b.name));
+    this.remotes = new Map();
+    for (const b of remotes) {
+      const bare = b.name.slice(b.name.indexOf("/") + 1);
+      if (!this.locals.has(bare) && !this.remotes.has(bare)) this.remotes.set(bare, b.name);
+    }
+    this.branches = [...locals, ...remotes];
+    this.worktreeOf = new Map((await checkouts(repo, this.on)).filter((c) => c.branch).map((c) => [c.branch, c.path]));
+  }
+
+  // The base list as filtered by what's typed; the whole list while the
+  // field still shows the current pick.
+  shownBases() {
+    const q = this.baseInput.value().trim().toLowerCase();
+    if (!q || q === this.baseSel.toLowerCase()) return this.branches;
+    return this.branches.filter((b) => b.name.toLowerCase().includes(q));
+  }
+
+  pickBase(b, cx) {
+    if (!b) { this.error = "No branch matches."; cx.notify(); return; }
+    this.baseSel = b.name;
+    this.baseInput.set_value(b.name);
+    this.baseAt = 0;
+    this.error = "";
+    this.labelInput.focus();
+    cx.notify();
+  }
+
+  // What Enter will do with the typed branch name.
+  mode(branch) {
+    if (!branch) return null;
+    if (this.preview?.branch === branch && this.preview.refOk === false) return { kind: "invalid" };
+    if (this.worktreeOf.has(branch)) return { kind: "open", path: this.worktreeOf.get(branch) };
+    if (this.locals.has(branch)) return { kind: "local" };
+    if (this.remotes.has(branch)) return { kind: "remote", tracks: this.remotes.get(branch) };
+    return { kind: "new" };
+  }
+
   // Recompute the preview shortly after typing stops; a newer one wins.
+  // (Spawn first and sleep inside: a cx kept from an event handler is gone
+  // by the time a timer fires.)
   schedulePreview(cx) {
     if (props()?.action !== "new") return;
     const seq = ++this.previewSeq;
-    cx.timer.after(150, () => {
+    cx.spawn(async (cx) => {
+      await cx.sleep(150);
       if (seq !== this.previewSeq) return;
-      cx.spawn(async (cx) => {
-        const p = await this.computePreview();
-        if (seq !== this.previewSeq) return;
-        this.preview = p;
-        cx.notify();
-      });
+      let p;
+      try { p = await this.computePreview(); }
+      catch (e) { p = { branch: this.text.trim(), failed: String(e) }; }
+      if (seq !== this.previewSeq) return;
+      this.preview = p;
+      cx.notify();
     });
   }
 
   async computePreview() {
     const r = this.repo;
     const branch = this.text.trim();
-    const base = this.baseInput.value().trim();
-    if (!r || !branch) return { branch, base };
-    const [ref, exists, baseOk] = await Promise.all([
-      git(r.main, ["check-ref-format", "--branch", branch], this.on),
-      git(r.main, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], this.on),
-      base ? git(r.top, ["rev-parse", "--verify", "--quiet", `${base}^{commit}`], this.on) : Promise.resolve({ ok: true }),
-    ]);
-    const path = ref.ok && this.template ? await wtPreviewPath(r, this.template, branch, this.on) : null;
-    return { branch, base, exists: exists.ok, refOk: ref.ok, baseOk: baseOk.ok, path };
+    if (!r || !branch) return { branch };
+    const ref = await git(r.main, ["check-ref-format", "--branch", branch], this.on);
+    if (!ref.ok) return { branch, refOk: false };
+    if (this.worktreeOf.has(branch)) return { branch, refOk: true, path: this.worktreeOf.get(branch) };
+    const path = this.template ? await wtPreviewPath(r, this.template, branch, this.on) : null;
+    return { branch, refOk: true, path, failed: path ? undefined : "wt couldn't render its worktree-path" };
   }
 
   // Tab / shift-tab between the new-worktree fields.
@@ -303,11 +362,22 @@ export default class Worktree extends View {
     const branch = this.text.trim();
     if (!branch) return "Type a branch name.";
     if (!(await git(this.repo.main, ["check-ref-format", "--branch", branch], this.on)).ok) return `"${branch}" isn't a valid branch name.`;
-    const exists = (await git(this.repo.main, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], this.on)).ok;
-    // A new branch starts from the Base field (filled with this checkout's branch); blank: this checkout (@).
-    const base = this.baseInput.value().trim() || "@";
-    if (!exists && base !== "@" && !(await git(this.repo.top, ["rev-parse", "--verify", "--quiet", `${base}^{commit}`], this.on)).ok) return `Base "${base}" isn't a branch or commit here.`;
-    const sw = exists ? ["switch", branch, "--no-cd"] : ["switch", "--create", branch, "--base", base, "--no-cd"];
+    // Refs may have moved since the dialog opened.
+    await this.loadBranches(this.repo);
+    const m = this.mode(branch);
+    if (m.kind === "open") {
+      // Already checked out: go to its space (or open one) instead of erroring.
+      const all = [...this.worktreeOf].map(([b, path]) => ({ branch: b, path }));
+      const s = spaceOf(m.path, all, this.on, spaces(), panes());
+      const label = this.labelInput.value().trim();
+      if (s) { run("space.select", { id: s.id }); if (label) run("space.rename", { id: s.id, name: label }); }
+      else run("space.new", { folder: m.path, machine: this.on ?? "", ...(label ? { name: label } : {}) });
+      return "";
+    }
+    // An existing local branch is checked out; a remote-only one gets a local
+    // branch tracking it (wt does that without --create); else a new branch from Base.
+    if (m.kind === "new" && !this.branches.some((b) => b.name === this.baseSel)) return "Pick a base branch from the list.";
+    const sw = m.kind === "new" ? ["switch", "--create", branch, "--base", this.baseSel, "--no-cd"] : ["switch", branch, "--no-cd"];
     const r = await wt(this.repo.top, sw, this.on, 600_000);
     if (!r.ok) return r.err || "wt switch failed.";
     const path = await wtPath(this.repo, branch, this.on);
@@ -365,6 +435,12 @@ export default class Worktree extends View {
       return cx.notify();
     }
     if (e.key === "enter" && props()?.action === "remove") return this.go(cx);
+    if ((e.key === "down" || e.key === "up") && props()?.action === "new" && this.field === "base") {
+      const n = this.shownBases().length;
+      if (n) this.baseAt = (this.baseAt + (e.key === "down" ? 1 : n - 1)) % n;
+      cx.stop_propagation();
+      return cx.notify();
+    }
     if (e.key === "tab" && props()?.action === "new" && this.repo) {
       this.cycle(Boolean(e.modifiers?.shift));
       cx.stop_propagation();
@@ -453,7 +529,7 @@ export default class Worktree extends View {
             ? !r.linked
               ? "This is the repository's main checkout, not a worktree."
               : `Closes the space and deletes ${tilde(r.top, this.userHome)}. The branch stays.`
-            : `A new space on a checkout made by wt. A branch that exists is checked out; a new one starts from Base.`;
+            : `A new space on a checkout made by wt.`;
     const blocked = !r || (remove && !r.linked);
     // New: the three fields and what they will make.
     const branch = this.text.trim();
@@ -479,21 +555,56 @@ export default class Worktree extends View {
             .bg(t.background)
             .text_color(t.foreground),
         );
-    const branchHint = !pv || !branch ? null
-      : pv.refOk === false ? { text: "not a valid branch name", color: t.blocked }
-      : pv.exists ? { text: "exists: its branch is checked out" }
-      : { text: "new branch" };
-    const baseHint = !pv || !branch ? null
-      : pv.exists ? { text: "not used: the branch exists" }
-      : pv.baseOk === false ? { text: "not found here", color: t.blocked }
-      : null;
+    // What Enter will do, said plainly and colored by how much it changes.
+    const m = this.mode(branch);
+    const action = !m ? { text: "Type a branch name.", color: t.dim }
+      : m.kind === "invalid" ? { text: `"${branch}" isn't a valid branch name.`, color: t.blocked }
+      : m.kind === "new" ? { text: `Creates new branch ${branch} from ${this.baseSel || "?"}`, color: t.accent }
+      : m.kind === "local" ? { text: `Checks out existing branch ${branch}`, color: t.foreground }
+      : m.kind === "remote" ? { text: `Creates ${branch} tracking ${m.tracks}`, color: t.foreground }
+      : { text: `${branch} is already checked out: opens that worktree`, color: t.blocked };
+    const baseHint = m && m.kind !== "new" && m.kind !== "invalid" ? { text: "not used: the branch exists" } : null;
+    // The base list, while Base has (or last had) the keyboard.
+    const bases = this.shownBases();
+    const baseList = v_flex()
+      .relative()
+      .h(Math.min(5, Math.max(1, bases.length)) * 26 + 2)
+      .rounded(6)
+      .border(1)
+      .border_color(t.input)
+      .child(
+        v_flex()
+          .id("wt-bases")
+          .size_full()
+          .overflow_y_scroll()
+          .children(bases.map((b, i) =>
+            h_flex()
+              .id(`base-${i}`)
+              .flex_none()
+              .h(26)
+              .px(10)
+              .gap(8)
+              .items_center()
+              .cursor_pointer()
+              .when(i === this.baseAt, (el) => el.bg(t.selected))
+              .when(i !== this.baseAt, (el) => el.hover((s) => s.bg(t.hover)))
+              .on_click((_e, cx) => this.pickBase(b, cx))
+              .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.foreground).child(b.name))
+              .when(b.name === this.baseSel, (el) => el.child(div().flex_none().text_size(11).text_color(t.accent).child("picked")))
+              .when(b.remote, (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child("remote")))))
+          .when(bases.length === 0, (el) => el.child(div().px(10).py(4).text_size(12).text_color(t.dim).child("No branch matches."))),
+      )
+      .child(Scrollbar.vertical("wt-bases").absolute().inset_0());
     const row = (k, v, color) =>
       h_flex()
         .gap(10)
         .child(div().w(46).flex_none().text_color(t.dim).child(k))
         .child(div().flex_1().min_w(0).truncate().text_color(color ?? t.foreground).child(v));
-    const from = pv?.exists ? "existing branch" : (pv?.base || "this checkout");
-    const where = !branch ? "type a branch name" : pv?.path ? tilde(pv.path, this.userHome ?? "") : pv ? "wt couldn't render its worktree-path" : "…";
+    const where = !branch ? "—"
+      : m?.kind === "invalid" ? "—"
+      : pv?.path ? tilde(pv.path, this.userHome ?? "")
+      : pv?.failed ? pv.failed
+      : "working out…";
     const shownAs = label || (pv?.path ? pv.path.split("/").pop() : "folder name");
     const previewBox = v_flex()
       .gap(4)
@@ -502,8 +613,8 @@ export default class Worktree extends View {
       .border(1)
       .border_color(t.input)
       .text_size(12)
-      .child(row("branch", branch ? `${branch}  ← ${from}` : "—", branch ? undefined : t.dim))
-      .child(row("path", where, pv?.path ? undefined : t.dim))
+      .child(div().text_size(12.5).font_semibold().text_color(action.color).child(action.text))
+      .child(row("path", where, pv?.path ? undefined : pv?.failed ? t.blocked : t.dim))
       .child(row("space", shownAs, label ? undefined : t.dim));
     return v_flex()
       .id("worktree")
@@ -520,8 +631,9 @@ export default class Worktree extends View {
       .when(remove && this.unpushed.length > 0, (el) => el.child(div().text_color(t.blocked).child(`Submodule ${this.unpushed.join(", ")} has commits that aren't pushed anywhere: they will be lost.`)))
       .when(!remove && !blocked, (el) =>
         el
-          .child(field("branch", "Branch", this.input, branchHint))
+          .child(field("branch", "Branch", this.input, null))
           .child(field("base", "Base (branched off of)", this.baseInput, baseHint))
+          .when(this.field === "base", (el) => el.child(baseList))
           .child(field("label", "Label (shown in the sidebar)", this.labelInput, null))
           .child(previewBox),
       )
