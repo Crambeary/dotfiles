@@ -1,0 +1,32 @@
+# Herdr UI overrides. Saved changes reload automatically.
+# Unset keys inherit config-gpui.toml; tables merge key by key.
+
+# New installs start with the roomy rounded sidebar. Remove this line for
+# the managed default, or pick another layout listed in config-gpui.toml.
+layout = "comfortable-rounded"
+theme = "Catppuccin Mocha"
+agents_placement = "panel"
+show_sidebar_gpu_load = true
+
+[backdrop]
+opacity = 0.91
+blur = true
+
+[sidebar]
+family = "FiraCode Nerd Font"
+size = 15.0
+select = "row"
+device_footer = "always"
+change_counts = "pr"
+
+[tabs]
+family = "FiraCode Nerd Font"
+size = 15.0
+
+[terminal]
+family = "FiraCode Nerd Font"
+size = 17.0
+
+[ui]
+family = "FiraCode Nerd Font"
+size = 15.0
