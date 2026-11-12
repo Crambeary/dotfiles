@@ -32,6 +32,9 @@ printf '%s' "$existing" | jq '
     "ctrl-space shift-d": "pane-ops.review-dir",
     "ctrl-space shift-m": "pane-ops.break",
     "ctrl-space shift-v": "pane-ops.move",
+    "ctrl-space w": "pane-ops.wt-new",
+    "ctrl-space shift-w": "pane-ops.wt-open",
+    "ctrl-space alt-w": "pane-ops.wt-remove",
     "ctrl-space o": "pane-ops.attention"{{ if eq .chezmoi.os "darwin" }},
     "cmd-alt-r": "pane-ops.review"{{ end }}
   }'

@@ -1,0 +1,8 @@
+# Worktrunk (wt) user config. Docs: https://worktrunk.dev/config/
+#
+# Worktrees live inside their repo, under .worktrees/. herdr-app's worktree-wt
+# mod creates them through wt, so this one setting decides where both wt in a
+# shell and Herdr's New worktree put them. A repo can override it in its own
+# .config/wt.toml. The worktree-wt mod adds /.worktrees/ to the repo's
+# .git/info/exclude; plain `wt switch -c` does not.
+worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"

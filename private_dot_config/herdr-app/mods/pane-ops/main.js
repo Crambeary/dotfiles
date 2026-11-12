@@ -1,5 +1,5 @@
 import { View, div } from "gpui-kit";
-import { run, panes, focused, agents, nextCommand, notify, exec, openOverlay, pickFolder } from "herdr";
+import { run, panes, spaces, focused, agents, nextCommand, notify, exec, openOverlay, pickFolder } from "herdr";
 
 // Headless: lives in a floating block, renders nothing, and handles the
 // `pane-ops.*` key commands. Only app commands and `git` are used, so it
@@ -38,6 +38,9 @@ export default class PaneOps extends View {
           else if (cmd === "review-wt") await this.review(focused()?.cwd, true);
           else if (cmd === "review-dir") await this.reviewDir();
           else if (cmd === "attention") this.attention();
+          else if (cmd === "wt-new") this.worktree("new");
+          else if (cmd === "wt-open") this.worktree("open");
+          else if (cmd === "wt-remove") this.worktree("remove");
         } catch (e) {
           info(`${cmd} failed: ${e}`);
         }
@@ -116,6 +119,19 @@ export default class PaneOps extends View {
   async reviewDir() {
     const folder = await pickFolder({ prompt: "Review" });
     if (folder) await this.review(folder, false, folder);
+  }
+
+  // The worktree-wt dialog (wt-backed clone of Herdr's worktree dialog) for
+  // the focused space, same sizes the menus open it at.
+  worktree(action) {
+    const f = focused();
+    const space = f && spaces().find((s) => (s.tabs ?? []).some((t) => t.id === f.tab));
+    if (!space) { info("Focus a terminal in a space first."); return; }
+    openOverlay({
+      mod: "worktree-wt", kind: "dialog",
+      ...(action === "open" ? { width: 560, height: 480 } : action === "new" ? { width: 520, height: 480 } : { width: 440, height: 260 }),
+      props: { space: space.id, folder: f.cwd, action },
+    });
   }
 
   // Cycle through agents that are blocked or done, newest first, wrapping.
