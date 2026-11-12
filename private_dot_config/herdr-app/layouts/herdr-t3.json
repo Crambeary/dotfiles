@@ -6,7 +6,14 @@
   },
   "type": "row",
   "floating": [
-    { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" }
+    {
+      "id": "pane-ops",
+      "content": {
+        "mod": "pane-ops"
+      },
+      "edge": "bottom",
+      "align": "end"
+    }
   ],
   "children": [
     {
@@ -229,24 +236,45 @@
       "resizable": false
     },
     {
-      "id": "bdbd29ced92396ae35f82fa333799928e",
-      "type": "block",
-      "content": {
-        "mod": "omarchy-changes"
-      },
+      "id": "panel",
+      "type": "column",
+      "children": [
+        {
+          "id": "panel-body",
+          "type": "stack",
+          "active": "files",
+          "children": [
+            {
+              "id": "files",
+              "type": "block",
+              "content": {
+                "mod": "omarchy-files"
+              }
+            },
+            {
+              "id": "changes",
+              "type": "block",
+              "content": {
+                "mod": "omarchy-changes"
+              }
+            },
+            {
+              "id": "graph",
+              "type": "block",
+              "content": {
+                "mod": "git-graph"
+              }
+            }
+          ]
+        }
+      ],
       "size": {
         "px": 368
-      }
-    },
-    {
-      "id": "b1f2f24ce06c54af0fc857efd991bb7f2",
-      "type": "block",
-      "content": {
-        "mod": "omarchy-files"
       },
-      "size": {
-        "px": 368
-      }
+      "min": 280,
+      "max": 900,
+      "hidden": true,
+      "background": "chrome"
     }
   ],
   "background": "canvas",

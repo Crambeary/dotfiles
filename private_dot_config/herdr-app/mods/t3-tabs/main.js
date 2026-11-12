@@ -11,6 +11,7 @@ import { stopsInit, stopsEnd, stop, focusRoot, within } from "./focus.js";
 import { sidebarParts } from "./sidebar.js";
 import { navigation } from "./navigation.js";
 import { newTab } from "./project.js";
+import { panelToggles, loadPanels } from "./panel.js";
 
 const inboxShown = () => sidebarParts(layout()).stack?.active === "inbox";
 
@@ -69,6 +70,8 @@ export default class Tabs extends View {
       cx.notify();
     });
     this.dragKeys = cx.focus_handle();
+    // The end part draws the side panel's toggles and remembers each space's view.
+    if (props()?.part === "end") this.panels = loadPanels();
     if (props()?.part !== "measure") stopsInit(this, cx);
     // Only the tab strip's copy answers every person's way to close: the layout's other parts would each open a dialog.
     if (!props()?.part) cx.spawn(async (cx) => {
@@ -262,6 +265,7 @@ export default class Tabs extends View {
     if (props()?.part === "end") return focusRoot(this, h_flex().size_full().items_center().justify_end().bg(t.chrome)
       .child(h_flex().id("tabs-end").flex_none().pr(12).gap(4).items_center().on_size_change((size) => this.fit(size))
         .when(!this.navigation.atHome, el => el.child(button("tab-new", svg("mods/t3-tabs/icons/plus.svg").size(14), "New tab", () => newTab(spaces().find(s => s.active)), "t3-tabs.new")))
+        .children([panelToggles(this, t, stopPress)?.ml(4)].filter(Boolean))
         .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/t3-tabs/icons/win-min.svg").size(16) : "−", "Minimize", () => run("window.minimize"), undefined, 28))
           .child(button("maximize", w.platform === "windows" ? svg(`mods/t3-tabs/icons/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", w.maximized ? "Restore" : "Maximize", () => run("window.maximize"), undefined, 28))
           .child(button("close-window", w.platform === "windows" ? svg("mods/t3-tabs/icons/win-close.svg").size(16) : svg("mods/t3-tabs/icons/x.svg").size(16), "Close window", () => run("window.close"), undefined, 28)))));
