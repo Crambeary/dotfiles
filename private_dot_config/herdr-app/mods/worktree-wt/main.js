@@ -194,8 +194,18 @@ export default class Worktree extends View {
     // Which field has the keyboard, for its accent border.
     this.field = "branch";
     this.inputFocused = true;
+    // Focusing a field selects its text, so typing replaces it (Base shows the
+    // pick, e.g. "main"; typing starts a fresh search). Ranges are UTF-8 bytes.
+    const bytes = (s) => encodeURIComponent(s).replace(/%[0-9A-F]{2}/g, "_").length;
     const track = (state, name) => {
-      state.on("focus", (_e, cx) => { this.field = name; this.inputFocused = true; cx.notify(); });
+      state.on("focus", (_e, cx) => {
+        this.field = name;
+        this.inputFocused = true;
+        const text = state.value();
+        if (text) state.set_selected_range({ start: 0, end: bytes(text) });
+        if (name === "base") this.baseAt = Math.max(0, this.shownBases().findIndex((b) => b.name === this.baseSel));
+        cx.notify();
+      });
       state.on("blur", (_e, cx) => { if (this.field === name) this.inputFocused = false; cx.notify(); });
     };
     track(this.input, "branch");
