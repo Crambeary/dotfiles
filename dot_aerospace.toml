@@ -1,6 +1,13 @@
 # Place a copy of this config to ~/.aerospace.toml
 # After that, you can edit ~/.aerospace.toml to your liking
 
+# Config format version. v2 stops inferring persistent workspaces from the
+# key bindings; they are listed explicitly in 'persistent-workspaces' below.
+config-version = 2
+
+# Workspaces that exist even when empty (v1 inferred these from the bindings).
+persistent-workspaces = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+
 # Feel free to omit keys that you don't use in your config.
 # If the key is absent in your config the default value is taken from this config
 
@@ -147,7 +154,8 @@ ctrl-p = 'exec-and-forget ~/.config/aerospace/scripts/pip-nudge.sh' # Cycles a P
 alt-p = ['mode pip', 'exec-and-forget sketchybar --set pip_mode_icon drawing=on'] # Enter freeform move/resize mode for the PIP window; see [mode.pip.binding] and scripts/pip-control.sh.
 # alt-shift-r = [ 'exec-and-forget "/opt/homebrew/opt/sketchybar/bin/sketchybar --reload"', 
 #   'reload-config',  ]
-ctrl-shift-r = 'exec-and-forget sketchybar --reload && aerospace reload-config'
+# '&&' is an operator in the 0.21+ binding parser, so the shell command must be quoted as one argument.
+ctrl-shift-r = "exec-and-forget /bin/bash -c 'sketchybar --reload && aerospace reload-config'"
 # alt-shift-r = 'reload-config'
 
 # All possible keys:
