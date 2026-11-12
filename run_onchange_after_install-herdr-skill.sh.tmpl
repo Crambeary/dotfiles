@@ -1,24 +1,27 @@
 #!/bin/bash
-# Installs herdr's agent skill (`herdr --skill`) into the user-level skill
-# directories for Claude Code, Codex (~/.agents/skills), and opencode. The
-# skill text ships with the herdr binary; the hash below is rendered from
-# `herdr --skill` at apply time, so `chezmoi apply` reinstalls the skill only
-# when a herdr update changes it.
-# Best-effort: a machine without herdr installed just skips it.
-{{- if lookPath "herdr" }}
-# herdr skill sha256: {{ output "herdr" "--skill" | sha256sum }}
-{{- end }}
+# Installs a pointer to herdr-app's current skill for Claude Code, Codex
+# (~/.agents/skills), and opencode. Read the installed binary's guidance at
+# invocation time so app updates do not leave a cached skill behind.
+# Best-effort: a machine without herdr-app installed just skips it.
 set -uo pipefail
 
-if ! command -v herdr >/dev/null 2>&1; then
-  echo "herdr: not installed — skipping skill install" >&2
+if ! command -v herdr-app >/dev/null 2>&1; then
+  echo "herdr-app: not installed — skipping skill install" >&2
   exit 0
 fi
 
-skill="$(herdr --skill)" || {
-  echo "herdr: --skill failed — skipping skill install" >&2
-  exit 0
-}
+skill=$(cat <<'SKILL'
+---
+name: herdr
+description: Control Herdr, a terminal multiplexer for coding agents. Use only when the user explicitly mentions Herdr or asks to use Herdr to inspect or control panes, tabs, workspaces, worktrees, commands, or another agent.
+---
+
+# Herdr
+
+Run `herdr-app --skill` and follow its output. It is the current, authoritative
+skill for driving Herdr; do not rely on remembered commands.
+SKILL
+)
 
 for dir in \
   "$HOME/.claude/skills" \
@@ -26,5 +29,5 @@ for dir in \
   "$HOME/.config/opencode/skills"; do
   mkdir -p "$dir/herdr"
   printf '%s\n' "$skill" >"$dir/herdr/SKILL.md"
-  echo "herdr: installed skill to $dir/herdr"
+  echo "herdr-app: installed skill pointer to $dir/herdr"
 done
