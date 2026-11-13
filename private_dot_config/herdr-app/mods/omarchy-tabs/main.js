@@ -210,7 +210,7 @@ export default class Tabs extends View {
     const root = layout();
     const panel = find(root, "panel"), body = find(root, "panel-body");
     const enabled = panel && body
-      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph"].filter(id => Boolean(find(body, id)))
+      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail"].filter(id => Boolean(find(body, id)))
         .filter(id => id !== "changes" || space?.branch != null)
       : [];
     this.syncPanel(space, panel, body, enabled);
@@ -236,6 +236,7 @@ export default class Tabs extends View {
       .child(h_flex().h_full().gap(0).items_center().flex_none()
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
-      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg"))));
+      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg")))
+      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg"))));
   }
 }
