@@ -258,6 +258,13 @@
                           }
                         },
                         {
+                          "id": "reviewer",
+                          "type": "block",
+                          "content": {
+                            "mod": "reviewer"
+                          }
+                        },
+                        {
                           "id": "browser-notes",
                           "type": "block",
                           "content": {
