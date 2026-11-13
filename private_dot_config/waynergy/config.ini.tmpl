@@ -35,7 +35,12 @@ path = /home/marc/.local/state/waynergy/waynergy.log
 0xE0B3 = 172 # kKeyAudioPlay    -> KEY_PLAYPAUSE
 {{ end }}
 # Mac host keycodes -> local keycodes
-# remote = mac keycode + 1; local = xkb keycode (compositor applies no +8 here)
+# remote = mac keycode + 1; local = xkb keycode {{ if index . "swapMacModifiers" -}}
+(uinput subtracts 8)
+# Command -> Super; Control -> Ctrl (both left and right).
+{{- else -}}
+(compositor applies no +8 here)
+{{- end }}
 [raw-keymap]
 1 = 38
 2 = 39
@@ -89,11 +94,21 @@ path = /home/marc/.local/state/waynergy/waynergy.log
 51 = 49
 52 = 22
 54 = 9
+{{ if index . "swapMacModifiers" -}}
+55 = 134
+56 = 133
+{{ else -}}
 56 = 37
+{{ end -}}
 57 = 50
 58 = 66
 59 = 64
+{{ if index . "swapMacModifiers" -}}
+60 = 37
+63 = 105
+{{ else -}}
 60 = 133
+{{ end -}}
 66 = 91
 68 = 63
 70 = 86

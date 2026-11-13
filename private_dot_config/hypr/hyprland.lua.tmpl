@@ -46,6 +46,8 @@ hl.config({
 	misc = {
 		disable_hyprland_logo = true,
 		disable_splash_rendering = true,
+		-- Let single-instance apps (FortiClient) bring their window forward when relaunched.
+		focus_on_activate = true,
 	},
 	dwindle = {
 		preserve_split = true,
@@ -54,6 +56,9 @@ hl.config({
 		mfact = 0.5,
 	},
 })
+
+-- Invert scrolling from the Mac server, only for Waynergy virtual input.
+hl.device({ name = "waynergy-mouse", natural_scroll = true })
 
 hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "default" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 3, bezier = "default" })
