@@ -5,7 +5,12 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
+{{- /* Use the user-local build when one is installed, else the system one. */}}
+{{- if stat (joinPath .chezmoi.homeDir ".local/bin/waynergy") }}
+ExecStart=%h/.local/bin/waynergy
+{{- else }}
 ExecStart=/usr/local/bin/waynergy
+{{- end }}
 Restart=on-failure
 RestartSec=5
 

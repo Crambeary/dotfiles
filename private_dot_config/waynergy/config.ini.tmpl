@@ -1,6 +1,8 @@
 host = 10.77.77.1
 port = 24800
-name = bagend
+{{- /* Screen name the mac's server config lists for this machine; set
+       waynergyName under [data] in chezmoi.toml when it isn't the hostname. */}}
+name = {{ index . "waynergyName" | default .chezmoi.hostname }}
 {{ if eq .chezmoi.hostname "bagend" -}}
 backend = wlr
 
