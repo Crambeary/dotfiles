@@ -11,6 +11,14 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
   export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# Make mise-managed commands available before prompt/history initialization,
+# including shells launched with a minimal inherited PATH.
+mise_shims="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/shims"
+if [[ -d "$mise_shims" && ":$PATH:" != *":$mise_shims:"* ]]; then
+  export PATH="$mise_shims:$PATH"
+fi
+unset mise_shims
+
 [[ -f ~/.zsh/aliases.zsh ]] && source ~/.zsh/aliases.zsh
 [[ -f ~/.zsh/functions.zsh ]] && source ~/.zsh/functions.zsh
 [[ -f ~/.zsh/starship.zsh ]] && source ~/.zsh/starship.zsh
@@ -161,14 +169,3 @@ export PATH="$PATH:$HOME/.local/share/yabridge"
 #
 # Nothing we use is lost: `atuin init zsh` above handles history and ctrl+r,
 # and no output-capture feature is enabled in atuin's config.
-
-# yazi: `y` opens the file manager and, on quit, changes the shell's cwd to
-# wherever yazi ended up navigating (yazi itself only changes its own view).
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
-}
