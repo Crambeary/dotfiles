@@ -269,3 +269,12 @@ scoop/persist/flow-launcher/**
 {{ if or (ne .chezmoi.os "linux") (not (index . "deskflowClient")) }}
 .local/bin/deskflow-rctrl-guard.sh
 {{ end }}
+
+# DankMaterialShell config on machines whose ~/.config/DankMaterialShell is a
+# symlink to a dir managed elsewhere: chezmoi replaces a symlinked target dir
+# with a real one, cutting DMS off from its settings. Set `dmsUnmanaged = true`
+# under [data] in chezmoi.toml to leave it alone.
+{{ if index . "dmsUnmanaged" }}
+.config/DankMaterialShell
+.config/DankMaterialShell/**
+{{ end }}
