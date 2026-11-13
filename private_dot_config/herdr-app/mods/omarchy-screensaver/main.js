@@ -1,12 +1,13 @@
 // omarchy-screensaver: the tuios screensavers (tuiffects: a Go port of
 // TerminalTextEffects) on the whole herdr window, rebuilt as text from the layout
-// and the app's data (skeleton.js). A 1px watcher block polls the desktop idle
-// time; past the delay it starts saver.sh in a terminal, shows it in a
-// full-window overlay, and hands it the frame. Any key ends it (the terminal
-// exits, the overlay closes).
-//   layout:   { "mod": "omarchy-screensaver" }
+// and the app's data (skeleton.js). An empty floating watcher polls the desktop
+// idle time; past the delay it starts saver.sh in a terminal, shows it in a
+// full-window overlay, and hands it the frame. A key, or the mouse moving or
+// clicking over the window, ends it (the terminal exits, the overlay closes).
+//   layout:   root "floating": [{ "id": "screensaver", "content": { "mod": "omarchy-screensaver" } }]
 //   command:  "alt-ctrl-s": "omarchy-screensaver:start"   (keys.json)
-//   settings: shared("screensaver") = { enabled, idle_seconds, effect, source: "window" | "terminal" }
+//   settings: shared("screensaver") = { enabled, idle_seconds, effect, seconds, source: "window" | "terminal" }
+//             seconds: cap on one effect (tuiffects -t); default 0, every effect plays to its end
 import { View, div } from "gpui-kit";
 import { exec, appHome, focused, readTextFile, writeTextFile, shared, setShared, window, openOverlay, nextCommand } from "herdr";
 import { skeleton, snapshot } from "./skeleton.js";
@@ -52,7 +53,8 @@ export default class Screensaver extends View {
     setShared("screensaver_open", true);
     try {
       const r = await exec("hc", ["run", "--bg", "--json", "--no-parent", "--rm", "--name", "screensaver",
-        "bash", `${mod}/saver.sh`, frame, nonce, effect ?? "random", fallback ?? ""], { timeout: 10000 });
+        "bash", `${mod}/saver.sh`, frame, nonce, effect ?? "random", fallback ?? "",
+        String((shared("screensaver") ?? {}).seconds ?? 0)], { timeout: 10000 });
       const address = JSON.parse(r.stdout).address;
       openOverlay({ kind: "dialog", frame: "none", modal: true, width: 1, height: 1,
         layout: { type: "block", content: { terminal: address } } });
@@ -71,7 +73,9 @@ export default class Screensaver extends View {
           await writeTextFile(frame, `${nonce}\n${text}`, old);
         }
       }
-      // Until the terminal is gone (any key ends saver.sh).
+      // Until the terminal is gone: saver.sh ends on a key, or on the mouse moving or
+      // clicking over the window (its terminal reports the mouse). Input elsewhere on
+      // the desktop doesn't end it, as tuios's saver only sees its own terminal.
       for (;;) {
         await cx.sleep(2000);
         const g = await exec("hc", ["get", address], { timeout: 3000 }).catch(() => null);
@@ -84,5 +88,5 @@ export default class Screensaver extends View {
     }
   }
 
-  render() { return div().size(1); }
+  render() { return div(); } // floats in the layout with nothing to show, like pane-ops
 }
