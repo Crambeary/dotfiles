@@ -223,14 +223,15 @@ scoop/persist/flow-launcher/**
 # GlazeWM error log: just grows forever, not real config.
 .glzr/glazewm/errors.log
 
-# Deskflow client unit: only marc-Ubuntu-TPL071 is a client of the mac's
-# deskflow server. Tracked because the snap ships no service of its own (the
-# old Synergy .deb did), so this file is the whole autostart mechanism -- and
+# Deskflow client unit: only machines that set `deskflowClient = true` under
+# [data] in chezmoi.toml are clients of the mac's deskflow server. Tracked
+# because the snap ships no service of its own (the old Synergy .deb did), so
+# this file is the whole autostart mechanism -- and
 # because -s encodes a non-obvious fix: the snap remaps HOME to
 # ~/snap/deskflow/<rev>, so the default config path is revision-numbered and
 # orphans itself (along with tls/, which Settings::tlsDir derives from it) on
 # every snap refresh. `systemctl --user enable`d: starts at login.
-{{ if ne .chezmoi.hostname "marc-Ubuntu-TPL071" }}
+{{ if not (index . "deskflowClient") }}
 .config/systemd/user/deskflow-client.service
 {{ end }}
 
@@ -265,6 +266,6 @@ scoop/persist/flow-launcher/**
 .config/autostart/xfce-desktop-start.desktop
 {{ end }}
 # This modifier workaround is specific to the Mac -> Ubuntu Deskflow pair.
-{{ if or (ne .chezmoi.os "linux") (ne .chezmoi.hostname "marc-Ubuntu-TPL071") }}
+{{ if or (ne .chezmoi.os "linux") (not (index . "deskflowClient")) }}
 .local/bin/deskflow-rctrl-guard.sh
 {{ end }}

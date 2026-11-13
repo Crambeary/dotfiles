@@ -378,7 +378,8 @@ The autostart supervisor starts Vicinae when available. If the Deskflow snap
 and `~/.config/Deskflow/Deskflow.conf` exist, it starts the client with X11
 explicitly selected and the snap's XKB data path. The config and TLS material
 remain local: install the snap and configure/pair Deskflow on a fresh machine.
-The Control_R workaround is deployed only to `marc-Ubuntu-TPL071`.
+The Control_R workaround is deployed only to machines that set
+`deskflowClient = true` under `[data]` in `~/.config/chezmoi/chezmoi.toml`.
 
 These use transient user services (`vicinae-xfce`, `deskflow-xfce`, and
 `deskflow-rctrl-xfce`), stopped when the Xfce session exits. Do not enable the
