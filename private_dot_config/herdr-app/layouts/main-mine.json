@@ -197,6 +197,14 @@
       },
       "edge": "bottom",
       "align": "end"
+    },
+    {
+      "id": "screensaver",
+      "content": {
+        "mod": "screensaver"
+      },
+      "edge": "bottom",
+      "align": "start"
     }
   ],
   "titlebar": "none",

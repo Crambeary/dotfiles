@@ -3,7 +3,7 @@
   "type": "column",
   "floating": [
     { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" },
-    { "id": "screensaver", "content": { "mod": "omarchy-screensaver" }, "edge": "bottom", "align": "start" }
+    { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }
   ],
   "titlebar": "none",
   "traffic_lights": [
