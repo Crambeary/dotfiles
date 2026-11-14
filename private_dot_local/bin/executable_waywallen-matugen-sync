@@ -85,11 +85,16 @@ fi
 echo "applying matugen theme from: $source_path"
 
 # dms matugen generate handles GTK/Qt/terminals/Hyprland/firefox etc. natively.
+# Dux 2.1.0 unpacks its shell to /run/user/<uid>/dms-shell/<hash>/ instead of
+# /usr/share/quickshell/dms; the hash changes per build, so glob for it.
+shell_dir=$(ls -d "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/dms-shell/*/ 2>/dev/null | head -1)
+[[ -n "$shell_dir" ]] || { echo "dms shell dir not found (is dms running?)"; exit 1; }
+
 dms matugen generate \
   --value "$source_path" \
   --kind image \
   --state-dir "$HOME/.cache/DankMaterialShell" \
-  --shell-dir /usr/share/quickshell/dms \
+  --shell-dir "$shell_dir" \
   --config-dir "$HOME/.config/DankMaterialShell"
 
 "$HOME/.local/bin/dms-matugen-extra-templates" "$source_path"

@@ -278,3 +278,14 @@ scoop/persist/flow-launcher/**
 .config/DankMaterialShell
 .config/DankMaterialShell/**
 {{ end }}
+
+# Linux: Windows-only tools, and matugen output that DMS regenerates on every
+# wallpaper change. Tracking the generated files made apply stop and prompt on
+# each one for having "changed since chezmoi wrote it".
+{{ if eq .chezmoi.os "linux" }}
+.glzr
+.glzr/**
+.config/kitty/dank-tabs.conf
+.config/kitty/dank-theme.conf
+.config/zed/themes/dank-zed-theme.json
+{{ end }}

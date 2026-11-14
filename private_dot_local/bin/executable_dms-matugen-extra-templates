@@ -6,8 +6,8 @@
 # this Zen install) and "user templates" pass (not reliably triggered from
 # outside DMS's own process).
 #
-# Takes the wallpaper image path as $1. Called from two places whenever the
-# wallpaper actually changes:
+# Takes the wallpaper path as $1 (image or video). Called from two places
+# whenever the wallpaper actually changes:
 #   - waywallen-matugen-sync, for wallpapers set via waywallen
 #   - the WallpaperWatcherDaemon DMS plugin, for wallpapers set via DMS itself
 #
@@ -20,7 +20,19 @@ set -euo pipefail
 # shells.
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 
-source_path="${1:?usage: dms-matugen-extra-templates <image-path>}"
+source_path="${1:?usage: dms-matugen-extra-templates <image-or-video-path>}"
+
+# matugen can't decode video. Grab one frame (1s in, to skip fade-ins) and
+# theme from that instead.
+case "${source_path,,}" in
+  *.mp4|*.webm|*.mkv|*.mov|*.avi|*.gif)
+    frame="${XDG_CACHE_HOME:-$HOME/.cache}/dms-matugen-video-frame.png"
+    mkdir -p "$(dirname "$frame")"
+    ffmpeg -nostdin -loglevel error -y -ss 1 -i "$source_path" \
+      -frames:v 1 -vf scale=640:-1 "$frame"
+    source_path="$frame"
+    ;;
+esac
 
 matugen image "$source_path" \
   -m dark \
