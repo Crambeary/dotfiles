@@ -1,7 +1,7 @@
 // New: pick the space and open a terminal tab there, or start a new space, on a machine picked as T3 picks an environment.
 import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex, InputState, Input } from "gpui-base";
-import { theme, spaces, machines, panes, run, closeOverlay, props, home, shared, setShared } from "herdr";
+import { theme, spaces, machines, panes, run, exec, closeOverlay, props, home, shared, setShared } from "herdr";
 import { projectMark, placeOf, newTab } from "./project.js";
 import { step, scrollList } from "./list.js";
 import { keyOf, keyLabel } from "./tip.js";
@@ -12,6 +12,10 @@ const ROW = 48;
 // The list's share of T3's 420 once its border, search, top inset and heading, bottom inset and footer are in; the popup hugs its content.
 const LIST_MAX = 420 - 2 - 48 - 8 - 28 - 8 - 41;
 const STATE = { ready: "Connected", loading: "Loading…", unavailable: "Unavailable" };
+// Hermes agents in Docker: the container, the user Hermes runs as in it, and where its profiles live. The default profile is the
+// container's own; every folder under profiles/ is another agent, so a new profile shows up here without touching this file.
+const HERMES = { container: "hermes", user: "hermes", profiles: "/opt/data/profiles" };
+const HERMES_KNOWN = "t3-new-menu.hermes";
 
 export default class NewMenu extends View {
   init(_props, cx) {
@@ -27,7 +31,38 @@ export default class NewMenu extends View {
     };
     this.spaceInput = field("Search spaces…");
     this.machineInput = field("Search machines…");
-    (this.picking ? this.machineInput : this.spaceInput).focus();
+    this.hermesInput = field("Search Hermes agents…");
+    this.hermes = false; // choosing a Hermes agent in Docker to open in a new tab
+    this.agents = shared(HERMES_KNOWN) ?? []; // the last list, shown at once while Docker is asked again
+    this.agentsFailed = false;
+    this.activeInput().focus();
+  }
+
+  activeInput() { return this.hermes ? this.hermesInput : this.picking ? this.machineInput : this.spaceInput; }
+
+  // Asked of the container each time the step opens, as a profile can come and go. Only a running container answers.
+  loadAgents(cx) {
+    this.agentsFailed = false;
+    cx.spawn(async (cx) => {
+      try {
+        const r = await exec("docker", ["exec", HERMES.container, "ls", "-1", HERMES.profiles]);
+        if (r.code !== 0) throw new Error(r.stderr);
+        this.agents = ["default", ...r.stdout.split("\n").map(n => n.trim()).filter(Boolean).sort()];
+        setShared(HERMES_KNOWN, this.agents);
+      } catch { this.agentsFailed = true; this.agents = []; }
+      cx.notify();
+    });
+  }
+
+  agentRows() {
+    return this.agents.map(p => ({ key: `hermes:${p}`, profile: p, name: p === "default" ? "Hermes" : `Hermes · ${p}`,
+      sub: p === "default" ? `Default profile · ${HERMES.container}` : `Profile ${p} · ${HERMES.container}` }));
+  }
+
+  openAgent(item) {
+    const space = spaces().find(s => s.active);
+    const argv = ["docker", "exec", "-it", "-u", HERMES.user, HERMES.container, "hermes", ...(item.profile === "default" ? [] : ["-p", item.profile])];
+    run("tab.new", { name: item.name, space: space?.id, argv });
   }
 
   // For the buttons that open this: see justClosed in focus.js. New space's and New tab's apart, as each opens the other's step.
@@ -46,6 +81,7 @@ export default class NewMenu extends View {
   // The current space first, then its machine's, so a machine's spaces stay together.
   items() {
     const q = this.filter.toLowerCase();
+    if (this.hermes) return this.agentRows().filter(a => a.name.toLowerCase().includes(q));
     if (this.picking) return this.machineRows().filter(m => m.name.toLowerCase().includes(q));
     const ps = panes(), here = spaces().find(s => s.active)?.machine ?? null;
     const rank = (s) => (s.active ? 0 : (s.machine ?? null) === here ? 1 : 2);
@@ -58,14 +94,29 @@ export default class NewMenu extends View {
     if (!item || item.off) return;
     closeOverlay(props().overlay);
     if (item.space) newTab(item.space);
+    else if (item.profile) this.openAgent(item);
     else run("space.new", { machine: item.machine ?? "" });
   }
 
   showMachines(on, cx) {
     this.picking = on;
+    this.hermes = false;
     this.at = 0;
     this.filter = "";
-    const input = on ? this.machineInput : this.spaceInput;
+    const input = this.activeInput();
+    input.set_value("");
+    input.focus();
+    cx.notify();
+  }
+
+  // The Hermes agents in Docker, a step like the machines'; Back returns to the spaces.
+  showHermes(on, cx) {
+    this.hermes = on;
+    this.picking = false;
+    this.at = 0;
+    this.filter = "";
+    if (on) this.loadAgents(cx);
+    const input = this.activeInput();
     input.set_value("");
     input.focus();
     cx.notify();
@@ -91,7 +142,7 @@ export default class NewMenu extends View {
       .on_click(() => this.choose(item))
       // As T3's CommandPaletteTitleIcon: level with the title, not the row.
       .child(h_flex().w(16).h(20).pt(2).self_start().flex_none().items_center().justify_center()
-        .child(s ? projectMark(s, 16, t, ps) : svg(`mods/t3-new-menu/icons/${item.machine ? "server" : "monitor"}.svg`).size(16).text_color(t.muted)))
+        .child(s ? projectMark(s, 16, t, ps) : svg(`mods/t3-new-menu/icons/${item.profile ? "bot" : item.machine ? "server" : "monitor"}.svg`).size(16).text_color(t.muted)))
       .child(v_flex().flex_1().min_w(0)
         .child(div().truncate().text_color(t.foreground).child(s ? s.name : item.name))
         .child(h_flex().min_w(0).gap(4).items_center().text_size(12).line_height("16px").text_color(t.dim)
@@ -117,28 +168,32 @@ export default class NewMenu extends View {
         if (e.key === "escape") return closeOverlay(props().overlay);
         const to = step(e, this.at, items.length);
         if (to >= 0) this.at = to;
-        else if (!this.picking && /^[1-9]$/.test(e.key) && e.modifiers.platform) { cx.stop_propagation(); return this.choose(items[Number(e.key) - 1]); }
+        else if (!this.picking && !this.hermes && /^[1-9]$/.test(e.key) && e.modifiers.platform) { cx.stop_propagation(); return this.choose(items[Number(e.key) - 1]); }
         else return;
         cx.stop_propagation();
         cx.notify();
       })
       .child(h_flex().h(36).my(6).flex_none().pl(18).pr(20).gap(7).items_center()
         .child(svg("mods/t3-new-menu/icons/search.svg").size(16).flex_none().text_color(t.dim))
-        .child(Input.new(this.picking ? this.machineInput : this.spaceInput).flex_1().h_full().text_size(14).text_color(t.foreground)))
-      .child(div().mt(8).px(16).py(6).flex_none().text_size(12).line_height("16px").font_medium().text_color(t.muted).child(this.picking ? "Machines" : "Spaces"))
+        .child(Input.new(this.activeInput()).flex_1().h_full().text_size(14).text_color(t.foreground)))
+      .child(div().mt(8).px(16).py(6).flex_none().text_size(12).line_height("16px").font_medium().text_color(t.muted).child(this.hermes ? "Hermes agents" : this.picking ? "Machines" : "Spaces"))
       .child(div().flex_none().mb(8).px(8)
         .when(items.length > 0, el => el.child(scrollList(this, "new-rows", { count: items.length, row: ROW, at: this.at, height: Math.min(items.length * ROW, LIST_MAX),
           draw: (i) => this.row(items[i], i, ps), wheeled: (keep) => { this.at = keep; } })))
-        .when(items.length === 0, el => el.child(div().py(40).text_center().text_color(t.dim).child(this.picking ? "No matching machines." : "No matching spaces."))))
+        .when(items.length === 0, el => el.child(div().py(40).text_center().text_color(t.dim).child(this.hermes ? (this.agentsFailed ? `Couldn't reach the "${HERMES.container}" container.` : this.agents.length ? "No matching agents." : "Looking for agents…") : this.picking ? "No matching machines." : "No matching spaces."))))
       .child(h_flex().flex_none().px(16).py(10).gap(8).items_center().justify_between().rounded_b(15).border_t(1).border_color(t.foreground + "12").bg(t.foreground + "06").font_medium().text_color(t.muted)
         .child(h_flex().gap(12).items_center()
           .child(hint("↑ ↓", "Navigate"))
-          .child(hint("Enter", this.picking ? "New space" : "New tab"))
+          .child(hint("Enter", this.hermes ? "Open Hermes" : this.picking ? "New space" : "New tab"))
           .child(hint("Esc", "Close")))
-        .when(this.picking, el => el.child(stop(this, t, "new-back", footButton("new-back", "Back to spaces").on_click((_e, cx) => this.showMachines(false, cx)).child("← Spaces"), 8)))
-        .when(!this.picking, el => el.child(stop(this, t, "space-new", footButton("space-new", "New space").on_click((_e, cx) => this.newSpace(cx))
-          .child(svg("mods/t3-new-menu/icons/folder-plus.svg").size(14).text_color(t.muted))
-          .child("New space")
-          .when(Boolean(newKey), row => row.child(key(newKey))), 8)))));
+        .when(this.picking || this.hermes, el => el.child(stop(this, t, "new-back", footButton("new-back", "Back to spaces").on_click((_e, cx) => (this.hermes ? this.showHermes(false, cx) : this.showMachines(false, cx))).child("← Spaces"), 8)))
+        .when(!this.picking && !this.hermes, el => el.child(h_flex().gap(4).items_center()
+          .child(stop(this, t, "hermes-new", footButton("hermes-new", "Open Hermes in Docker").on_click((_e, cx) => this.showHermes(true, cx))
+            .child(svg("mods/t3-new-menu/icons/bot.svg").size(14).text_color(t.muted))
+            .child("Hermes"), 8))
+          .child(stop(this, t, "space-new", footButton("space-new", "New space").on_click((_e, cx) => this.newSpace(cx))
+            .child(svg("mods/t3-new-menu/icons/folder-plus.svg").size(14).text_color(t.muted))
+            .child("New space")
+            .when(Boolean(newKey), row => row.child(key(newKey))), 8))))));
   }
 }

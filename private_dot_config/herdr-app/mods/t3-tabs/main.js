@@ -264,7 +264,7 @@ export default class Tabs extends View {
     // however wide they are, and the window's own buttons stay last.
     if (props()?.part === "end") return focusRoot(this, h_flex().size_full().items_center().justify_end().bg(t.chrome)
       .child(h_flex().id("tabs-end").flex_none().pr(12).gap(4).items_center().on_size_change((size) => this.fit(size))
-        .when(!this.navigation.atHome, el => el.child(button("tab-new", svg("mods/t3-tabs/icons/plus.svg").size(14), "New tab", () => newTab(spaces().find(s => s.active)), "t3-tabs.new")))
+        .when(!this.navigation.atHome, el => el.child(button("tab-new", svg("mods/t3-tabs/icons/plus.svg").size(14), "New tab", () => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 }), "t3-tabs.new")))
         .children([panelToggles(this, t, stopPress)?.ml(4)].filter(Boolean))
         .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/t3-tabs/icons/win-min.svg").size(16) : "−", "Minimize", () => run("window.minimize"), undefined, 28))
           .child(button("maximize", w.platform === "windows" ? svg(`mods/t3-tabs/icons/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", w.maximized ? "Restore" : "Maximize", () => run("window.maximize"), undefined, 28))
