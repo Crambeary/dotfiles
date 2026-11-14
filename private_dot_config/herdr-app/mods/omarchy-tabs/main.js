@@ -3,11 +3,14 @@ import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { syncNames } from "./names.js";
 import { renderPaneHeader } from "./pane.js";
-import { spaces, panes, terminals, props, run, openOverlay, theme, shared, setShared, layout, exec, readTextFile, home, appHome, nextCommand, notify } from "herdr";
+import { spaces, panes, terminals, props, run, openOverlay, theme, shared, setShared, layout, settings, exec, readTextFile, home, appHome, nextCommand, notify } from "herdr";
 import { resumeCommand, argvOf } from "./reopen.js";
 
 // The last closed tabs (newest last), kept across restarts for ctrl-alt-shift-t.
 const CLOSED = "omarchy-tabs.closed";
+
+// Tabs share the strip: each is TAB_MAX wide, shrinking to TAB_MIN, then the strip scrolls.
+const TAB_MAX = 240, TAB_MIN = 120, TAB_COMPACT = 175;
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -162,6 +165,19 @@ export default class Tabs extends View {
     const stop = (_e, cx) => cx.stop_propagation();
     const f = t.foreground, idle = f + "0a", hov = f + "14", sel = f + "2e";
     const allPanes = panes(), allTerminals = terminals();
+    // Strip geometry: tab width from the measured strip, then a scroll offset kept in range and following the active tab.
+    const n = shown.length, strip = this.stripW ?? n * TAB_MAX;
+    const tabW = n ? Math.round(Math.max(TAB_MIN, Math.min(TAB_MAX, strip / n))) : TAB_MAX;
+    const maxScroll = Math.max(0, n * tabW - strip);
+    let off = Math.max(0, Math.min(this.scrollX ?? 0, maxScroll));
+    const activeAt = shown.findIndex(c => c.active), activeId = shown[activeAt]?.id;
+    if (activeId !== this.seenActive && activeAt >= 0 && this.stripW !== undefined) {
+      this.seenActive = activeId;
+      off = Math.max(0, Math.min(off, activeAt * tabW), (activeAt + 1) * tabW - strip);
+      off = Math.min(off, maxScroll);
+    }
+    this.scrollX = off;
+    const compact = tabW < TAB_COMPACT;
     const item = (c, i) => {
       const tabPanes = allPanes.filter(p => p.tab === c.id);
       const lead = tabPanes.find(p => p.program?.agent && p.status === c.status) ?? tabPanes.find(p => p.program?.agent) ?? tabPanes[0];
@@ -185,7 +201,7 @@ export default class Tabs extends View {
         ? agentPanes.map(p => `${p.program.name}: ${({ working: "working", blocked: "needs input", done: "done" })[p.status] ?? "idle"}`).join("\n")
         : [status, c.named && title && title !== c.name ? title : program?.name].filter(Boolean).join(" · ");
       const icons = (multi ? programs.slice(0, 3) : [program]).filter(p => p?.icon);
-      return h_flex().id(`tab-${c.id}`).w(240).h_full().px(10).gap(7).rounded(0).items_center().flex_none().text_size(12)
+      return h_flex().id(`tab-${c.id}`).w(tabW).absolute().top(0).bottom(0).left(i * tabW - off).px(compact ? 8 : 10).gap(compact ? 5 : 7).rounded(0).items_center().flex_none().text_size(12)
         .tooltip(`${name}\n${detail}`)
         // The close button shows on the active tab and on the one under the pointer.
         .on_hover((over, cx) => { if (over) this.overTab = c.id; else if (this.overTab === c.id) this.overTab = null; cx.notify(); })
@@ -202,7 +218,7 @@ export default class Tabs extends View {
         .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "menu-wt", kind: "popup", width: 200, props: { tab: "tab", target: { id: c.id, space: space.id } } }); })
         .when(icons.length > 0, el => el.child(h_flex().flex_none().gap(6).children(icons.map(p => p.tint ? svg(p.icon).size(14).text_color(t.muted) : image(p.icon).size(14)))))
         .child(div().flex_1().min_w(0).truncate().child(c.zoomed ? `${name} Z` : name))
-        .when(Boolean(status), el => el.child(div().flex_none().text_size(10.5).text_color(t[c.status] ?? t.muted).child(status)))
+        .when(Boolean(status) && !compact, el => el.child(div().flex_none().text_size(10.5).text_color(t[c.status] ?? t.muted).child(status)))
         .when(c.status === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
         .when(c.status === "blocked" || c.status === "done", el => el.child(div().size(6).rounded(0).bg(t[c.status])))
         .when(c.active || this.overTab === c.id, el => el.child(div().id(`close-${c.id}`).flex_none().p(3).rounded(0).text_color(t.dim).hover(s => s.bg(hov).text_color(t.foreground)).on_mouse_down("left", stop).on_click((_e, cx) => { cx.stop_propagation(); run("tab.close", { id: c.id }); }).child(svg("mods/pane/close.svg").size(14))));
@@ -228,7 +244,22 @@ export default class Tabs extends View {
     return h_flex().size_full().min_w(0).gap(0).items_center().bg(t.chrome)
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
-      .child(h_flex().id("tab-scroll").max_w(shown.length * 241).flex_shrink(1).min_w(0).h_full().items_center().gap(0).overflow_x_scrollbar().children(shown.map(item)))
+      .child(div().id("tab-scroll").relative().overflow_hidden().w(n * TAB_MAX).flex_shrink(1).min_w(0).h_full()
+        .on_size_change((size, cx) => {
+          const w = size.width / (Number(settings()?.zoom) || 1);
+          if (Math.abs(w - (this.stripW ?? -1)) >= 0.5) { this.stripW = w; cx.notify(); }
+        })
+        // The wheel (or a sideways swipe) scrolls the strip; the bar around it still steps through tabs.
+        .on_scroll_wheel((e, cx) => {
+          cx.stop_propagation();
+          const z = Number(settings()?.zoom) || 1;
+          const d = Math.abs(e.delta.x) > Math.abs(e.delta.y) ? e.delta.x : e.delta.y;
+          const next = Math.max(0, Math.min((this.scrollX ?? 0) - d / z, Math.max(0, n * tabW - (this.stripW ?? n * TAB_MAX))));
+          if (next === this.scrollX) return;
+          this.scrollX = next;
+          cx.notify();
+        })
+        .children(shown.map(item)))
       .child(div().id("tab-new").h_full().w(36).flex_none().flex().items_center().justify_center().rounded(0).border_r(1).border_color(t.border).bg(idle).text_color(t.dim)
         .hover(s => s.bg(hov).text_color(t.foreground)).on_mouse_down("left", stop)
         .on_click(() => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 })).child("+"))
