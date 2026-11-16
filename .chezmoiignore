@@ -1,7 +1,7 @@
-# Machines with `herdrOnly = true` under [data] in chezmoi.toml (e.g. the Omarchy
+# Machines with `omarchy = true` under [data] in chezmoi.toml (the Omarchy
 # laptop) manage nothing except ~/.config/herdr-app. Everything is ignored, then
 # the herdr-app tree and its parent are re-included with `!`.
-{{ if index . "herdrOnly" }}
+{{ if index . "omarchy" }}
 **
 !.config
 !.config/herdr-app
