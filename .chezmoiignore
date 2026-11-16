@@ -19,6 +19,8 @@
 
 # Repo docs, not a dotfile target
 README.md
+notes
+notes/**
 tests
 tests/**
 
@@ -158,6 +160,40 @@ install-powershell7.cmd
 # yet); the mod and layouts under .config/herdr-app are portable and still apply.
 {{ if eq .chezmoi.os "windows" }}
 .config/herdr-app/keys.json
+{{ end }}
+
+# macOS: the Linux desktop stack and Windows tools have no use here. Before
+# this block only Windows was gated off them, so a mac `chezmoi apply` wrote
+# Hyprland/DMS/systemd config and GlazeWM/Zebar files nothing reads.
+# .config/matugen stays: the mac matugen config pulls templates and post-hook
+# scripts from ~/.config/matugen.
+{{ if eq .chezmoi.os "darwin" }}
+.config/DankMaterialShell
+.config/DankMaterialShell/**
+.config/hypr
+.config/hypr/**
+.config/swaync
+.config/swaync/**
+.config/systemd
+.config/systemd/**
+.config/waynergy
+.config/waynergy/**
+.config/autostart
+.config/autostart/**
+.local/share/applications
+.local/share/applications/**
+.local/bin/dms-*
+.local/bin/matugen-wallpaper-sync
+.local/bin/waywallen-matugen-sync
+.steam
+.steam/**
+.profile
+.glzr
+.glzr/**
+# Zed settings differ per machine (the mac's hold work SSH hosts that stay out
+# of this public repo), so the mac's copy is left unmanaged.
+.config/zed/settings.json
+.config/zed/themes/dank-zed-theme.json
 {{ end }}
 
 # Optional per-machine SketchyBar settings

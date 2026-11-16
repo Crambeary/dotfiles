@@ -22,3 +22,4 @@ if [[ -n $SSH_AUTH_SOCK && ! -S $SSH_AUTH_SOCK ]] && (( $+commands[systemctl] ))
 	[[ -S $_live_sock ]] && export SSH_AUTH_SOCK=$_live_sock
 	unset _live_sock
 fi
+export PATH="$HOME/.local/share/mise/shims:$PATH"
