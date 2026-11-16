@@ -6,7 +6,6 @@ import { notNews, ownStatus, stillSettled, subAgents, treeStatus } from "./tree.
 import { tip, glow } from "./tip.js";
 import { detailsFor, detailsAt, detailsWatch } from "./details.js";
 import { programIcon } from "./program.js";
-import { focusAgent } from "./zoom.js";
 import { stopsInit, stopsEnd, stop, focusRoot, within } from "./focus.js";
 import { sidebarParts } from "./sidebar.js";
 import { navigation } from "./navigation.js";
@@ -97,7 +96,7 @@ export default class Tabs extends View {
 
   async settle(cx) {
     // Settle is the Inbox's: Lists has no Settled to put it in (docs/adr/0002).
-    if (this.navigation.atHome || sidebarParts(layout()).stack?.active === "lists") return;
+    if (sidebarParts(layout()).stack?.active === "lists") return;
     const f = { ...focused() }, ps = panes(), p = ps.find(p => p.pane === f.pane), every = agents(), all = terminals();
     if (p?.mod && programOf(p)?.inbox) {
       if (!["working", "blocked"].includes(modStatus(p))) await this.navigation.handle(`close-pane-now:${p.pane}`, cx);
@@ -126,8 +125,6 @@ export default class Tabs extends View {
     const pins = shared("agents.pins") ?? [];
     if (pins.includes(address)) setShared("agents.pins", pins.filter(p => p !== address));
     this.remember("Settled", { address, snoozed, pins }, cx);
-    const current = focused();
-    if (["space", "tab", "pane", "terminal", "agent"].every(key => current?.[key] === f[key])) run("t3-tabs.home");
   }
 
   unpin(address, cx) {
@@ -161,12 +158,10 @@ export default class Tabs extends View {
     }
     // Gone while the writes run, so a second press can't repeat them; back with what failed, so it can be tried again.
     setShared("t3-inbox.notice", null);
-    let back;
     const failed = [];
     for (const u of [...n.undos].reverse()) {
       if (n.action !== "Unpinned") {
         if (!await this.writeLabel(u.address, "settled", "")) { failed.unshift(u); continue; }
-        back = u.address;
         if (Number(u.snoozed) > Date.now()) await this.writeLabel(u.address, "snoozed", u.snoozed);
       }
       const pins = [...(shared("agents.pins") ?? [])];
@@ -177,7 +172,6 @@ export default class Tabs extends View {
       }
     }
     if (failed.length) setShared("t3-inbox.notice", { ...n, count: failed.length, undos: failed });
-    if (back && this.navigation.atHome) focusAgent(back);
   }
 
   // Each tab's width: its whole name while the room allows, else the longest names give way first.
@@ -264,13 +258,12 @@ export default class Tabs extends View {
     // however wide they are, and the window's own buttons stay last.
     if (props()?.part === "end") return focusRoot(this, h_flex().size_full().items_center().justify_end().bg(t.chrome)
       .child(h_flex().id("tabs-end").flex_none().pr(12).gap(4).items_center().on_size_change((size) => this.fit(size))
-        .when(!this.navigation.atHome, el => el.child(button("tab-new", svg("mods/t3-tabs/icons/plus.svg").size(14), "New tab", () => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 }), "t3-tabs.new")))
+        .child(button("tab-new", svg("mods/t3-tabs/icons/plus.svg").size(14), "New tab", () => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 }), "t3-tabs.new"))
         .children([panelToggles(this, t, stopPress)?.ml(4)].filter(Boolean))
         .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/t3-tabs/icons/win-min.svg").size(16) : "−", "Minimize", () => run("window.minimize"), undefined, 28))
           .child(button("maximize", w.platform === "windows" ? svg(`mods/t3-tabs/icons/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", w.maximized ? "Restore" : "Maximize", () => run("window.maximize"), undefined, 28))
           .child(button("close-window", w.platform === "windows" ? svg("mods/t3-tabs/icons/win-close.svg").size(16) : svg("mods/t3-tabs/icons/x.svg").size(16), "Close window", () => run("window.close"), undefined, 28)))));
     const space = spaces().find(p => p.active);
-    // At Home, none: the brand bar's lit mark tells where this is.
     const { tabs: shown } = this.navigation.frame(!props()?.part), inbox = inboxShown();
     // A tab that goes under the pointer reports no leaving, and a lit × would keep every tab's card away.
     if (this.hot?.startsWith("close-") && !shown.some(c => this.hot === `close-${c.id}`)) this.hot = null;

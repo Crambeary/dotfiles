@@ -1,6 +1,6 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { spaces, agents, theme, run, window, props, layout, shared, setShared, focused, home, nextCommand, settings } from "herdr";
+import { spaces, theme, run, window, props, layout, shared, setShared, focused, home, nextCommand, settings } from "herdr";
 import { wallpapers, setWallpaper, setZoomBorder, ZOOM_BORDER } from "./wallpaper.js";
 
 const own = (el) => el.on_mouse_down("left", (_e, cx) => cx.stop_propagation());
@@ -72,7 +72,6 @@ export default class OmarchyBar extends View {
       if (zoomed || this.zoomed !== undefined || find(layout(), "main")?.content?.pane?.focus?.width === ZOOM_BORDER) setZoomBorder(zoomed);
       this.zoomed = zoomed;
     }
-    const blocked = new Set(agents().filter((a) => a.status === "blocked").map((a) => a.space));
     const space = list.find((s) => s.active);
     const cwd = focused()?.cwd;
     const here = cwd ? (cwd === home() ? "~" : cwd.split("/").filter(Boolean).pop()) : null;
@@ -100,14 +99,6 @@ export default class OmarchyBar extends View {
       .child(own(div().id("sidebar-toggle").flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
         .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(toggleSidebar)
         .child(svg("mods/omarchy-chrome/sidebar.svg").size(14))))
-      .when(!this.narrow, (el) => el.children(list.map((s, i) => {
-        const col = blocked.has(s.id) ? t.blocked : s.active ? t.foreground : t.dim;
-        return div().id(`ws-${s.id}`).flex_none().h_full().px(8).flex().items_center().justify_center().cursor_pointer()
-          .border_b(2).border_color(s.active ? t.accent : "#00000000").text_color(col)
-          .hover((st) => st.text_color(t.foreground).bg(t.hover))
-          .on_click(() => run("space.select", { id: s.id }))
-          .child(String(i + 1));
-      })))
       .child(own(div().id("search").flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
         .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(() => run("mod.open", { name: "picker" }))
         .child(svg("mods/omarchy-chrome/search.svg").size(14))))
