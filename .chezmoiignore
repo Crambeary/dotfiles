@@ -1,3 +1,13 @@
+# Machines with `herdrOnly = true` under [data] in chezmoi.toml (e.g. the Omarchy
+# laptop) manage nothing except ~/.config/herdr-app. Everything is ignored, then
+# the herdr-app tree and its parent are re-included with `!`.
+{{ if index . "herdrOnly" }}
+**
+!.config
+!.config/herdr-app
+!.config/herdr-app/**
+{{ end }}
+
 .config/nvim/plugin/packer_compiled.lua
 
 # Generated antidote bundle â€” .zshrc rebuilds it from .zsh_plugins.txt on demand
