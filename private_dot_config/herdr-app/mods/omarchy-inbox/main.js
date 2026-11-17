@@ -24,6 +24,7 @@ import { v_flex, InputState } from "gpui-base";
 import { agents, terminals, panes, spaces, focused, hc, notify, theme, shared, setShared, setAgentOrder, props, nextCommand, settings, layout, window } from "herdr";
 import { modStatus, programOf } from "./name.js";
 import { descendants, ownStatus, stillSettled } from "./tree.js";
+import { inboxAgents, inboxRoots, treeMembers, childrenExpanded } from "./subagents.js";
 import { stopsInit, stopsEnd, focusRoot, enter } from "./focus.js";
 import { FIRST, trackInboxRows, inboxInView, inboxFields, inboxSections } from "./row-model.js";
 import { DAY, initCustom, customView } from "./snooze.js";
@@ -51,6 +52,7 @@ export default class Inbox extends View {
     // it had ended then, and for one that just stopped, when its run started.
     this.changed = JSON.parse(localStorage.getItem("changes") ?? "{}");
     this.open = localStorage.getItem("open") === "true";
+    this.childChoices = JSON.parse(localStorage.getItem("children-open") ?? "{}");
     this.workOpen = localStorage.getItem("working-open") === "true";
     this.napOpen = localStorage.getItem("snoozed-open") === "true";
     // The card whose snooze menu is open, and the row its keys are on.
@@ -97,7 +99,14 @@ export default class Inbox extends View {
       for (;;) {
         const command = await nextCommand();
         if (command === "settle") /** @type {any} */ (this).settleKey?.(cx);
-        else if (command === "clear") /** @type {any} */ (this).clearSettled?.();
+        else if (command.startsWith("children:")) {
+          const model = this.compute(cx, false), a = model.every.find(a => a.address === command.slice(9));
+          if (a) this.toggleChildren(a.address, model.kids.get(a.address), cx);
+        }
+        else if (command === "clear") {
+          inboxActions(this, this.compute(cx, false));
+          /** @type {any} */ (this).clearSettled?.();
+        }
         else if (command.startsWith("custom-snooze:")) /** @type {any} */ (this).customSnooze?.(command.slice("custom-snooze:".length), cx);
         else if (command === "undo") this.undo(cx);
         // pane.go onto this list (mod.json's "focusable"): the keyboard starts at Search.
@@ -105,6 +114,12 @@ export default class Inbox extends View {
         cx.notify();
       }
     });
+  }
+
+  toggleChildren(address, words, cx) {
+    this.childChoices[address] = !childrenExpanded(this.childChoices, address, words);
+    localStorage.setItem("children-open", JSON.stringify(this.childChoices));
+    cx.notify();
   }
 
   matches() { return inboxMatches(this); }
@@ -204,12 +219,14 @@ export default class Inbox extends View {
     const now = Date.now();
     const runs = agents(), all = terminals(), ps = panes(), sp = spaces(), f = focused();
     // `pane:<id>` is a mod card's address, in t3-inbox.rows too. Docked alone, keep the original one-card-per-agentless-tab rule.
-    const every = [...runs, ...sp.flatMap((s) => s.tabs.flatMap((c) => {
+    const candidates = [...inboxAgents(runs, all, sp), ...sp.flatMap((s) => s.tabs.flatMap((c) => {
       const cards = ps.filter(x => x.tab === c.id && x.mod && programOf(x)?.inbox);
       return (runs.some(a => a.tab === c.id) ? [] : cards.slice(0, 1)).map(p => ({ ...p,
         address: `pane:${p.pane}`, status: modStatus(p) ?? "idle", focused: p.pane === f?.pane,
         space: s.id, space_name: s.name, program: { name: p.title, ...programOf(p) } }));
     }))];
+    const children = new Map(candidates.map(a => [a.address, descendants(all, a.address)]));
+    const every = inboxRoots(candidates, all);
     const inView = inboxInView(every, all, f);
     // As T3's route reveal: an agent brought into view from elsewhere (a key, the picker, its pane) that the space
     // filter hides widens the filter to every space, kept. Not on the first draw, and a filter you pick isn't undone.
@@ -240,7 +257,7 @@ export default class Inbox extends View {
     }
     // Pins are the core's, as omarchy-agents keeps them (pins.js), with the order the inbox's own: pinned agents stay up top in pin order, whatever their state.
     const pins = readPins();
-    const wake = (a, cx) => this.setLabel("snoozed", a.address, "", cx);
+    const wake = (a, cx) => { for (const k of treeMembers(a, all)) this.setLabel("snoozed", k.address, "", cx); };
     // A snooze ends on a failure in its tree (a program's error doesn't stay said), a new turn in view (the person gave
     // it work), or being looked at once it has woken. A pin ends it too, as the pinning writes the label.
     const failed = (a) => term.get(a.address)?.status === "error" || descendants(all, a.address).some((k) => k.status === "error");
@@ -248,7 +265,9 @@ export default class Inbox extends View {
       const until = napUntil(a);
       if (!until) continue;
       const turned = window().active && viewing(a) && running(a) && ["idle", "done"].includes(this.changed[a.address]?.s);
-      if (failed(a) || turned || (window().active && viewing(a) && until <= now)) this.setLabelDue("snoozed", a.address, "", cx);
+      if (failed(a) || turned || (window().active && viewing(a) && until <= now)) {
+        for (const k of treeMembers(a, all)) if (napUntil(k)) this.setLabelDue("snoozed", k.address, "", cx);
+      }
     }
     const tabs = new Map(sp.flatMap((s) => s.tabs.map((c) => [c.id, c])));
     this.track(every.map((a) => ({
@@ -275,7 +294,7 @@ export default class Inbox extends View {
     }
     if (publish) this.publishRows([...pinned, ...out, ...busyRows, ...napRows, ...rows], inView,
       [...pinned, ...out, ...work, ...nap, ...put]);
-    return { now, all, ps, sp, f, every, inView, scope, term, pins, wake, ...fields, ...sections };
+    return { now, all, ps, sp, f, every, children, inView, scope, term, pins, wake, ...fields, ...sections };
   }
 
   publishRows(rows, view, ordered = rows) {

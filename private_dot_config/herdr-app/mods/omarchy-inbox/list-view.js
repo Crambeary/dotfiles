@@ -17,6 +17,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
   const { d, dragging, lifted, plan, cardH, rows, hot, aim, gap, others, placeholder, boundary, pinTo } = drag;
   const { card, slim } = draw;
   const { doomed } = actions;
+  const closing = doomed.reduce((n, a) => n + 1 + (model.children.get(a.address)?.length ?? 0), 0);
   const zoom = Number(settings()?.zoom) || 1;
   const lit = (id, color) => view.hot === id ? t.foreground : color;
   const scoped = sp.filter((s) => scope.includes(s.id));
@@ -63,10 +64,10 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
     const shelf = [];
     let b = 0;
     if (work.length) { shelf.push(["m:working", "marker", b]); b += SHELF + STACK; for (const a of busyRows) { shelf.push([a, "work", b]); b += heightOf("work", a.address); } }
-    if (nap.length) { shelf.push(["m:snoozed", "marker", b]); b += SHELF + STACK; for (const a of napRows) { shelf.push([a, "slim", b]); b += a.address === d?.from && dragging && plan ? 0 : SLIM + STACK; } }
+    if (nap.length) { shelf.push(["m:snoozed", "marker", b]); b += SHELF + STACK; for (const a of napRows) { shelf.push([a, "slim", b]); b += a.address === d?.from && dragging && plan ? 0 : heightOf("slim", a.address); } }
     if (put.length || dragging) {
       shelf.push(["m:settled", "marker", b]); b += SHELF + STACK;
-      for (const a of rows) { if (dragging && plan?.gap === a.address) b += gapH; shelf.push([a, "slim", b]); b += a.address === d?.from && dragging && plan ? 0 : SLIM + STACK; }
+      for (const a of rows) { if (dragging && plan?.gap === a.address) b += gapH; shelf.push([a, "slim", b]); b += a.address === d?.from && dragging && plan ? 0 : heightOf("slim", a.address); }
       if (view.open && put.length > view.limit) { shelf.push(["m:more", "marker", b]); b += SLIM; }
     }
     const base = Math.max(y, (view.listH ?? 0) - 8 - b);
@@ -133,8 +134,8 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
       cx.stop_propagation();
       view.hot = null; // The dialog covers it, before the pointer can report leaving it.
       const ask = {
-        title: `Close ${doomed.length} terminal${doomed.length === 1 ? "" : "s"}?`,
-        detail: "This ends the terminals of your settled agents. The tab you're on stays.",
+        title: `Close ${closing} terminal${closing === 1 ? "" : "s"}?`,
+        detail: "This ends your settled agents and their subagents. Trees with working agents or agents needing you stay, as does the tab you're on.",
         command: { name: "omarchy-inbox.clear" },
       };
       // The shipped confirm dialog: no T3 dialogs here.

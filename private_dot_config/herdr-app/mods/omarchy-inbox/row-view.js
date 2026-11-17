@@ -9,6 +9,8 @@ import { detailsLive, detailsFor, detailsLine, detailsCard } from "./details.js"
 import { programIcon } from "./program.js";
 import { stop, within } from "./focus.js";
 import { snoozeButton } from "./snooze.js";
+import { childrenExpanded, childActivity } from "./subagents.js";
+import { focusAgent } from "./zoom.js";
 import { SLIM } from "./list-view.js";
 
 // The settle key: this mod's own command (keys.json `omarchy-inbox.settle`), shown only if bound.
@@ -36,7 +38,7 @@ function left(ms, now) {
 }
 
 export function inboxRowView(view, t, model, actions, drag) {
-  const { now, ps, sp, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt } = model;
+  const { now, ps, sp, children, kids, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt } = model;
   const { settle, unsettle, away, pick } = actions;
   const { dragging, plan, verb, badge, swept, row, open, sweepFrom, justDropped } = drag;
   const zoom = Number(settings()?.zoom) || 1;
@@ -70,11 +72,45 @@ export function inboxRowView(view, t, model, actions, drag) {
       ], { hide: Boolean(view.hot) || view.detailsHold === a.address }).ml(4)));
   };
 
+  const expanded = a => childrenExpanded(view.childChoices, a.address, kids.get(a.address) ?? []);
+  const chevron = (a, ghost) => {
+    const count = children.get(a.address)?.length ?? 0;
+    if (ghost || !count) return null;
+    const id = `children-${a.address}`, up = expanded(a);
+    return stop(view, t, id, h_flex().id(id).h(20).px(2).gap(3).flex_none().items_center()
+      .text_color(t.dim).hover(s => s.text_color(t.foreground)).role("button")
+      .accessibility_label(`${up ? "Hide" : "Show"} ${count} subagents of ${title(a)}`)
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+      .on_click((_e, cx) => {
+        cx.stop_propagation();
+        view.toggleChildren(a.address, kids.get(a.address), cx);
+      })
+      .child(svg(`mods/omarchy-inbox/icons/chevron-${up ? "down" : "right"}.svg`).size(12).flex_none())
+      .child(div().text_size(11).child(String(count))));
+  };
+  // All depths share one flat list. Rows focus their agent, with no actions of their own.
+  const childList = (a, ghost) => {
+    const xs = children.get(a.address) ?? [];
+    if (ghost || !xs.length || !expanded(a)) return [];
+    return [v_flex().id(`subagents-${a.address}`).mt(6).gap(2).flex_none().children(xs.map(k => {
+      const word = k.status === "error" ? "blocked" : k.status ?? "idle";
+      const name = k.name || title(k), activity = childActivity(k), id = `child-${a.address}-${k.address}`;
+      return stop(view, t, id, h_flex().id(id).px(6).py(4).gap(6).items_center().flex_none()
+        .hover(s => s.bg(t.foreground + "14")).role("button").accessibility_label(`${name}: ${activity}`)
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_click((_e, cx) => { cx.stop_propagation(); focusAgent(k.address); cx.notify(); })
+        .child(div().size(6).flex_none().rounded_full().bg(t[word] ?? t.dim))
+        .child(v_flex().flex_1().min_w(0)
+          .child(div().truncate().text_size(12).text_color(t.foreground).child(name))
+          .child(div().truncate().text_size(11).text_color(t.muted).child(activity))));
+    }))];
+  };
+
   // `ghost`: the copy that follows the pointer, drawn without handlers or ids the list already uses.
   const card = (a, ghost) => {
     const st = state(a), on = viewing(a);
     const machine = machineOf(a), branch = branchOf(a);
-    // As T3's sidebar, a card says nothing of its sub-agents: its state takes theirs in (tree.js).
+    // The card keeps the existing tree status; the chevron reveals its descendants.
     const meta = branch ?? "";
     const pic = programIcon(a.program, 14, t.muted);
     // Snooze is offered for anything not needing the person, working too, as T3's. A failed turn counts as needing them
@@ -164,6 +200,7 @@ export function inboxRowView(view, t, model, actions, drag) {
         .child(div().flex_1().min_w(0).truncate().child(a.space_name ?? ""))
         .child(corner))
       .child(h_flex().h(20).mt(4).gap(6).items_center()
+        .when(!ghost && Boolean(children.get(a.address)?.length), el => el.child(chevron(a, ghost)))
         .child(div().flex_1().min_w(0).truncate().text_size(14).when(leads, (el) => el.font_medium())
           .text_color(leads || over || swept(a) ? t.foreground : t.muted).child(title(a)))
         // Marks go on the third line when there is one, as in T3, so the title keeps its whole line.
@@ -172,6 +209,7 @@ export function inboxRowView(view, t, model, actions, drag) {
         // T3's MiddleTruncate: a branch's start and end tell it apart.
         .child(div().flex_1().min_w(0).overflow_hidden().whitespace_nowrap().text_ellipsis_middle().child(meta))
         .when(Boolean(marks), (m) => m.child(marks))))
+      .children(childList(a, ghost))
       .when(!ghost, (el) => stop(view, t, `card-${a.address}`, el));
   };
 
@@ -200,9 +238,10 @@ export function inboxRowView(view, t, model, actions, drag) {
       ? h_flex().gap(4).items_center().text_color(t.accent).child(svg("mods/omarchy-inbox/icons/alarm-clock.svg").size(12).flex_none().text_color(t.accent)).child(left(napUntil(a), now))
       : !ghost && ago(settledAt(a)[0], now);
     const base = h_flex().id(`${ghost ? "ghost-" : ""}slim-${a.address}`).h(SLIM).px(10).gap(10).flex_none().items_center().rounded(0);
-    return (ghost ? base : row(base, a, details).role("button").accessibility_label(title(a)).on_hover(hover(a)).on_click(open(a)))
+    const line = (ghost ? base : row(base, a, details).role("button").accessibility_label(title(a)).on_hover(hover(a)).on_click(open(a)))
       .when(on, (el) => el.bg(t.foreground + "2e").child(div().absolute().left(0).top(0).bottom(0).w(2).bg(t.accent)))
       .when(!on && !ghost && !dragging && !view.sweep?.moved, (el) => el.hover((s) => s.bg(t.foreground + "14")).active((s) => s.bg(t.foreground + "2e")))
+      .when(!ghost && Boolean(children.get(a.address)?.length), el => el.child(chevron(a, ghost)))
       .child(h_flex().id(`slim-mark-${a.address}`).size(16).flex_none().items_center().justify_center().opacity(bright ? 1 : 0.4).transition("opacity", MOTION).child(ghost ? mark : tipMark(view, t, `slim-space-${a.address}`, a.space_name, mark, { delay })))
       .child(div().flex_1().min_w(0).truncate().when(on, (el) => el.font_medium()).text_color(bright ? t.foreground : t.muted).child(title(a)))
       .child(ghost ? (verb ? badge(verb) : div()) : swept(a) ? badge(view.sweep.action === "unsnooze" ? "wake" : "unsettle")
@@ -211,6 +250,7 @@ export function inboxRowView(view, t, model, actions, drag) {
           .child(div().flex_none().text_size(12).text_color(t.dim).opacity(over ? 0 : 1).transition("opacity", MOTION).child(time))
           .child(div().absolute().top(0).right(-4).child(tip(view, t, undoId, undoLabel, undo, { action: on && !napping ? settleKey() : undefined, delay }))))
       .when(!ghost, (el) => stop(view, t, `slim-${a.address}`, el));
+    return v_flex().flex_none().child(line).children(childList(a, ghost));
   };
 
 
