@@ -74,9 +74,18 @@ export function inboxActions(view, model) {
   };
   const snooze = (a, at, cx) => {
     const members = treeMembers(a, all), before = new Map(members.map(k => [k.address, napUntil(k)]));
-    for (const k of members) view.setLabel("snoozed", k.address, String(at), cx);
+    const turnLabel = (k) => view.pending["snoozed-turn"][k.address] ?? term.get(k.address)?.labels?.["snoozed-turn"] ?? "";
+    const turnsBefore = new Map(members.map(k => [k.address, turnLabel(k)]));
+    for (const k of members) {
+      // Where it stood, so new work can end the snooze (main.js).
+      view.setLabel("snoozed-turn", k.address, `${k.turn ?? 0}:${k.status === "working" ? 1 : 0}`, cx);
+      view.setLabel("snoozed", k.address, String(at), cx);
+    }
     view.remember("Snoozed", members.length, (cx) => {
-      for (const k of members) view.setLabel("snoozed", k.address, before.get(k.address) ? String(before.get(k.address)) : "", cx);
+      for (const k of members) {
+        view.setLabel("snoozed", k.address, before.get(k.address) ? String(before.get(k.address)) : "", cx);
+        view.setLabel("snoozed-turn", k.address, turnsBefore.get(k.address), cx);
+      }
     }, cx);
     // The card moves away without a pointer-leave event, for it or for the clock under the pointer.
     view.napMenu = view.hovered = view.hot = null;

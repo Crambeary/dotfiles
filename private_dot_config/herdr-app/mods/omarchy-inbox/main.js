@@ -7,6 +7,8 @@
 // - Pins are the core's (`terminal.pin`, as omarchy-agents), with only their order kept here (pins.js).
 // - The sidebar is Omarchy's: a stack `sidebar-lists` of Agents and this, switched by omarchy-bar; omarchy-chrome's footer
 //   draws the Undo notice.
+// - A snooze also ends when the agent starts new work, whoever gave it (a coordinator agent's message, say), not only a
+//   turn begun in view. It's kept in a label of its own, `snoozed-turn`, so `snoozed` reads the same in every mod.
 //
 // The inbox: no spaces, only the agents still asking for attention, as cards, latest news first.
 // Below, as in T3: Working (busy agents, folded) and Settled (put away by hand until new work brings them back).
@@ -16,8 +18,8 @@
 // shared("<mod>.program")): it goes by what its mod reports as an agent does. It's a view whose state lives elsewhere, so
 // Settle closes it: no Settled, no Undo, no pin and no drag.
 // Snoozed, as T3's: `snoozed=<wake ms>` hides an agent, working or not, on a shelf of its own until then, and it wakes
-// where it was, marked Woke until looked at. It shows meanwhile while it needs the person; a failure, a new turn in
-// view, Wake, a pin or Settle ends it.
+// where it was, marked Woke until looked at. It shows meanwhile while it needs the person; a failure, new work,
+// Wake, a pin or Settle ends it.
 
 import { View } from "gpui-kit";
 import { v_flex, InputState } from "gpui-base";
@@ -62,7 +64,7 @@ export default class Inbox extends View {
     this.napKeys = cx.focus_handle();
     this.limit = FIRST;
     // Labels written but not back from the core yet: label → address → value ("" = removed).
-    this.pending = { settled: {}, snoozed: {} };
+    this.pending = { settled: {}, snoozed: {}, "snoozed-turn": {} };
     this.unsettledBefore = { ...(shared("omarchy-inbox.unsettled") ?? {}) };
     // Labels with writes under way, by `key address`: how many, and whether the label can't yet be taken at its word.
     this.writing = {};
@@ -152,7 +154,7 @@ export default class Inbox extends View {
         this.refused[`${key} ${addr} ${value}`] = Date.now();
         notify({ title: "Couldn't update the agent", body: r.stderr.trim(), level: "error" });
         // A Settle or Snooze that didn't happen: the notice says one fewer, or goes. Its Undo would only rewrite what's there.
-        if (value && this.notice?.live) { if (--this.notice.count > 0) this.publishNotice(); else this.forget(cx); }
+        if (value && key !== "snoozed-turn" && this.notice?.live) { if (--this.notice.count > 0) this.publishNotice(); else this.forget(cx); }
       }
       if (w.out === 0 && w.unsure && this.pending[key][addr] !== undefined) this.setLabel(key, addr, this.pending[key][addr], cx);
       cx.notify();
@@ -261,11 +263,20 @@ export default class Inbox extends View {
     // A snooze ends on a failure in its tree (a program's error doesn't stay said), a new turn in view (the person gave
     // it work), or being looked at once it has woken. A pin ends it too, as the pinning writes the label.
     const failed = (a) => term.get(a.address)?.status === "error" || descendants(all, a.address).some((k) => k.status === "error");
+    // New work, whoever gave it, ends it as well, seen or not (Omarchy's own). `snoozed-turn=<turn>:<1 if working>`,
+    // written with the snooze, is the turns it had ended then: working on a turn begun since, or a turn ended since
+    // beyond the one it was on, is new work. A snooze without it (T3's, or older) keeps to the rest.
+    const startedSince = (a) => {
+      const k = term.get(a.address), mark = this.pending["snoozed-turn"][a.address] ?? k?.labels?.["snoozed-turn"];
+      if (!k || !mark) return false;
+      const [then, was] = mark.split(":").map(Number), turn = k.turn ?? 0;
+      return (k.status === "working" && (!was || turn > then)) || turn > then + (was ? 1 : 0);
+    };
     for (const a of every) {
       const until = napUntil(a);
       if (!until) continue;
       const turned = window().active && viewing(a) && running(a) && ["idle", "done"].includes(this.changed[a.address]?.s);
-      if (failed(a) || turned || (window().active && viewing(a) && until <= now)) {
+      if (failed(a) || turned || startedSince(a) || (window().active && viewing(a) && until <= now)) {
         for (const k of treeMembers(a, all)) if (napUntil(k)) this.setLabelDue("snoozed", k.address, "", cx);
       }
     }
