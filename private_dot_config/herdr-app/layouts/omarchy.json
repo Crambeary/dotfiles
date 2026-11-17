@@ -136,7 +136,8 @@
                     "mod": "omarchy-inbox",
                     "props": {
                       "picker": "picker",
-                      "newMenu": "new-menu-wt"
+                      "newMenu": "new-menu-wt",
+                      "openMenu": "omarchy-open"
                     }
                   },
                   "background": "chrome",

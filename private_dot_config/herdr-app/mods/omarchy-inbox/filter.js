@@ -114,6 +114,11 @@ export function inboxTop(view, t, model) {
       else if (!closing) openOverlay({ mod: props().newMenu, kind: "popup", frame: "none", at: /** @type {any} */ ("top"), offset: 96, width: 576, height: 420, props: { pick: true } });
       cx.notify();
     }, { action: asks ? null : "space.new" }))
+    .child(tool("inbox-open", "Open…", "plus", (_e, cx) => {
+      view.hot = null;
+      if (!justClosed(view, "omarchy-open.closed")) openOverlay({ mod: props()?.openMenu ?? "omarchy-open", kind: "popup", frame: "none", at: /** @type {any} */ ("top"), offset: 96, width: 576, height: 420 });
+      cx.notify();
+    }))
     // The layout passes its own menu; docked alone, the shipped one.
     // The layout passes its own menu, opened as omarchy-tabs' + opens it; docked alone, the shipped one.
     .child(tool("inbox-new-tab", "New tab", "square-pen", (_e, cx) => {

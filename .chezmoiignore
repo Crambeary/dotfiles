@@ -23,6 +23,7 @@ notes
 notes/**
 tests
 tests/**
+.config/herdr-app/CONTEXT.md
 
 # Python bytecode. The prefer-modern-tools hook runs as a script so it never
 # generates this on its own, but compiling it in the source dir (e.g. a
