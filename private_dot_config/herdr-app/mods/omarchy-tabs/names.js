@@ -1,11 +1,11 @@
-// Follows OMP and Claude session titles, otherwise the program or shell folder.
+// Follows OMP, Claude and Codex session titles, otherwise the program or shell folder.
 // OMP drops only its π indicator and Braille spinner, preserving title emoji.
 // A changed/reset tab name permanently opts that OMP tab out, across reloads.
 
 import { spaces, panes, shared, setShared, run } from "herdr";
 
 // Default launcher names are eligible only before we first manage an OMP tab.
-const DEFAULTS = new Set(["Claude Code"]);
+const DEFAULTS = new Set(["Claude Code", "Codex"]);
 const OMP_DEFAULTS = new Set(["omp", "OMP", "Oh My Pi"]);
 const KEY = "tab-titles.set"; // tab id -> the last name we gave it
 const OMP_KEY = "tab-titles.omp"; // tab id -> true (following), false (manual)
@@ -14,6 +14,12 @@ function nameFor(p) {
   if (p.app === "omp") return (p.title ?? "").replace(/^π(?:\s+[\u2800-\u28ff])?\s*/, "");
   // Claude prefixes a spinner or ✳ while working.
   if (p.app === "claude-code") return (p.title ?? "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
+  // Codex titles its thread "<spinner> <thread> | <folder>"; with no thread yet, only the folder, which tells nothing.
+  if (p.app === "codex") {
+    const folder = (p.cwd ?? "").split(/[\\/]/).pop();
+    const t = (p.title ?? "").replace(/^[^\p{L}\p{N}]+/u, "").replace(/ \| [^|]*$/, "").trim();
+    return t && t !== folder ? t : p.program?.name;
+  }
   if (!p.program?.shell) return p.program?.name;
   if (!p.cwd) return null;
   return p.cwd === homeOf(p.cwd) ? "~" : p.cwd.split("/").filter(Boolean).pop();
@@ -26,7 +32,7 @@ function homeOf(cwd) {
 
 // Pane headers follow their own session, independently of tab naming/opt-out.
 export function paneTitle(p) {
-  if (p.app === "omp" || p.app === "claude-code") {
+  if (p.app === "omp" || p.app === "claude-code" || p.app === "codex") {
     const title = nameFor(p);
     if (title?.trim()) return title;
   }
@@ -42,12 +48,12 @@ export function syncNames() {
   const ompSaved = shared(OMP_KEY) ?? {};
   const omp = { ...ompSaved };
   const tabs = new Map(allSpaces.flatMap(s => s.tabs).map(t => [t.id, t]));
-  // Stable priority for split tabs: first OMP, then Claude, then first terminal.
+  // Stable priority for split tabs: first OMP, then Claude or Codex, then first terminal.
   const pick = new Map();
   for (const p of panes()) {
     if (!p.terminal) continue;
     const cur = pick.get(p.tab);
-    const priority = pane => pane.app === "omp" ? 2 : pane.app === "claude-code" ? 1 : 0;
+    const priority = pane => pane.app === "omp" ? 2 : pane.app === "claude-code" || pane.app === "codex" ? 1 : 0;
     if (!cur || priority(p) > priority(cur)) pick.set(p.tab, p);
   }
   for (const [id, p] of pick) {

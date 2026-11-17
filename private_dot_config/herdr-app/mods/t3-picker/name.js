@@ -11,6 +11,8 @@ const MARK = { pi: /^π - /u, opencode: /^OC \| / };
 const OWN = {
   pi: (s, folder) => { s = s.replace(MARK.pi, ""); return folder && s.endsWith(` - ${folder}`) ? s.slice(0, -folder.length - 3) : s; },
   opencode: (s) => s.replace(MARK.opencode, ""),
+  // Codex's "<thread> | <folder>": no mark of its own to spot a left-behind one by, so only its folder comes off.
+  codex: (s, folder) => folder && s.endsWith(` | ${folder}`) ? s.slice(0, -folder.length - 3) : s,
 };
 
 // What a pane runs, for its icon: its program, or for a mod pane what its mod gives in shared("<mod>.program") ({ icon, tint }).
