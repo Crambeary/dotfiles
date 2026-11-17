@@ -241,31 +241,10 @@
                         },
                         {
                           "id": "changes",
-                          "type": "stack",
-                          "active": "changes-view",
-                          "children": [
-                            {
-                              "id": "changes-view",
-                              "type": "block",
-                              "content": {
-                                "mod": "omarchy-changes",
-                                "props": {
-                                  "graph": "git-graph"
-                                }
-                              }
-                            },
-                            {
-                              "id": "git-graph",
-                              "type": "block",
-                              "content": {
-                                "mod": "omarchy-changes",
-                                "props": {
-                                  "view": "graph",
-                                  "back": "changes-view"
-                                }
-                              }
-                            }
-                          ]
+                          "type": "block",
+                          "content": {
+                            "mod": "{{ if eq .chezmoi.os "windows" }}omarchy-changes{{ else }}gitview{{ end }}"
+                          }
                         },
                         {
                           "id": "graph",
@@ -279,13 +258,6 @@
                           "type": "block",
                           "content": {
                             "mod": "agenttrail"
-                          }
-                        },
-                        {
-                          "id": "reviewer",
-                          "type": "block",
-                          "content": {
-                            "mod": "reviewer"
                           }
                         },
                         {

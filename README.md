@@ -102,6 +102,20 @@ preference — if you retheme, keep the two visibly far apart. The gate uses the
 short hostname, so confirm with `chezmoi data | rg hostname` on the remote
 before assuming it matched.
 
+The desktop app's Omarchy layout uses
+[herdr-gitview](https://github.com/ChmaraX/herdr-gitview) for Changes on macOS
+and Linux. `.chezmoiexternal.toml` pins the app mods and native engine to
+v0.6.0 with per-platform SHA-256 checksums; update the version and checksums
+together. `chezmoi apply` installs them without running upstream's installer
+or changing other layouts. The separate Graph panel stays available. Windows
+keeps `omarchy-changes`, since gitview does not support Windows.
+
+In Omarchy, Changes opens the file list and selecting a file shows its diff
+beside the terminal. `cmd-shift-g` toggles Changes and `cmd-g` opens gitview
+in its own tab; on Linux use `ctrl-alt-shift-g` and `ctrl-alt-g`.
+`mods/gitview/config.json.tmpl` resolves the local engine, `herdr-app`, and
+`hc` paths on each machine.
+
 ## tuicr
 
 The shared `.chezmoitemplates/tuicr-config.toml` selects the Matugen theme and

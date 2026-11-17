@@ -1,0 +1,5 @@
+{
+  "bin": {{ joinPath .chezmoi.homeDir ".config/herdr-app/mods/gitview/bin/herdr-gitview" | toJson }},
+  "herdr_app": {{ lookPath "herdr-app" | default "herdr-app" | toJson }},
+  "hc": {{ lookPath "hc" | default "hc" | toJson }}
+}

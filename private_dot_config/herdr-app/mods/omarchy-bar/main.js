@@ -1,6 +1,6 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { spaces, theme, run, window, props, layout, shared, setShared, focused, home, nextCommand, settings, agents, terminals, openOverlay, closeOverlay } from "herdr";
+import { spaces, panes, theme, run, window, props, layout, shared, setShared, focused, home, nextCommand, settings, agents, terminals, openOverlay, closeOverlay } from "herdr";
 import { wallpapers, setWallpaper, setZoomBorder, ZOOM_BORDER } from "./wallpaper.js";
 
 const own = (el) => el.on_mouse_down("left", (_e, cx) => cx.stop_propagation());
@@ -224,10 +224,12 @@ export default class OmarchyBar extends View {
     const w = window();
     const space = spaces().find(s => s.active);
     const panel = find(layout(), "panel"), body = find(layout(), "panel-body");
+    // A focused mod has no branch. Keep the repo context of this space's terminals.
+    const hasRepo = space?.branch != null || panes().some(p => p.terminal && p.branch != null && space?.tabs.some(tab => tab.id === p.tab));
     // Match the tab mod's per-space restore eligibility; only the controls move.
     const enabled = panel && body
-      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail", "reviewer"].filter(id => Boolean(find(body, id)))
-        .filter(id => (id !== "changes" && id !== "reviewer") || space?.branch != null)
+      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail"].filter(id => Boolean(find(body, id)))
+        .filter(id => id !== "changes" || hasRepo)
       : [];
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -248,7 +250,6 @@ export default class OmarchyBar extends View {
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
       .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg")))
-      .when(enabled.includes("reviewer"), el => el.child(panelButton("reviewer", "Review", "mods/reviewer/comment.svg")))
       .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg")))
       .when(Boolean(w?.buttons), (el) => el
         .child(btn("wb-min", "win-min", "window.minimize"))

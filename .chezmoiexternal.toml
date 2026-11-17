@@ -13,3 +13,31 @@
   type = "git-repo"
   url = "https://github.com/shezdy/hyprsplit.git"
 
+# Omarchy Changes: upstream app mods and engine, pinned together. Keep the
+# binaries out of Git and verify each platform's release bundle on download.
+# https://github.com/ChmaraX/herdr-gitview/releases/tag/v0.6.0
+{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) (or (eq .chezmoi.arch "arm64") (eq .chezmoi.arch "amd64")) }}
+{{ $target := printf "%s-%s" (ternary "aarch64" "x86_64" (eq .chezmoi.arch "arm64")) (ternary "apple-darwin" "unknown-linux-gnu" (eq .chezmoi.os "darwin")) }}
+{{ $checksums := dict
+  "aarch64-apple-darwin" "6cb6617616aebd4916180921771463cfe2f1056658a95d08225541fe5dc7ae9b"
+  "x86_64-apple-darwin" "df4a82a245445d4b3e29e01013d952c9b78e4eeaa9268352f2b613e0c076159a"
+  "aarch64-unknown-linux-gnu" "14a10da5b25595b542b86a7b2d7a5125cf8f21288ac2ac63dcaa9d6272f03b03"
+  "x86_64-unknown-linux-gnu" "0a641c8c2e9270daa0e5917e7509e3b343fe2f6ad02b06af1730632d2548269f" }}
+{{ $bundle := printf "herdr-gitview-app-%s" $target }}
+{{ $url := printf "https://github.com/ChmaraX/herdr-gitview/releases/download/v0.6.0/%s.tar.gz" $bundle }}
+{{ range list "gitview" "gitview-diff" "gitview-agents" "gitview-sidebar" "gitview-tab" "gitview-ask" "gitview-keys" "gitview-mark" "gitview-tracing" }}
+[".config/herdr-app/mods/{{ . }}"]
+  type = "archive"
+  url = {{ $url | quote }}
+  checksum.sha256 = {{ index $checksums $target | quote }}
+  stripComponents = 4
+  include = ["{{ $bundle }}/herdr-app/mods/{{ . }}/**"]
+{{ end }}
+[".config/herdr-app/mods/gitview/bin/herdr-gitview"]
+  type = "archive-file"
+  url = {{ $url | quote }}
+  checksum.sha256 = {{ index $checksums $target | quote }}
+  path = "{{ $bundle }}/bin/herdr-gitview"
+  executable = true
+{{ end }}
+

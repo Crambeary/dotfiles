@@ -42,5 +42,9 @@ printf '%s' "$existing" | jq '
     "cmd-alt-r": "pane-ops.review"{{ end }}
   } |
   ."layout:omarchy" += {
-    "ctrl-space i": "omarchy-bar.inbox"
+    "ctrl-space i": "omarchy-bar.inbox"{{ if eq .chezmoi.os "darwin" }},
+    "cmd-shift-g": "mod.open:gitview-sidebar",
+    "cmd-g": "mod.open:gitview-tab"{{ else if eq .chezmoi.os "linux" }},
+    "ctrl-alt-shift-g": "mod.open:gitview-sidebar",
+    "ctrl-alt-g": "mod.open:gitview-tab"{{ end }}
   }'

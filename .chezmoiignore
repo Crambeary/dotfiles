@@ -161,6 +161,8 @@ install-powershell7.cmd
 # yet); the mod and layouts under .config/herdr-app are portable and still apply.
 {{ if eq .chezmoi.os "windows" }}
 .config/herdr-app/keys.json
+.config/herdr-app/mods/gitview
+.config/herdr-app/mods/gitview/**
 {{ end }}
 
 # macOS: the Linux desktop stack and Windows tools have no use here. Before
