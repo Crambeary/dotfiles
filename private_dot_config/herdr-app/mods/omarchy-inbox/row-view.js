@@ -95,13 +95,16 @@ export function inboxRowView(view, t, model, actions, drag) {
     return [v_flex().id(`subagents-${a.address}`).mt(6).gap(2).flex_none().children(xs.map(k => {
       const word = k.status === "error" ? "blocked" : k.status ?? "idle";
       const name = k.name || title(k), activity = childActivity(k), id = `child-${a.address}-${k.address}`;
+      const pic = programIcon(k.program, 12, t.muted);
       return stop(view, t, id, h_flex().id(id).px(6).py(4).gap(6).items_center().flex_none()
         .hover(s => s.bg(t.foreground + "14")).role("button").accessibility_label(`${name}: ${activity}`)
         .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
         .on_click((_e, cx) => { cx.stop_propagation(); peekTerminal(k.address); cx.notify(); })
         .child(div().size(6).flex_none().rounded_full().bg(t[word] ?? t.dim))
         .child(v_flex().flex_1().min_w(0)
-          .child(div().truncate().text_size(12).text_color(t.foreground).child(name))
+          .child(h_flex().gap(4).items_center()
+            .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.foreground).child(name))
+            .when(Boolean(pic), el => el.child(div().flex_none().opacity(0.6).child(pic))))
           .child(div().truncate().text_size(11).text_color(t.muted).child(activity))));
     }))];
   };
