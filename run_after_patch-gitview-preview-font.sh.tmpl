@@ -1,0 +1,8 @@
+{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) (or (eq .chezmoi.arch "arm64") (eq .chezmoi.arch "amd64")) -}}
+#!/bin/sh
+# Run after every apply, including when the external release is re-extracted.
+set -eu
+python3 - {{ joinPath .chezmoi.homeDir ".config/herdr-app/mods/gitview-diff" | quote }} <<'PY'
+{{ includeTemplate "gitview-preview-font.py" . }}
+PY
+{{ end -}}

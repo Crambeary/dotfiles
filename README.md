@@ -116,6 +116,15 @@ in its own tab; on Linux use `ctrl-alt-shift-g` and `ctrl-alt-g`.
 `mods/gitview/config.json.tmpl` resolves the local engine, `herdr-app`, and
 `hc` paths on each machine.
 
+In a focused Markdown or HTML preview, `+` (or `=`) increases its font size,
+`-` decreases it, and `0` resets to 16 px. The preview starts at 16 px and
+remembers the chosen size across restarts, shared by Gitview previews; the
+range is 10–32 px. These controls also appear in the preview's `?` help.
+`run_after_patch-gitview-preview-font.sh.tmpl` reapplies the small integration
+patch after Chezmoi installs the pinned release (requires `python3`). If an
+upstream upgrade changes its anchors, apply fails and the patch must be reviewed.
+The implementation lives in `mods/gitview-diff/preview-font.js`.
+
 [herdr-nvim](https://github.com/ChmaraX/herdr-nvim) fills Omarchy's Files
 slot on macOS and Linux: a file tree in the panel and a persistent nvim beside
 the tab. It is pinned to v1.3.1 the same way, mods and runtime from one
