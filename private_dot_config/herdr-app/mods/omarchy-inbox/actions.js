@@ -4,6 +4,7 @@ import { focusAgent, focusPane } from "./zoom.js";
 import { detailsFor } from "./details.js";
 import { placeOf } from "./project.js";
 import { treeMembers } from "./subagents.js";
+import { peekTerminal } from "./peek.js";
 
 export function inboxActions(view, model) {
   const { every, all, viewing, term, napUntil, wake, state, settledAt, busy, pinned, out, busyRows, sp, ps, put } = model;
@@ -29,7 +30,8 @@ export function inboxActions(view, model) {
     view.changed[a.address] = { ...view.changed[a.address], at: Date.now(), start: null };
     localStorage.setItem("changes", JSON.stringify(view.changed));
   };
-  const go = (a) => a.mod ? focusPane(a.pane) : focusAgent(a.address);
+  // Orphaned subagents can be top-level cards without a pane to focus.
+  const go = (a) => a.mod ? focusPane(a.pane) : a.pane ? focusAgent(a.address) : peekTerminal(a.address);
   // Putting away the agent in view moves on to the next card down the list, from the top past the end, as T3 does;
   // one in the background moves nothing.
   const moveOn = (xs) => {

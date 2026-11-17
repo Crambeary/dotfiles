@@ -1,6 +1,7 @@
 import { div, svg } from "gpui-kit";
 import { v_flex, h_flex, Popup } from "gpui-base";
 import { settings } from "herdr";
+import { peekTerminal } from "./peek.js";
 import { namer } from "./name.js";
 import { projectMark } from "./project.js";
 import { glow, tip, tipMark, keyOf } from "./tip.js";
@@ -10,7 +11,6 @@ import { programIcon } from "./program.js";
 import { stop, within } from "./focus.js";
 import { snoozeButton } from "./snooze.js";
 import { childrenExpanded, childActivity } from "./subagents.js";
-import { focusAgent } from "./zoom.js";
 import { SLIM } from "./list-view.js";
 
 // The settle key: this mod's own command (keys.json `omarchy-inbox.settle`), shown only if bound.
@@ -88,7 +88,7 @@ export function inboxRowView(view, t, model, actions, drag) {
       .child(svg(`mods/omarchy-inbox/icons/chevron-${up ? "down" : "right"}.svg`).size(12).flex_none())
       .child(div().text_size(11).child(String(count))));
   };
-  // All depths share one flat list. Rows focus their agent, with no actions of their own.
+  // All depths share one flat list. Peek at children as Agents does, including ones without panes.
   const childList = (a, ghost) => {
     const xs = children.get(a.address) ?? [];
     if (ghost || !xs.length || !expanded(a)) return [];
@@ -98,7 +98,7 @@ export function inboxRowView(view, t, model, actions, drag) {
       return stop(view, t, id, h_flex().id(id).px(6).py(4).gap(6).items_center().flex_none()
         .hover(s => s.bg(t.foreground + "14")).role("button").accessibility_label(`${name}: ${activity}`)
         .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-        .on_click((_e, cx) => { cx.stop_propagation(); focusAgent(k.address); cx.notify(); })
+        .on_click((_e, cx) => { cx.stop_propagation(); peekTerminal(k.address); cx.notify(); })
         .child(div().size(6).flex_none().rounded_full().bg(t[word] ?? t.dim))
         .child(v_flex().flex_1().min_w(0)
           .child(div().truncate().text_size(12).text_color(t.foreground).child(name))

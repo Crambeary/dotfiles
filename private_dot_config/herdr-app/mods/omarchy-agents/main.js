@@ -4,6 +4,7 @@
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout, home } from "herdr";
+import { peekTerminal } from "./peek.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -170,7 +171,7 @@ export default class Agents extends View {
   }
 
   peek(addr) {
-    run("terminal.peek", { terminal: addr });
+    peekTerminal(addr);
   }
 
   // Live sub-agents of `addr`, depth first, each with the tree lines in front of it.

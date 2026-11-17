@@ -6,7 +6,7 @@ import { resolve, dirname } from 'node:path';
 import { SourceTextModule, SyntheticModule } from 'node:vm';
 
 const root = resolve('private_dot_config/herdr-app/mods/omarchy-inbox');
-let all = [], runs = [], ps = [], sp = [], focus = {}, calls = [], shared = new Map(), storage = new Map();
+let all = [], runs = [], ps = [], sp = [], focus = {}, calls = [], shared = new Map(), storage = new Map(), modProps = {};
 const theme = new Proxy({}, { get: (_, k) => `#${String(k)}` });
 class Element {
   constructor() {
@@ -28,9 +28,9 @@ const base = { v_flex: el, h_flex: el, Popup: { new: el }, Popover: { new: el },
 const herdr = {
   terminals: () => all, agents: () => runs, panes: () => ps, spaces: () => sp, focused: () => focus,
   shared: k => shared.get(k), setShared: (k,v) => shared.set(k,v),
-  run: (name,args) => calls.push({name,args}), props: () => ({}), theme: () => theme,
-  keys: () => ({}), machines: () => [], closeOverlay() {}, exec: async () => ({}), readTextFile: async () => null, appHome: () => "", settings: () => ({zoom:1}), layout: () => null, window: () => ({}), setAgentOrder() {},
-  notify() {}, openOverlay() {}, nextCommand: () => new Promise(() => {}),
+  run: (name,args) => calls.push({name,args}), props: () => modProps, theme: () => theme,
+  keys: () => ({}), machines: () => [], closeOverlay: id => calls.push({close:id}), exec: async () => ({}), readTextFile: async () => null, appHome: () => "", settings: () => ({zoom:1}), layout: () => null, window: () => ({}), setAgentOrder() {},
+  notify() {}, openOverlay: spec => calls.push({overlay:spec}), nextCommand: () => new Promise(() => {}),
   hc: async ([cmd, address, label]) => {
     assert.equal(cmd, 'label'); const i = label.indexOf('=');
     const k = all.find(k => k.address === address);
@@ -79,6 +79,10 @@ function draw(view,model) {
 
 let v=setup(), m=v.compute(cx,false);
 assert.deepEqual(ids(m.every),['root']);
+inboxActions(v,m).go(m.every[0]);
+assert.deepEqual(calls.at(-1),{name:'agent.focus',args:{terminal:'root'}});
+inboxActions(v,m).go({mod:'test-mod',pane:'mod-pane'});
+assert.deepEqual(calls.at(-1),{name:'pane.focus',args:{pane:'mod-pane'}});
 assert.deepEqual(ids(m.children.get('root')),['child','deep']);
 assert.equal(m.state(m.every[0]),'idle');
 let card=draw(v,m).card(m.every[0]);
@@ -89,7 +93,23 @@ card=draw(v,m).card(m.every[0]);
 assert.ok(find(card,'child-root-child')); assert.ok(find(card,'child-root-deep'));
 assert.equal(find(card,'subagents-root').nodes.length,2);
 find(card,'child-root-deep').handlers.click({},cx);
-assert.deepEqual(calls.at(-1),{name:'agent.focus',args:{terminal:'deep'}});
+assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'deep'}});
+// Omarchy replaces only the frame; a machine-qualified address survives both paths.
+const { peekTerminal } = cache.get(resolve(root,'peek.js')).namespace;
+assert.equal(await readFile(resolve(root,'peek.js'),'utf8'),
+  await readFile(resolve(root,'../omarchy-agents/peek.js'),'utf8'));
+shared.set('layout','omarchy');
+find(card,'child-root-deep').handlers.click({},cx);
+let spec=calls.at(-1).overlay;
+assert.equal(spec.frame,'none'); assert.equal(spec.kind,'dialog');
+assert.equal(spec.layout.radius,0); assert.deepEqual(spec.layout.border,{width:2,color:'accent'});
+assert.equal(spec.layout.children[0].content.mod,'omarchy-peek');
+assert.equal(spec.layout.children[0].content.props.terminal,'deep');
+assert.equal(spec.layout.children[1].content.terminal,'deep');
+peekTerminal('remote/child');
+assert.equal(calls.at(-1).overlay.layout.children[1].content.terminal,'remote/child');
+shared.set('layout','main'); peekTerminal('remote/child');
+assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'remote/child'}});
 assert.equal(find(card,'settle-child'),undefined);
 find(card,'children-root').handlers.click({},cx);
 assert.equal(find(draw(v,m).card(m.every[0]),'subagents-root'),undefined);
@@ -111,6 +131,8 @@ assert.deepEqual(ids(v.compute(cx,false).every),['child']);
 v=setup(); runs=runs.filter(a=>a.address==='root'); all[0].state='finished'; runs=[];
 m=v.compute(cx,false); assert.deepEqual(ids(m.every),['child']);
 assert.equal(m.every[0].pane,null); assert.equal(m.every[0].space_name,'Subagents');
+inboxActions(v,m).go(m.every[0]);
+assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'child'}});
 // A pane-less orphan remains actionable and Clear ends it and its descendants.
 inboxActions(v,m).settle(m.every,cx); await flush(); m=v.compute(cx,false);
 inboxActions(v,m); v.clearSettled();
@@ -136,8 +158,12 @@ assert.ok(calls.some(c=>c.name==='terminal.pin'&&c.args.terminal==='child'&&c.ar
 // Settled and snoozed rows retain the same flat descendant view.
 v=setup(); all[0].labels.settled=`${Date.now()}:2`; v.childChoices.root=true;
 m=v.compute(cx,false); assert.ok(find(draw(v,m).slim(m.every[0]),'child-root-deep'));
+find(draw(v,m).slim(m.every[0]),'child-root-deep').handlers.click({},cx);
+assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'deep'}});
 v=setup(); all[0].labels.snoozed=String(wake); v.childChoices.root=true;
 m=v.compute(cx,false); assert.ok(find(draw(v,m).slim(m.every[0]),'child-root-deep'));
+find(draw(v,m).slim(m.every[0]),'child-root-deep').handlers.click({},cx);
+assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'deep'}});
 // A failure automatically ends the snooze on every member, including hidden descendants.
 v=setup(); for(const k of all.filter(k=>k.status)) k.labels.snoozed=String(wake);
 all[3].status='error'; v.compute(cx,false); await flush();
@@ -158,4 +184,16 @@ all[3].status='idle'; v.clearSettled();
 assert.ok(calls.some(c=>c.name==='terminal.kill'&&c.args.terminal==='deep'));
 assert.ok(calls.some(c=>c.name==='terminal.kill'&&c.args.terminal==='child'));
 assert.ok(calls.some(c=>c.name==='pane.close'&&c.args.pane==='p-root'));
-console.log('PASS inbox subagents: grouping, flat rows and handlers, blocked overrides, persistence, orphans, focus, tree settle/snooze/undo, guarded clear');
+// The themed header closes only its overlay; keep/go-to retain the native actions.
+const header = await load(resolve(root,'../omarchy-peek/main.js')); await header.evaluate();
+const peek = new header.namespace.default();
+modProps={terminal:'remote/child',overlay:'peek-overlay'};
+ps=[]; calls=[];
+find(peek.render(),'keep').handlers.click({},cx);
+assert.deepEqual(calls,[{name:'terminal.keep',args:{terminal:'remote/child'}},{close:'peek-overlay'}]);
+ps=[{terminal:'remote/child',pane:'remote/child-pane'}]; calls=[];
+find(peek.render(),'keep').handlers.click({},cx);
+assert.deepEqual(calls,[{name:'pane.focus',args:{pane:'remote/child-pane'}},{close:'peek-overlay'}]);
+calls=[]; find(peek.render(),'close').handlers.click({},cx);
+assert.deepEqual(calls,[{close:'peek-overlay'}]);
+console.log('PASS inbox subagents: grouping, rows, persistence, orphans, focus, settle/snooze/undo, guarded clear, Omarchy peek frame and header controls');
