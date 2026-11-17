@@ -109,20 +109,43 @@
               }
             },
             {
-              "id": "agents",
-              "type": "block",
+              "id": "sidebar-lists",
+              "type": "stack",
               "size": {
                 "weight": 1
               },
               "min": 90,
-              "content": {
-                "mod": "omarchy-agents"
-              },
-              "background": "chrome",
-              "border": {
-                "width": 2,
-                "color": "border"
-              }
+              "active": "agents",
+              "children": [
+                {
+                  "id": "agents",
+                  "type": "block",
+                  "content": {
+                    "mod": "omarchy-agents"
+                  },
+                  "background": "chrome",
+                  "border": {
+                    "width": 2,
+                    "color": "border"
+                  }
+                },
+                {
+                  "id": "inbox",
+                  "type": "block",
+                  "content": {
+                    "mod": "omarchy-inbox",
+                    "props": {
+                      "picker": "picker",
+                      "newMenu": "new-menu-wt"
+                    }
+                  },
+                  "background": "chrome",
+                  "border": {
+                    "width": 2,
+                    "color": "border"
+                  }
+                }
+              ]
             },
             {
               "id": "sidebar-footer",

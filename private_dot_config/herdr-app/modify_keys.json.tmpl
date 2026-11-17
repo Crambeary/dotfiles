@@ -40,4 +40,7 @@ printf '%s' "$existing" | jq '
     "ctrl-space alt-w": "pane-ops.wt-remove",
     "ctrl-space o": "pane-ops.attention"{{ if eq .chezmoi.os "darwin" }},
     "cmd-alt-r": "pane-ops.review"{{ end }}
+  } |
+  ."layout:omarchy" += {
+    "ctrl-space i": "omarchy-bar.inbox"
   }'

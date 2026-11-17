@@ -51,7 +51,21 @@ export default class WorkspaceChrome extends View {
         .text_color(dim ? t.dim : t.muted).hover(s => s.bg(t.foreground + "14").border_color(t.foreground + "40").text_color(t.foreground)).cursor_pointer()
         .on_click(action).child(svg(`mods/omarchy-chrome/${icon}.svg`).size(14))
         .when(!collapsed, el => el.child(label));
-      return v_flex().size_full().justify_center().bg(t.chrome).px(collapsed ? 0 : 10).py(collapsed ? 4 : 10).gap(2).when(collapsed, el => el.items_center()).text_size(12)
+      // The inbox's undo notice (omarchy-inbox.notice), as t3-chrome's: "Settled," or "Settled 2," then Undo for its 5s,
+      // fading in and out over 200ms, Undo inert while it goes. One older than 6s is a fade left from before a restart.
+      // Undo asks the inbox through shared("omarchy-inbox.undo"), which it reads even while the stack shows Agents.
+      // The footer keeps its 136px: while the notice shows, the rows close up to make room. The rail has no room for it.
+      const n = shared("omarchy-inbox.notice");
+      const live = n && n.live && Date.now() - n.at < 5000;
+      const notice = !collapsed && n && Date.now() - n.at < 6000 && h_flex().id(`undo-notice-${n.gen}`).h(24).px(8).gap(4).flex_none().items_center()
+        .text_size(11).text_color(t.dim).opacity(n.shown ? 1 : 0).transition("opacity", { duration: 200, easing: "ease-out" })
+        .child(div().min_w(0).truncate().child(`${n.action}${n.count === 1 ? "" : ` ${n.count}`},`))
+        .child(h_flex().id("undo-notice-undo").flex_none().h(24).items_center().font_medium().text_color(t.foreground)
+          .when(live, el => el.cursor_pointer().hover(s => s.underline())
+            .on_click(() => setShared("omarchy-inbox.undo", { gen: n.gen, at: n.at, requestedAt: Date.now() })))
+          .child("Undo"));
+      return v_flex().size_full().justify_center().bg(t.chrome).px(collapsed ? 0 : 10).py(collapsed ? 4 : notice ? 2 : 10).gap(notice ? 0 : 2).when(collapsed, el => el.items_center()).text_size(12)
+        .when(Boolean(notice), el => el.child(notice))
         .child(row("settings", "settings", "Settings", false, () => run("mod.open", { name: "omarchy-settings" }))
           .when(Boolean(updates().app.ready), el => el.child(div().size(6).rounded(0).bg(t.accent).when(collapsed, d => d.absolute().top(2).right(2)))))
         .child(row("keys", "keyboard", "Keybindings", false, () => run("mod.open", { name: "omarchy-keys" })))

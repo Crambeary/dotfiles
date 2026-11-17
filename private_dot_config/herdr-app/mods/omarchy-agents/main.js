@@ -242,7 +242,10 @@ export default class Agents extends View {
     const pinned = list.filter((a) => a.pinned);
     const rest = list.filter((a) => !a.pinned);
     list = [...pinned, ...rest];
-    setAgentOrder(list.map((a) => a.address));
+    // In Omarchy's sidebar stack (sidebar-lists) the inbox owns agent.next/prev while it's the shown child. A stack's
+    // other child stays alive (installed AGENTS.md), so don't rely on it not rendering.
+    const stack = find(layout(), "sidebar-lists");
+    if (!stack || stack.active === "agents") setAgentOrder(list.map((a) => a.address));
 
     const withKids = (a, i) => {
       const subs = collapsed ? [] : this.tree(all, a.address);

@@ -83,6 +83,12 @@ function entries() {
   const list = NAMED.filter(([n]) => known.has(n))
     .filter(([n]) => !(mac && n.startsWith("window.")))
     .map(([name, args, group, title, words]) => ({ name, args, group, title, words }));
+  // The Omarchy inbox: commands of the layout's top bar (omarchy-bar), so only where it shows.
+  if (shared("layout") === "omarchy") list.push(
+    { name: "omarchy-bar.inbox", args: {}, group: "Layout", title: "Toggle inbox", words: "agents sidebar attention needs you settle snooze" },
+    { name: "omarchy-bar.inbox-scope-both", args: {}, group: "Layout", title: "Inbox scope: spaces and agents", words: "inbox replace sidebar" },
+    { name: "omarchy-bar.inbox-scope-agents", args: {}, group: "Layout", title: "Inbox scope: agents only", words: "inbox spaces visible" },
+  );
   for (const l of layouts()) {
     const t = { main: "Herdr", terminals: "Terminals", win98: "Herdr 98" }[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
     list.push({ name: "layout.switch", args: { name: l }, group: "Layout", title: `Layout: ${t}`, words: `look ${l}` });
