@@ -79,8 +79,8 @@ export function inboxActions(view, model) {
     for (const k of members) {
       // Where it stood, so new work can end the snooze (main.js). From its terminal, as main.js reads it back: a card's
       // agents() row has no turn, so a top-level agent would mark 0 and wake at once on any turn it had already ended.
-      const at = term.get(k.address);
-      view.setLabel("snoozed-turn", k.address, `${at?.turn ?? 0}:${at?.status === "working" ? 1 : 0}`, cx);
+      const now = term.get(k.address);
+      view.setLabel("snoozed-turn", k.address, `${now?.turn ?? 0}:${now?.status === "working" ? 1 : 0}`, cx);
       view.setLabel("snoozed", k.address, String(at), cx);
     }
     view.remember("Snoozed", members.length, (cx) => {
