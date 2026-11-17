@@ -13,7 +13,18 @@
 # on tuiffects or on a sleep, so it redraws the moment an effect ends.
 F=$1; NONCE=$2; E=${3:-random}; T=$4; S=${5:-0}
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
-BIN=$(command -v tuiffects || ls "$HOME"/.local/share/mise/installs/go/*/bin/tuiffects 2>/dev/null | tail -n1)
+BIN=$(command -v tuiffects)
+# A mise shim can exist after its default Go version was removed. Check that
+# it actually runs before choosing it, then try the installed Go binaries.
+if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
+  BIN=""
+  for candidate in "$HOME"/.local/share/mise/installs/go/*/bin/tuiffects; do
+    if [ -x "$candidate" ] && "$candidate" --version >/dev/null 2>&1; then
+      BIN=$candidate
+      break
+    fi
+  done
+fi
 [ -x "$BIN" ] || { echo "tuiffects not installed (mise use -g go:github.com/Gaurav-Gosain/tuiffects/cmd/tuiffects)"; read -r _; exit 1; }
 stty -echo 2>/dev/null
 MOUSE_ON='\033[?1000h\033[?1003h\033[?1006h' MOUSE_OFF='\033[?1006l\033[?1003l\033[?1000l'
@@ -41,6 +52,13 @@ while :; do
   printf '%s\n' "$FRAME" | perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV' "$BIN" -e "$E" -t "$S" &
   P=$!
   wait "$P" 2>/dev/null
+  result=$?
+  # Don't hide a failed effect under repeated clears and static frames.
+  if [ "$result" -ne 0 ]; then
+    printf '\nScreensaver effect failed (exit %s). Press any key to close.\n' "$result"
+    wait "$W" 2>/dev/null
+    exit "$result"
+  fi
   # tuiffects ends with the cursor two lines under its canvas, which scrolls a
   # full-screen frame up by one: draw the final frame again from the top, with no
   # newline after its last line. Its bottom row runs to the last column, so

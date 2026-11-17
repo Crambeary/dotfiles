@@ -176,8 +176,8 @@ function t3Inbox(g, a, cx) {
   const settled = (ag) => Boolean(label(ag, "settled"));
   const napUntil = (ag) => Number(label(ag, "snoozed")) || 0;
   const hidden = (ag) => !settled(ag) && napUntil(ag) > now && ag.status !== "blocked";
-  const pins = shared("agents.pins") ?? [];
-  const all = agents();
+  const pins = cx.inbox?.pins ?? shared("agents.pins") ?? [];
+  const all = cx.inbox?.agents ?? agents();
   if (!all.length) {
     g.text(a.x + 1, rowAt(a, cx, 64), "Nothing here yet.", t.dim, a.w - 2);
     return;

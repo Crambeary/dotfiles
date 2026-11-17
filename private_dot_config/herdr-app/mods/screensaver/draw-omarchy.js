@@ -2,11 +2,38 @@
 // -agents, -chrome, -tabs, -pane (a pane header) and the right panel's views.
 // Each drawer gets (g, a, cx): the grid, its block in cells, and
 // cx = { t: theme, props, cw, ch, z, data, snap }.
-import { spaces, agents, panes, focused, shared, machines, window } from "herdr";
+import { spaces, agents, panes, terminals, focused, shared, machines, window } from "herdr";
 import { G, glyph, clean, tilde, baseOf, duration, RANK, spaceOrder, gitTail, agentLabel, tabName } from "./draw-common.js";
+import { mods as t3 } from "./draw-t3.js";
 
 const SECTION = { 4: "needs you", 3: "done", 2: "working", 1: "idle" };
 const SECTION_STATUS = { 4: "blocked", 3: "done", 2: "working" };
+
+// Inbox cards share T3's geometry. Use Omarchy's root grouping, rolled-up
+// status and core pins, so nested agents don't appear as duplicate cards.
+function drawInbox(g, a, cx) {
+  const all = terminals(), runs = agents();
+  const live = new Map(all.filter(k => k.state === "live").map(k => [k.address, k]));
+  const ancestors = address => {
+    const found = new Set([address]);
+    let k = live.get(live.get(address)?.parent);
+    while (k && !found.has(k.address)) { found.add(k.address); k = live.get(k.parent); }
+    found.delete(address);
+    return found;
+  };
+  const roots = runs.filter(r => !runs.some(p => ancestors(r.address).has(p.address))).map(r => {
+    const kids = all.filter(k => k.state === "live" && ancestors(k.address).has(r.address));
+    const own = live.get(r.address)?.status === "error" ? "blocked" : r.status;
+    const status = own === "blocked" || kids.some(k => ["blocked", "error"].includes(k.status)) ? "blocked"
+      : own !== "done" && kids.some(k => k.status === "working") ? "working" : own;
+    return { ...r, status };
+  });
+  const pinned = new Set(all.filter(k => k.labels?.["herdr.pinned"]).map(k => k.address));
+  for (const r of runs) if (r.pinned) pinned.add(r.address);
+  const pins = (shared("omarchy-inbox.pin-order") ?? []).filter(id => pinned.has(id));
+  for (const id of pinned) if (!pins.includes(id)) pins.push(id);
+  t3["t3-inbox"](g, a, { ...cx, inbox: { agents: roots, pins } });
+}
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -299,6 +326,7 @@ export const mods = {
   "omarchy-ai-usage": drawUsage,
   "omarchy-spaces": drawSpaces,
   "omarchy-agents": drawAgents,
+  "omarchy-inbox": drawInbox,
   "omarchy-chrome": drawChrome,
   "omarchy-tabs": drawTabs,
   "omarchy-files": panel("omarchy-files"),
