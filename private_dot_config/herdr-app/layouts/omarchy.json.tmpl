@@ -4,10 +4,14 @@
   "floating": [
     { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" },
     { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }{{ if ne .chezmoi.os "windows" }},
-    { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}{{ if eq .chezmoi.os "darwin" }},
-    {{- /* herdr-chat (macOS only), installed by its own installer outside chezmoi: these are the two layout edits it makes. */}}
+    { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}
+    {{- /* herdr-chat (macOS only): run_onchange_before_install-herdr-chat installs its mods with --no-layout, and these are
+           the two layout edits its installer would make. Each only once its mod is there, so a machine without it keeps a
+           working layout; the installer can also leave chat-menu out alone, when Herdr's shipped menu changed shape. */}}
+    {{- $mods := joinPath .chezmoi.homeDir ".config/herdr-app/mods" }}
+    {{- if and (eq .chezmoi.os "darwin") (stat (joinPath $mods "new-chat/mod.json")) }},
     { "id": "new-chat-commands", "content": { "mod": "new-chat", "props": { "role": "commands" } }, "edge": "bottom", "align": "start" }{{ end }}
-  ],{{ if eq .chezmoi.os "darwin" }}
+  ],{{ if and (eq .chezmoi.os "darwin") (stat (joinPath $mods "chat-menu/mod.json")) }}
   "terminal_menu": "chat-menu",{{ end }}
   "titlebar": "none",
   "traffic_lights": [
