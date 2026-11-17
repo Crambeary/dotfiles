@@ -15,7 +15,6 @@ return {
   -- LSP setup for Python - lazy-loaded
   {
     "neovim/nvim-lspconfig",
-    event = { "BufReadPost *.py", "BufNewFile *.py" },
     opts = {
       servers = {
         pyright = {

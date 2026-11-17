@@ -1,7 +1,7 @@
 return {
+  { "nvim-neo-tree/neo-tree.nvim", enabled = false },
   {
-    { "nvim-neo-tree/neo-tree.nvim", enabled = false },
-    "telescope.nvim",
+    "nvim-telescope/telescope.nvim",
     dependencies = {
       "nvim-telescope/telescope-file-browser.nvim",
     },
