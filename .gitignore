@@ -3,3 +3,8 @@
 
 /.env
 /.rtk/filters.toml
+
+# gpui-shell writes these into a mod dir (herdr-app check on a source mod, say)
+# for editor type-checking; .chezmoiignore keeps them out of the target too.
+private_dot_config/herdr-app/mods/*/gpui-kit.d.ts
+private_dot_config/herdr-app/mods/*/jsconfig.json

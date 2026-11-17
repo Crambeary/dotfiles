@@ -30,6 +30,11 @@ tests/**
 # py_compile syntax check) leaves a __pycache__ that chezmoi would otherwise
 # happily sync to every machine.
 **/__pycache__/**
+# gpui-shell writes these into each mod dir for editor type-checking only;
+# the runtime never reads them, and the .d.ts is ~22k lines per copy.
+.config/herdr-app/mods/*/gpui-kit.d.ts
+.config/herdr-app/mods/*/jsconfig.json
+
 
 # Cygwin/MSYS crash dumps (bash.exe.stackdump) land in whatever dir was cwd.
 *.stackdump
