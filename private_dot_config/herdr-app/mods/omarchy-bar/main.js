@@ -176,7 +176,7 @@ export default class OmarchyBar extends View {
         if (narrow !== this.narrow) {
           this.narrow = narrow;
           const sizes = narrow
-            ? [["bar-left", { weight: 1 }], ["ai-usage", { weight: 2 }], ["bar-right", { px: w?.buttons ? 90 : 0 }]]
+            ? [["bar-left", { weight: 1 }], ["ai-usage", { weight: 2 }], ["bar-right", { px: 150 + (w?.buttons ? 90 : 0) }]]
             : [["bar-left", { weight: 3 }], ["ai-usage", { weight: 2.5 }], ["bar-right", { weight: 3 }]];
           for (const [id, size] of sizes) {
             const current = find(layout(), id)?.size;
@@ -222,12 +222,34 @@ export default class OmarchyBar extends View {
 
   right(row, t) {
     const w = window();
+    const space = spaces().find(s => s.active);
+    const panel = find(layout(), "panel"), body = find(layout(), "panel-body");
+    // Match the tab mod's per-space restore eligibility; only the controls move.
+    const enabled = panel && body
+      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail", "reviewer"].filter(id => Boolean(find(body, id)))
+        .filter(id => (id !== "changes" && id !== "reviewer") || space?.branch != null)
+      : [];
+    const panelButton = (id, label, icon) => {
+      const on = panel && !panel.hidden && body?.active === id;
+      return own(div().id(`panel-${id}`).flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
+        .tooltip(label).bg(t.foreground + (on ? "2e" : "0a")).text_color(on ? t.foreground : t.muted)
+        .hover(s => s.bg(t.foreground + (on ? "2e" : "14")))
+        .on_click(() => {
+          if (on) run("layout.hide", { id: "panel" });
+          else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
+        }).child(svg(icon).size(14)));
+    };
     const btn = (id, icon, cmd, danger) => own(
       div().id(id).flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
         .hover((s) => s.bg(danger ? t.blocked : t.hover).text_color(danger ? t.background : t.foreground))
         .on_click(() => run(cmd))
         .child(svg(`mods/terminals-bar/${icon}.svg`).size(14)));
     return row.justify_end()
+      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
+      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
+      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg")))
+      .when(enabled.includes("reviewer"), el => el.child(panelButton("reviewer", "Review", "mods/reviewer/comment.svg")))
+      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg")))
       .when(Boolean(w?.buttons), (el) => el
         .child(btn("wb-min", "win-min", "window.minimize"))
         .child(btn("wb-max", w.maximized ? "win-restore" : "win-max", "window.maximize"))

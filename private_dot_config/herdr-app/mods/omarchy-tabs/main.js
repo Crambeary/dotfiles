@@ -173,7 +173,7 @@ export default class Tabs extends View {
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
     const stop = (_e, cx) => cx.stop_propagation();
-    const f = t.foreground, idle = f + "0a", hov = f + "14", sel = f + "2e";
+    const f = t.foreground, idle = f + "0a", hov = f + "14";
     const allPanes = panes(), allTerminals = terminals();
     // Strip geometry: tab width from the measured strip, then a scroll offset kept in range and following the active tab.
     const n = shown.length, strip = this.stripW ?? n * TAB_MAX;
@@ -243,17 +243,6 @@ export default class Tabs extends View {
         .filter(id => (id !== "changes" && id !== "reviewer") || space?.branch != null)
       : [];
     this.syncPanel(space, panel, body, enabled);
-    const panelButton = (id, label, icon) => {
-      const on = panel && !panel.hidden && body?.active === id;
-      // Full-height cells like the tabs, so the strip has one rhythm and no odd gaps.
-      return h_flex().id(`panel-${id}`).h_full().px(12).gap(6).flex_none().items_center().rounded(0).border_l(1).border_color(t.border)
-        .text_size(12).bg(on ? sel : idle).text_color(on ? t.foreground : t.muted)
-        .hover(s => s.bg(on ? sel : hov)).on_mouse_down("left", stop)
-        .on_click(() => {
-          if (on) run("layout.hide", { id: "panel" });
-          else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
-        }).child(svg(icon).size(14)).child(label);
-    };
     return h_flex().size_full().min_w(0).gap(0).items_center().bg(t.chrome)
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
@@ -276,12 +265,6 @@ export default class Tabs extends View {
       .child(div().id("tab-new").h_full().w(36).flex_none().flex().items_center().justify_center().rounded(0).border_r(1).border_color(t.border).bg(idle).text_color(t.dim)
         .hover(s => s.bg(hov).text_color(t.foreground)).on_mouse_down("left", stop)
         .on_click(() => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 })).child("+"))
-      .child(div().flex_1())
-      .child(h_flex().h_full().gap(0).items_center().flex_none()
-      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
-      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
-      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg")))
-      .when(enabled.includes("reviewer"), el => el.child(panelButton("reviewer", "Review", "mods/reviewer/comment.svg")))
-      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg"))));
+      .child(div().flex_1());
   }
 }
