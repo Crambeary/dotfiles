@@ -1,7 +1,7 @@
 // Pick a space, then a terminal or an installed agent to open there; or choose a machine and folder for a new space.
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, v_flex, InputState, Input } from "gpui-base";
-import { theme, spaces, machines, panes, knownAgents, run, exec, closeOverlay, props, home, shared, setShared } from "herdr";
+import { theme, spaces, machines, panes, knownAgents, run, exec, closeOverlay, props, home, shared, setShared, appHome, readTextFile } from "herdr";
 import { projectMark, placeOf, newTab } from "./project.js";
 import { step, scrollList } from "./list.js";
 import { keyLabel } from "./tip.js";
@@ -12,6 +12,9 @@ const LIST_MAX = 420 - 2 - 48 - 8 - 28 - 8 - 41;
 const STATE = { ready: "Connected", loading: "Loading…", unavailable: "Unavailable" };
 // The agents each machine last reported, shared with the New tab menu (new-menu-wt) so either shows them at once.
 const KNOWN = "new-menu.agents";
+// herdr-chat's launcher (mod new-chat), when its installer has put it in mods/: whether it's there, as last seen. Shared with
+// the New tab menu (new-menu-wt), which offers the same row. A chat runs on this computer only.
+const CHAT_KNOWN = "new-menu.chat";
 const isPath = (s) => s.startsWith("/") || s.startsWith("~");
 const basename = (s) => s.replace(/\/+$/, "").split("/").pop() || "/";
 // Paths are positional arguments, never shell source. Expand home on the target,
@@ -81,19 +84,28 @@ export default class OpenMenu extends View {
       this.agentsChecked = true;
       cx.notify();
     });
+    this.chat = shared(CHAT_KNOWN) ?? false;
+    cx.spawn(async cx => {
+      try { this.chat = (await readTextFile(`${appHome()}/mods/new-chat/mod.json`)) != null; }
+      catch { this.chat = false; }
+      setShared(CHAT_KNOWN, this.chat);
+      if (request === this.generation) cx.notify();
+    });
   }
 
   startRows() {
     const s = this.space;
     if (!s) return [];
     return [{ key: "start:terminal", start: "terminal", name: "Terminal", sub: `New tab in ${s.name}` },
-      ...(this.agents ?? []).map(a => ({ key: `start:${a.key}`, start: "agent", agent: a, name: a.name, sub: `Start ${a.name} in ${s.name}` }))];
+      ...(this.agents ?? []).map(a => ({ key: `start:${a.key}`, start: "agent", agent: a, name: a.name, sub: `Start ${a.name} in ${s.name}` })),
+      ...(this.chat && !s.machine ? [{ key: "start:chat", start: "chat", chat: true, name: "New chat…", sub: "Pi, Claude Code or Codex as a chat" }] : [])];
   }
 
   start(item) {
     const s = this.space;
     closeOverlay(props().overlay);
     if (item.start === "terminal") newTab(s);
+    else if (item.start === "chat") run("mod.open", { name: "new-chat" });
     else run("tab.new", { name: item.agent.name, space: s.id, folder: placeOf(s, panes()), argv: item.agent.run });
   }
 
@@ -245,6 +257,7 @@ export default class OpenMenu extends View {
       .on_click((_e, cx) => this.choose(item, cx))
       .child(h_flex().w(16).h(20).pt(2).self_start().flex_none().items_center().justify_center()
         .child(s ? projectMark(s, 16, t, ps)
+          : item.chat ? svg("mods/omarchy-open/icons/chat.svg").size(16).text_color(t.foreground)
           : item.agent ? (item.agent.tint || !item.agent.icon ? svg(item.agent.icon ?? "icons/shell.svg").size(16).text_color(t.foreground) : image(item.agent.icon).size(16))
           : item.start ? svg("icons/shell.svg").size(16).text_color(t.muted)
           : svg(`mods/omarchy-open/icons/${item.folder ? "folder-plus" : item.machine ? "server" : "monitor"}.svg`).size(16).text_color(t.muted)))

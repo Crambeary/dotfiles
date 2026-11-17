@@ -4,8 +4,11 @@
   "floating": [
     { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" },
     { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }{{ if ne .chezmoi.os "windows" }},
-    { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}
-  ],
+    { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}{{ if eq .chezmoi.os "darwin" }},
+    {{- /* herdr-chat (macOS only), installed by its own installer outside chezmoi: these are the two layout edits it makes. */}}
+    { "id": "new-chat-commands", "content": { "mod": "new-chat", "props": { "role": "commands" } }, "edge": "bottom", "align": "start" }{{ end }}
+  ],{{ if eq .chezmoi.os "darwin" }}
+  "terminal_menu": "chat-menu",{{ end }}
   "titlebar": "none",
   "traffic_lights": [
     12,

@@ -1,6 +1,9 @@
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { theme, spaces, panes, knownAgents, run, exec, openOverlay, closeOverlay, props, window, keys, shared, setShared } from "herdr";
+import { theme, spaces, panes, knownAgents, run, exec, openOverlay, closeOverlay, props, window, keys, shared, setShared, appHome, readTextFile } from "herdr";
+
+// herdr-chat's launcher (mod new-chat), when its installer has put it in mods/: whether it's there, as last seen.
+const CHAT_KNOWN = "new-menu.chat";
 
 // The last agents each machine reported, shown at once while knownAgents() checks again.
 const KNOWN = "new-menu.agents";
@@ -44,6 +47,13 @@ export default class NewMenu extends View {
     // The Hermes row shows only where its container answers; the last answer shows at once while Docker is asked again.
     this.profiles = shared(HERMES_KNOWN) ?? [];
     this.findHermes(cx);
+    this.chat = shared(CHAT_KNOWN) ?? false;
+    cx.spawn(async cx => {
+      try { this.chat = (await readTextFile(`${appHome()}/mods/new-chat/mod.json`)) != null; }
+      catch { this.chat = false; }
+      setShared(CHAT_KNOWN, this.chat);
+      cx.notify();
+    });
   }
   findHermes(cx) {
     this.hermesFailed = false;
@@ -98,7 +108,7 @@ export default class NewMenu extends View {
     if (this.hermes) return this.renderHermes(t, space);
     const installed = this.agents.filter(a => a.installed);
     const choices = this.failed ? installed : [...installed, ...this.agents.filter(a => !a.installed).slice(0, 2)];
-    return v_flex().min_h(0).w_full().h(Math.min(512, 198 - ((this.profiles ?? []).length ? 0 : 31) + Math.max(1, choices.length + (this.failed ? 1 : 0)) * 31)).bg(t.popover).p(5).text_size(12.8)
+    return v_flex().min_h(0).w_full().h(Math.min(512, 198 - ((this.profiles ?? []).length ? 0 : 31) + (this.chat ? 31 : 0) + Math.max(1, choices.length + (this.failed ? 1 : 0)) * 31)).bg(t.popover).p(5).text_size(12.8)
       .id("new-menu").track_focus(this.handle)
       .on_key_down((e) => {
         if (e.modifiers.control || e.modifiers.platform || e.modifiers.alt) return;
@@ -113,6 +123,7 @@ export default class NewMenu extends View {
         .children(choices.map((a, i) => this.row(a.key, a.tint ? svg(a.icon).size(14).text_color(t.foreground) : image(a.icon).size(14), a.name,
           () => run("tab.new", { name: a.name, space: space?.id, argv: a.run }), a.installed ? (i < 9 ? String(i + 1) : "") : "not installed", a.installed)))
         .when(this.failed || this.agents.length === 0, el => el.child(div().px(9).py(6).text_color(t.dim).child(this.failed ? "Could not check installed agents" : "Checking installed agents…"))))
+      .when(this.chat, el => el.child(this.row("chat", svg("mods/new-menu-wt/icons/chat.svg").size(14), "New chat…", () => run("mod.open", { name: "new-chat" }), shortcut("mod.open:new-chat"))))
       .child(div().h(1).mx(4).my(5).bg(t.border))
       .when((this.profiles ?? []).length > 0, el => el.child(this.row("hermes", svg("mods/new-menu-wt/icons/bot.svg").size(14), "Hermes in Docker…", (cx) => this.showHermes(true, cx), "›", true, true)))
       .child(this.row("space", div().w(14).child("+"), "New space", () => run("space.new"), shortcut("space.new")))
