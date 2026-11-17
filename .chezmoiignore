@@ -1,11 +1,16 @@
 # Machines with `omarchy = true` under [data] in chezmoi.toml (the Omarchy
-# laptop) manage nothing except ~/.config/herdr-app. Everything is ignored, then
-# the herdr-app tree and its parent are re-included with `!`.
+# laptop) manage nothing except ~/.config/herdr-app. Every top-level entry and
+# every child of .config is ignored, and only the two directories on the path are
+# re-included. Re-including `.config/herdr-app/**` instead would also override
+# every ignore inside the tree, since chezmoi lets any `!` beat any ignore.
 {{ if index . "omarchy" }}
-**
+*
 !.config
+.config/*
 !.config/herdr-app
-!.config/herdr-app/**
+# Externals are matched on their own path, not pruned with an ignored parent,
+# so each .chezmoiexternal target under .config needs naming here.
+.config/alacritty/**
 {{ end }}
 
 .config/nvim/plugin/packer_compiled.lua
@@ -25,16 +30,16 @@ tests
 tests/**
 .config/herdr-app/CONTEXT.md
 
-# Python bytecode. The prefer-modern-tools hook runs as a script so it never
-# generates this on its own, but compiling it in the source dir (e.g. a
-# py_compile syntax check) leaves a __pycache__ that chezmoi would otherwise
-# happily sync to every machine.
-**/__pycache__/**
 # gpui-shell writes these into each mod dir for editor type-checking only;
 # the runtime never reads them, and the .d.ts is ~22k lines per copy.
 .config/herdr-app/mods/*/gpui-kit.d.ts
 .config/herdr-app/mods/*/jsconfig.json
 
+# Python bytecode. The prefer-modern-tools hook runs as a script so it never
+# generates this on its own, but compiling it in the source dir (e.g. a
+# py_compile syntax check) leaves a __pycache__ that chezmoi would otherwise
+# happily sync to every machine.
+**/__pycache__/**
 
 # Cygwin/MSYS crash dumps (bash.exe.stackdump) land in whatever dir was cwd.
 *.stackdump
