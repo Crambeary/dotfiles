@@ -49,30 +49,50 @@
           }
         },
         {
-          "id": "ai-usage",
+          "id": "review-tools",
           "type": "block",
           "size": {
-            "weight": 2.5
+            "px": 60
           },
           "content": {
-            "mod": "omarchy-ai-usage",
+            "mod": "omarchy-bar",
             "props": {
-              "compact": true
+              "part": "center"
             }
           }
         },
         {
           "id": "bar-right",
-          "type": "block",
+          "type": "row",
           "size": {
             "weight": 3
           },
-          "content": {
-            "mod": "omarchy-bar",
-            "props": {
-              "part": "right"
+          "resizable": false,
+          "children": [
+            {
+              "id": "ai-usage",
+              "type": "block",
+              "content": {
+                "mod": "omarchy-ai-usage",
+                "props": {
+                  "compact": true
+                }
+              }
+            },
+            {
+              "id": "bar-controls",
+              "type": "block",
+              "size": {
+                "px": 150
+              },
+              "content": {
+                "mod": "omarchy-bar",
+                "props": {
+                  "part": "right"
+                }
+              }
             }
-          }
+          ]
         }
       ]
     },

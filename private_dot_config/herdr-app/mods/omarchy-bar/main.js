@@ -2,6 +2,7 @@ import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { spaces, panes, theme, run, window, props, layout, shared, setShared, focused, home, nextCommand, settings, agents, terminals, openOverlay, closeOverlay } from "herdr";
 import { wallpapers, setWallpaper, setZoomBorder, ZOOM_BORDER } from "./wallpaper.js";
+import { buttonTip } from "./shortcuts.js";
 
 const own = (el) => el.on_mouse_down("left", (_e, cx) => cx.stop_propagation());
 
@@ -45,6 +46,13 @@ function showInbox(on) {
 // At the pointer, as omarchy-agents' sort menu.
 const openScopeMenu = () => openOverlay({ mod: "omarchy-bar", kind: "popup", width: 210, height: 112, props: { scopeMenu: true } });
 const toggleInbox = () => find(layout(), "sidebar-lists") && showInbox(!inboxShown());
+
+function togglePanel(id) {
+  const panel = find(layout(), "panel"), body = find(layout(), "panel-body");
+  if (!panel || !find(body, id)) return;
+  if (!panel.hidden && body.active === id) run("layout.hide", { id: "panel" });
+  else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
+}
 
 function setScope(scope) {
   setShared(SCOPE, scope);
@@ -103,6 +111,8 @@ export default class OmarchyBar extends View {
         if (command === "next-wallpaper") await nextWallpaper();
         else if (command === "inbox") toggleInbox();
         else if (command === "inbox-scope-menu") openScopeMenu();
+        else if (command === "graph") togglePanel("graph");
+        else if (command === "map") togglePanel("agenttrail");
         else if (command.startsWith("inbox-scope-")) setScope(command.slice("inbox-scope-".length));
         cx.notify();
       }
@@ -148,7 +158,17 @@ export default class OmarchyBar extends View {
     if (part === "left") this.reconcile(cx);
     const row = h_flex().id(`omarchy-${part}`).size_full().items_center().bg(t.chrome).text_size(12).text_color(t.muted).overflow_hidden();
     if (part === "right") return this.right(row, t);
+    if (part === "center") return this.center(row, t);
     return this.left(row, t);
+  }
+
+  center(row, t) {
+    return row.justify_center()
+      .children([["redline", "Redline", "redline"], ["forge-window", "Forge", "forge"]].map(([name, label, icon]) =>
+        own(div().id(`open-${name}`).flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
+          .text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
+          .tooltip(buttonTip(label, `mod.open:${name}`))
+          .on_click(() => run("mod.open", { name })).child(svg(`mods/omarchy-bar/${icon}.svg`).size(14)))));
   }
 
   left(row, t) {
@@ -175,9 +195,8 @@ export default class OmarchyBar extends View {
         const narrow = globalThis.window.viewport_size().width < 1024;
         if (narrow !== this.narrow) {
           this.narrow = narrow;
-          const sizes = narrow
-            ? [["bar-left", { weight: 1 }], ["ai-usage", { weight: 2 }], ["bar-right", { px: 150 + (w?.buttons ? 90 : 0) }]]
-            : [["bar-left", { weight: 3 }], ["ai-usage", { weight: 2.5 }], ["bar-right", { weight: 3 }]];
+          const sizes = [["bar-left", { weight: 1 }], ["bar-right", { weight: 1 }],
+            ["bar-controls", { px: (narrow ? 120 : 150) + (w?.buttons ? 90 : 0) }]];
           for (const [id, size] of sizes) {
             const current = find(layout(), id)?.size;
             if (current && (current.px !== size.px || current.weight !== size.weight)) run("layout.resize", { id, ...size });
@@ -186,12 +205,15 @@ export default class OmarchyBar extends View {
         }
       })
       .child(own(div().id("menu").flex_none().size(24).mr(6).flex().items_center().justify_center().cursor_pointer()
+        .tooltip(buttonTip("Command palette", "mod.open:omarchy-palette"))
         .hover((s) => s.bg(t.hover)).on_click(() => run("mod.open", { name: "omarchy-palette" }))
         .text_color(t.accent).child(svg("mods/omarchy-bar/omarchy.svg").size(14))))
       .child(own(div().id("sidebar-toggle").flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
+        .tooltip(buttonTip("Toggle sidebar", "layout.toggle:sidebar"))
         .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(toggleSidebar)
         .child(svg("mods/omarchy-chrome/sidebar.svg").size(14))))
       .child(own(div().id("search").flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
+        .tooltip(buttonTip("Search spaces and agents", "mod.open:picker"))
         .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(() => run("mod.open", { name: "picker" }))
         .child(svg("mods/omarchy-chrome/search.svg").size(14))))
       .when(Boolean(find(layout(), "sidebar-lists")), (el) => el.child(this.inboxButton(t)))
@@ -209,7 +231,7 @@ export default class OmarchyBar extends View {
     const label = `${shown ? "Show agents" : "Show inbox"}${count ? ` (${count} need${count === 1 ? "s" : ""} you)` : ""}. Right-click: scope`;
     return own(div().id("inbox-toggle").relative().flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
       .text_color(shown ? t.foreground : t.dim).when(shown, (el) => el.bg(t.foreground + "14"))
-      .hover((s) => s.bg(t.hover).text_color(t.foreground)).tooltip(label)
+      .hover((s) => s.bg(t.hover).text_color(t.foreground)).tooltip(buttonTip(label, "omarchy-bar.inbox"))
       .on_click(() => toggleInbox())
       .on_mouse_down("right", (_e, cx) => {
         cx.stop_propagation();
@@ -231,29 +253,27 @@ export default class OmarchyBar extends View {
       ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail"].filter(id => Boolean(find(body, id)))
         .filter(id => id !== "changes" || hasRepo)
       : [];
-    const panelButton = (id, label, icon) => {
+    const panelButton = (id, label, icon, actions = []) => {
       const on = panel && !panel.hidden && body?.active === id;
       return own(div().id(`panel-${id}`).flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
-        .tooltip(label).bg(t.foreground + (on ? "2e" : "0a")).text_color(on ? t.foreground : t.muted)
+        .tooltip(buttonTip(label, actions)).bg(t.foreground + (on ? "2e" : "0a")).text_color(on ? t.foreground : t.muted)
         .hover(s => s.bg(t.foreground + (on ? "2e" : "14")))
-        .on_click(() => {
-          if (on) run("layout.hide", { id: "panel" });
-          else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
-        }).child(svg(icon).size(14)));
+        .on_click(() => togglePanel(id)).child(svg(icon).size(14)));
     };
-    const btn = (id, icon, cmd, danger) => own(
+    const btn = (id, label, icon, cmd, danger) => own(
       div().id(id).flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer().text_color(t.dim)
+        .tooltip(buttonTip(label, cmd))
         .hover((s) => s.bg(danger ? t.blocked : t.hover).text_color(danger ? t.background : t.foreground))
         .on_click(() => run(cmd))
         .child(svg(`mods/terminals-bar/${icon}.svg`).size(14)));
     return row.justify_end()
-      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
-      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
-      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg")))
-      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg")))
+      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg", ["herdr-nvim.toggle", "mod.open:herdr-nvim", "layout.select:panel-body:files"])))
+      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg", ["mod.open:gitview-sidebar", "layout.select:panel-body:changes"])))
+      .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg", "omarchy-bar.graph")))
+      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg", "omarchy-bar.map")))
       .when(Boolean(w?.buttons), (el) => el
-        .child(btn("wb-min", "win-min", "window.minimize"))
-        .child(btn("wb-max", w.maximized ? "win-restore" : "win-max", "window.maximize"))
-        .child(btn("wb-close", "win-close", "window.close", true)));
+        .child(btn("wb-min", "Minimize window", "win-min", "window.minimize"))
+        .child(btn("wb-max", w.maximized ? "Restore window" : "Maximize window", w.maximized ? "win-restore" : "win-max", "window.maximize"))
+        .child(btn("wb-close", "Close window", "win-close", "window.close", true)));
   }
 }
