@@ -41,3 +41,35 @@
   executable = true
 {{ end }}
 
+# herdr-nvim: nvim beside the tab, with a file tree in the Omarchy Files slot.
+# Mods and runtime come from one pinned bundle; chezmoi writes the wrapper the
+# upstream installer would, so its installer never edits the live layout.
+# https://github.com/ChmaraX/herdr-nvim/releases/tag/v1.3.1
+{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) (or (eq .chezmoi.arch "arm64") (eq .chezmoi.arch "amd64")) }}
+{{ $target := printf "%s-%s" (ternary "aarch64" "x86_64" (eq .chezmoi.arch "arm64")) (ternary "apple-darwin" "unknown-linux-gnu" (eq .chezmoi.os "darwin")) }}
+{{ $checksums := dict
+  "aarch64-apple-darwin" "8789767c97dcaec15e040e78ad92703bc5a8b6083318f60b5f05e25356143880"
+  "x86_64-apple-darwin" "4f93d9ad70377ac799ccf02ea49a631cb3c0af403e172799b2bd8d1c8b3ab309"
+  "aarch64-unknown-linux-gnu" "5b043b510c10d3f868885547e8a5bff6cea9e31694e0f3fdeef47b1e32cf5720"
+  "x86_64-unknown-linux-gnu" "561b97ab8299f9c27cc5e71445966075950d2327950208be5e659bf426aa10cf" }}
+{{ $bundle := printf "herdr-nvim-app-%s" $target }}
+{{ $url := printf "https://github.com/ChmaraX/herdr-nvim/releases/download/v1.3.1/%s.tar.gz" $bundle }}
+[".config/herdr-app/mods/herdr-nvim"]
+  type = "archive"
+  url = {{ $url | quote }}
+  checksum.sha256 = {{ index $checksums $target | quote }}
+  stripComponents = 4
+  include = ["{{ $bundle }}/herdr-app/mods/herdr-nvim/**"]
+[".config/herdr-app/mods/herdr-nvim/runtime"]
+  type = "archive"
+  url = {{ $url | quote }}
+  checksum.sha256 = {{ index $checksums $target | quote }}
+  stripComponents = 1
+  include = ["{{ $bundle }}/bin/**", "{{ $bundle }}/lua/**", "{{ $bundle }}/plugin/**"]
+[".config/herdr-app/mods/herdr-nvim/runtime/bin/install-nvim.sh"]
+  type = "archive-file"
+  url = {{ $url | quote }}
+  checksum.sha256 = {{ index $checksums $target | quote }}
+  path = "{{ $bundle }}/herdr-app/install-nvim.sh"
+  executable = true
+{{ end }}

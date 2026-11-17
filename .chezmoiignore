@@ -163,6 +163,8 @@ install-powershell7.cmd
 .config/herdr-app/keys.json
 .config/herdr-app/mods/gitview
 .config/herdr-app/mods/gitview/**
+.config/herdr-app/mods/herdr-nvim
+.config/herdr-app/mods/herdr-nvim/**
 {{ end }}
 
 # macOS: the Linux desktop stack and Windows tools have no use here. Before

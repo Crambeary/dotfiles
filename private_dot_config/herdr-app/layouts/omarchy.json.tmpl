@@ -3,7 +3,8 @@
   "type": "column",
   "floating": [
     { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" },
-    { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }
+    { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }{{ if ne .chezmoi.os "windows" }},
+    { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}
   ],
   "titlebar": "none",
   "traffic_lights": [
@@ -235,9 +236,16 @@
                         {
                           "id": "files",
                           "type": "block",
-                          "content": {
+                          "content": {{ if eq .chezmoi.os "windows" }}{
                             "mod": "omarchy-files"
-                          }
+                          }{{ else }}{
+                            "mod": "herdr-nvim",
+                            "props": {
+                              "replaces": {
+                                "mod": "omarchy-files"
+                              }
+                            }
+                          }{{ end }}
                         },
                         {
                           "id": "changes",

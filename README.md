@@ -116,6 +116,17 @@ in its own tab; on Linux use `ctrl-alt-shift-g` and `ctrl-alt-g`.
 `mods/gitview/config.json.tmpl` resolves the local engine, `herdr-app`, and
 `hc` paths on each machine.
 
+[herdr-nvim](https://github.com/ChmaraX/herdr-nvim) fills Omarchy's Files
+slot on macOS and Linux: a file tree in the panel and a persistent nvim beside
+the tab. It is pinned to v1.3.1 the same way, mods and runtime from one
+bundle, with `mods/herdr-nvim/bin/herdr-nvim.tmpl` standing in for the wrapper
+upstream's installer writes; that installer never runs, so it never patches
+the live layout. `cmd-e` toggles the tree and nvim, `cmd-shift-e` focuses the
+tree, `cmd-o` picks a file the agent touched; on Linux use `ctrl-alt-e`,
+`ctrl-alt-shift-e` and `ctrl-alt-o`. Omarchy keeps its own pane header, so the
+Preview button upstream adds to the stock header is not shown. Windows keeps
+`omarchy-files`.
+
 ## tuicr
 
 The shared `.chezmoitemplates/tuicr-config.toml` selects the Matugen theme and

@@ -1,0 +1,9 @@
+#!/bin/sh
+# The wrapper herdr-nvim's own installer would write, from chezmoi instead:
+# the pinned release in .chezmoiexternal.toml puts the runtime in runtime/.
+export HERDR_NVIM_HOST=app
+export HERDR_NVIM_SELF={{ joinPath .chezmoi.homeDir ".config/herdr-app/mods/herdr-nvim/bin/herdr-nvim" | squote }}
+export HERDR_NVIM_PLUGIN_ROOT={{ joinPath .chezmoi.homeDir ".config/herdr-app/mods/herdr-nvim/runtime" | squote }}
+export HERDR_APP_BIN={{ lookPath "herdr-app" | default "herdr-app" | squote }}
+export HERDR_APP_HOME={{ joinPath .chezmoi.homeDir ".config/herdr-app" | squote }}
+exec "$HERDR_NVIM_PLUGIN_ROOT/bin/herdr-nvim" "$@"

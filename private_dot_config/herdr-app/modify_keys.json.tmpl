@@ -44,7 +44,13 @@ printf '%s' "$existing" | jq '
   ."layout:omarchy" += {
     "ctrl-space i": "omarchy-bar.inbox"{{ if eq .chezmoi.os "darwin" }},
     "cmd-shift-g": "mod.open:gitview-sidebar",
-    "cmd-g": "mod.open:gitview-tab"{{ else if eq .chezmoi.os "linux" }},
+    "cmd-g": "mod.open:gitview-tab",
+    "cmd-e": "mod.open:herdr-nvim",
+    "cmd-shift-e": "herdr-nvim.reveal",
+    "cmd-o": "herdr-nvim.pick"{{ else if eq .chezmoi.os "linux" }},
     "ctrl-alt-shift-g": "mod.open:gitview-sidebar",
-    "ctrl-alt-g": "mod.open:gitview-tab"{{ end }}
+    "ctrl-alt-g": "mod.open:gitview-tab",
+    "ctrl-alt-e": "mod.open:herdr-nvim",
+    "ctrl-alt-shift-e": "herdr-nvim.reveal",
+    "ctrl-alt-o": "herdr-nvim.pick"{{ end }}
   }'
