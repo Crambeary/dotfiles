@@ -72,20 +72,20 @@ export function inboxActions(view, model) {
     for (const a of panes) run("pane.close", { pane: a.pane });
     return moved;
   };
-  const snooze = (a, at, cx) => {
-    const members = treeMembers(a, all), before = new Map(members.map(k => [k.address, napUntil(k)]));
+  const snooze = (a, wakeAt, cx) => {
+    const members = treeMembers(a, all), wakesBefore = new Map(members.map(k => [k.address, napUntil(k)]));
     const turnLabel = (k) => view.pending["snoozed-turn"][k.address] ?? term.get(k.address)?.labels?.["snoozed-turn"] ?? "";
     const turnsBefore = new Map(members.map(k => [k.address, turnLabel(k)]));
     for (const k of members) {
       // Where it stood, so new work can end the snooze (main.js). From its terminal, as main.js reads it back: a card's
       // agents() row has no turn, so a top-level agent would mark 0 and wake at once on any turn it had already ended.
-      const now = term.get(k.address);
-      view.setLabel("snoozed-turn", k.address, `${now?.turn ?? 0}:${now?.status === "working" ? 1 : 0}`, cx);
-      view.setLabel("snoozed", k.address, String(at), cx);
+      const terminal = term.get(k.address);
+      view.setLabel("snoozed-turn", k.address, `${terminal?.turn ?? 0}:${terminal?.status === "working" ? 1 : 0}`, cx);
+      view.setLabel("snoozed", k.address, String(wakeAt), cx);
     }
     view.remember("Snoozed", members.length, (cx) => {
       for (const k of members) {
-        view.setLabel("snoozed", k.address, before.get(k.address) ? String(before.get(k.address)) : "", cx);
+        view.setLabel("snoozed", k.address, wakesBefore.get(k.address) ? String(wakesBefore.get(k.address)) : "", cx);
         view.setLabel("snoozed-turn", k.address, turnsBefore.get(k.address), cx);
       }
     }, cx);
