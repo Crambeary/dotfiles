@@ -5,6 +5,8 @@ import { syncNames } from "./names.js";
 import { renderPaneHeader } from "./pane.js";
 import { spaces, panes, terminals, props, run, openOverlay, theme, shared, setShared, layout, settings, exec, readTextFile, home, appHome, nextCommand, notify } from "herdr";
 import { resumeCommand, argvOf } from "./reopen.js";
+import { describeTab } from "./label.js";
+import { splitTabs, hidingInbox, initStack, renderStack, stackHeight } from "./stack.js";
 
 // The last closed tabs (newest last), kept across restarts for ctrl-alt-shift-t.
 const CLOSED = "omarchy-tabs.closed";
@@ -25,6 +27,8 @@ export default class Tabs extends View {
   init(_props, cx) {
     this.hovered = false;
     if (_props?.pane) return;
+    // An overlay's props arrive through props(), not always as init's argument.
+    if ((props() ?? _props)?.stack) return initStack(this, cx);
     // Auto Title (its own service, mods/auto-title installs it) names tabs where it's installed; naming them here
     // too, each would take the other's names for the person's and stop. Unknown until checked: name nothing.
     this.autoTitle = null;
@@ -167,11 +171,13 @@ export default class Tabs extends View {
 
   render(cx) {
     if (props()?.pane) return renderPaneHeader(this);
+    if (props()?.stack) return renderStack(this);
     this.track(cx);
     if (this.autoTitle === false) syncNames();
     const t = theme();
     const space = spaces().find(p => p.active);
-    const shown = space?.tabs ?? [];
+    // With "Hide inbox sessions" on, the Inbox's tabs wait in the stack at the right end (stack.js).
+    const { shown, hidden } = splitTabs(space);
     const stop = (_e, cx) => cx.stop_propagation();
     const f = t.foreground, idle = f + "0a", hov = f + "14";
     const allPanes = panes(), allTerminals = terminals();
@@ -189,31 +195,7 @@ export default class Tabs extends View {
     this.scrollX = off;
     const compact = tabW < TAB_COMPACT;
     const item = (c, i) => {
-      const tabPanes = allPanes.filter(p => p.tab === c.id);
-      const lead = tabPanes.find(p => p.program?.agent && p.status === c.status) ?? tabPanes.find(p => p.program?.agent) ?? tabPanes[0];
-      const program = lead?.program;
-      const terminal = allTerminals.find(p => p.address === lead?.terminal);
-      const report = Object.values(terminal?.records ?? {}).find(r => r.state === c.status && r.title);
-      const liveTitle = terminal?.report?.title || report?.title || lead?.title;
-      const title = (liveTitle === program?.name ? lead?.branch || liveTitle : liveTitle || "").replace(/^\[[^\]]*\]\s*[^|]*\|\s*/, "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
-      const status = { working: "Working", blocked: "Needs input", done: "Done", idle: "Idle" }[c.status];
-      // A tab with several agents shows their icons; the person's own tab name wins (names.js records its own names).
-      const agentPanes = tabPanes.filter(p => p.program?.agent);
-      const programs = [...new Map(agentPanes.map(p => [p.program.name, p.program])).values()];
-      const multi = agentPanes.length > 1;
-      const personNamed = c.named && shared("tab-titles.set")?.[c.id] !== c.name && !programs.some(p => p.name === c.name);
-      // The icons already say which agents run here; the label carries what they work on.
-      const isProgram = n => !n || tabPanes.some(p => p.program?.name === n || p.terminal === n) || n === "Claude Code";
-      const folder = lead?.cwd ? (/^\/(home\/[^/]+|root)\/?$/.test(lead.cwd) ? "~" : lead.cwd.split("/").filter(Boolean).pop()) : "";
-      const work = [title, folder, lead?.branch].find(n => !isProgram(n)) ?? (isProgram(c.name) ? "" : c.name);
-      // Auto Title's names are meant to be read as given: a tab it names after a running program (ping) says what
-      // runs there, which no icon does. Only an agent's own name says nothing the icon doesn't.
-      const agentName = !c.name || programs.some(p => p.name === c.name) || c.name === "Claude Code";
-      const name = this.autoTitle && c.named ? (agentName ? work : c.name) : personNamed && !isProgram(c.name) ? c.name : work;
-      const detail = multi
-        ? agentPanes.map(p => `${p.program.name}: ${({ working: "working", blocked: "needs input", done: "done" })[p.status] ?? "idle"}`).join("\n")
-        : [status, c.named && title && title !== c.name ? title : program?.name].filter(Boolean).join(" · ");
-      const icons = (multi ? programs.slice(0, 3) : [program]).filter(p => p?.icon);
+      const { name, detail, status, icons } = describeTab(c, allPanes, allTerminals, this.autoTitle);
       return h_flex().id(`tab-${c.id}`).w(tabW).absolute().top(0).bottom(0).left(i * tabW - off).px(compact ? 8 : 10).gap(compact ? 5 : 7).rounded(0).items_center().flex_none().text_size(12)
         .tooltip(`${name}\n${detail}`)
         // The close button shows on the active tab and on the one under the pointer.
@@ -267,6 +249,22 @@ export default class Tabs extends View {
       .child(div().id("tab-new").h_full().w(36).flex_none().flex().items_center().justify_center().rounded(0).border_r(1).border_color(t.border).bg(idle).text_color(t.dim)
         .hover(s => s.bg(hov).text_color(t.foreground)).on_mouse_down("left", stop)
         .on_click(() => openOverlay({ mod: "new-menu-wt", kind: "popup", width: 250, height: 512 })).child("+"))
-      .child(div().flex_1());
+      .child(div().flex_1())
+      .child(this.stackButton(t, space, hidden, idle, hov, stop));
+  }
+
+  // The stack at the far right: the hidden tabs, and the switch that hides them. Lit while the tab in view is one of them.
+  stackButton(t, space, hidden, idle, hov, stop) {
+    const on = hidingInbox(), inside = hidden.some(c => c.active);
+    const label = !on ? "Hidden tabs (off)" : hidden.length ? `${hidden.length} hidden tab${hidden.length === 1 ? "" : "s"}` : "No hidden tabs";
+    return h_flex().id("tab-stack").h_full().px(10).gap(5).flex_none().items_center().justify_center().rounded(0)
+      .border_l(1).border_color(t.border).bg(inside ? t.background : idle).text_color(inside ? t.foreground : t.dim)
+      .when(inside, el => el.border_2().border_color(t.accent))
+      .hover(s => s.bg(inside ? t.background : hov).text_color(t.foreground)).on_mouse_down("left", stop)
+      .tooltip(label)
+      .on_click(() => openOverlay({ mod: "omarchy-tabs", kind: "popup", width: 300, height: stackHeight(space),
+        props: { stack: true, autoTitle: this.autoTitle } }))
+      .child(svg("mods/omarchy-tabs/icons/layers.svg").size(15))
+      .when(on && hidden.length > 0, el => el.child(div().text_size(11).child(String(hidden.length))));
   }
 }
