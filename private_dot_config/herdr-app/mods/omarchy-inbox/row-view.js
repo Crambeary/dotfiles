@@ -13,6 +13,9 @@ import { snoozeButton } from "./snooze.js";
 import { childrenExpanded, childActivity } from "./subagents.js";
 import { SLIM } from "./list-view.js";
 
+// Terminal-style dots, animated natively without JavaScript redraw timers.
+const WORKING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 // The settle key: this mod's own command (keys.json `omarchy-inbox.settle`), shown only if bound.
 const settleKey = () => "omarchy-inbox.settle";
 
@@ -154,13 +157,13 @@ export function inboxRowView(view, t, model, actions, drag) {
     // Lifted, or marked by a sweep, the corner says what letting go will do instead.
     // The state or the time, faded out on hover where Settle fades in over it, as T3's corner.
     const word = running(a)
-        ? pill(t.working, svg("mods/workspace-chrome/spinner.svg").size(16).flex_none().text_color(t.working).spin(900),
+        ? pill(t.working, div().w(16).flex_none().text_size(18).text_color(t.working).frames(WORKING_FRAMES, 80),
           "Working", started(a) > 0 && started(a) < Infinity ? took(started(a), now) : null)
         : st === "blocked"
           ? pill(t.blocked, div().size(16).flex_none().rounded(0).bg(t.blocked + "26").text_size(11).font_bold().flex().items_center().justify_center().child("!"), "Needs you")
           : wokeMark
             || (st === "done"
-              ? pill(t.ansi2, svg("mods/omarchy-inbox/icons/circle-check.svg").size(16).flex_none().text_color(t.ansi2), "Done")
+              ? pill(t.ansi2, div().w(16).flex_none().text_size(16).text_color(t.ansi2).child("✓"), "Done")
               : div().id(`state-${a.address}`).flex_none().child(since(a) > 0 ? ago(since(a), now) : ""));
     // Still at work when it wakes, it says both, as T3's row; hovered, Woke stays and Working makes way.
     const status = running(a) && wokeMark ? h_flex().gap(4).flex_none().items_center().when(!acting, (el) => el.child(word)).child(wokeMark) : word;

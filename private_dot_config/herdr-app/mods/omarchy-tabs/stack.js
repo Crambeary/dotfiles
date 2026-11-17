@@ -6,6 +6,9 @@ import { v_flex, h_flex } from "gpui-base";
 import { agents, spaces, panes, terminals, shared, setShared, run, props, closeOverlay, theme } from "herdr";
 import { describeTab } from "./label.js";
 
+// Terminal-style dots, animated natively without JavaScript redraw timers.
+const WORKING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 // ↑/↓, round the ends (omarchy-inbox/list.js's step): the row to move to, or -1 for any other key.
 const step = (e, at, n) => !n || (e.key !== "down" && e.key !== "up") ? -1 : e.key === "down" ? (at + 1) % n : (at <= 0 ? n : at) - 1;
 
@@ -73,7 +76,7 @@ export function renderStack(view) {
       .child(h_flex().w(14).flex_none().gap(4).children(icons.slice(0, 1).map(p => p.tint ? svg(p.icon).size(14).text_color(t.muted) : image(p.icon).size(14))))
       .child(div().flex_1().min_w(0).truncate().child(name || c.name || "Tab"))
       .when(Boolean(status), el => el.child(div().flex_none().text_size(10.5).text_color(t[c.status] ?? t.muted).child(status)))
-      .when(c.status === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
+      .when(c.status === "working", el => el.child(div().w(12).flex_none().text_size(14).text_color(t.working).frames(WORKING_FRAMES, 80)))
       .when(c.status === "blocked" || c.status === "done", el => el.child(div().size(6).flex_none().bg(t[c.status]))));
   };
 

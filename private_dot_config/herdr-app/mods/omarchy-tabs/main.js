@@ -8,6 +8,9 @@ import { resumeCommand, argvOf } from "./reopen.js";
 import { describeTab } from "./label.js";
 import { splitTabs, hidingInbox, initStack, renderStack, stackHeight } from "./stack.js";
 
+// Terminal-style dots, animated natively without JavaScript redraw timers.
+const WORKING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 // The last closed tabs (newest last), kept across restarts for ctrl-alt-shift-t.
 const CLOSED = "omarchy-tabs.closed";
 
@@ -214,7 +217,7 @@ export default class Tabs extends View {
         .when(icons.length > 0, el => el.child(h_flex().flex_none().gap(6).children(icons.map(p => p.tint ? svg(p.icon).size(14).text_color(t.muted) : image(p.icon).size(14)))))
         .child(div().flex_1().min_w(0).truncate().child(c.zoomed ? `${name} Z` : name))
         .when(Boolean(status) && !compact, el => el.child(div().flex_none().text_size(10.5).text_color(t[c.status] ?? t.muted).child(status)))
-        .when(c.status === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
+        .when(c.status === "working", el => el.child(div().w(12).flex_none().text_size(14).text_color(t.working).frames(WORKING_FRAMES, 80)))
         .when(c.status === "blocked" || c.status === "done", el => el.child(div().size(6).rounded(0).bg(t[c.status])))
         .when(c.active || this.overTab === c.id, el => el.child(div().id(`close-${c.id}`).flex_none().p(3).rounded(0).text_color(t.dim).hover(s => s.bg(hov).text_color(t.foreground)).on_mouse_down("left", stop).on_click((_e, cx) => { cx.stop_propagation(); run("tab.close", { id: c.id }); }).child(svg("mods/pane/close.svg").size(14))));
     };
