@@ -25,6 +25,16 @@ export default class Tabs extends View {
   init(_props, cx) {
     this.hovered = false;
     if (_props?.pane) return;
+    // Auto Title (its own service, mods/auto-title installs it) names tabs where it's installed; naming them here
+    // too, each would take the other's names for the person's and stop. Unknown until checked: name nothing.
+    this.autoTitle = null;
+    cx.spawn(async (cx) => {
+      const copies = [`${home()}/Library/Application Support/herdr-auto-title/bin/herdr-auto-title`,
+        `${home()}/.local/share/herdr-auto-title/herdr-auto-title`];
+      const found = await Promise.all(copies.map(c => exec("test", ["-x", c]).then(r => r.code === 0, () => false)));
+      this.autoTitle = found.includes(true);
+      cx.notify();
+    });
     this.pressed = null;
     this.panels = JSON.parse(localStorage.getItem("panels") ?? "{}");
     this.snap = {};
@@ -158,7 +168,7 @@ export default class Tabs extends View {
   render(cx) {
     if (props()?.pane) return renderPaneHeader(this);
     this.track(cx);
-    syncNames();
+    if (this.autoTitle === false) syncNames();
     const t = theme();
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
@@ -196,7 +206,10 @@ export default class Tabs extends View {
       const isProgram = n => !n || tabPanes.some(p => p.program?.name === n || p.terminal === n) || n === "Claude Code";
       const folder = lead?.cwd ? (/^\/(home\/[^/]+|root)\/?$/.test(lead.cwd) ? "~" : lead.cwd.split("/").filter(Boolean).pop()) : "";
       const work = [title, folder, lead?.branch].find(n => !isProgram(n)) ?? (isProgram(c.name) ? "" : c.name);
-      const name = personNamed && !isProgram(c.name) ? c.name : work;
+      // Auto Title's names are meant to be read as given: a tab it names after a running program (ping) says what
+      // runs there, which no icon does. Only an agent's own name says nothing the icon doesn't.
+      const agentName = !c.name || programs.some(p => p.name === c.name) || c.name === "Claude Code";
+      const name = this.autoTitle && c.named ? (agentName ? work : c.name) : personNamed && !isProgram(c.name) ? c.name : work;
       const detail = multi
         ? agentPanes.map(p => `${p.program.name}: ${({ working: "working", blocked: "needs input", done: "done" })[p.status] ?? "idle"}`).join("\n")
         : [status, c.named && title && title !== c.name ? title : program?.name].filter(Boolean).join(" · ");
