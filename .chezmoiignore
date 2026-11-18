@@ -1,16 +1,12 @@
 # Machines with `omarchy = true` under [data] in chezmoi.toml (the Omarchy
-# laptop) manage nothing except ~/.config/herdr-app. Every top-level entry and
-# every child of .config is ignored, and only the two directories on the path are
-# re-included. Re-including `.config/herdr-app/**` instead would also override
-# every ignore inside the tree, since chezmoi lets any `!` beat any ignore.
+# laptop) manage nothing from chezmoi: the Herdr app there is installed from
+# herdr-mods (https://github.com/Crambeary/herdr-mods).
 {{ if index . "omarchy" }}
 *
-!.config
-.config/*
-!.config/herdr-app
 # Externals are matched on their own path, not pruned with an ignored parent,
-# so each .chezmoiexternal target under .config needs naming here.
+# so each .chezmoiexternal target needs naming here.
 .config/alacritty/**
+.config/hypr/hyprsplit/**
 {{ end }}
 
 .config/nvim/plugin/packer_compiled.lua
@@ -28,12 +24,6 @@ notes
 notes/**
 tests
 tests/**
-.config/herdr-app/CONTEXT.md
-
-# gpui-shell writes these into each mod dir for editor type-checking only;
-# the runtime never reads them, and the .d.ts is ~22k lines per copy.
-.config/herdr-app/mods/*/gpui-kit.d.ts
-.config/herdr-app/mods/*/jsconfig.json
 
 # Python bytecode. The prefer-modern-tools hook runs as a script so it never
 # generates this on its own, but compiling it in the source dir (e.g. a
@@ -166,18 +156,6 @@ install-powershell7.cmd
 .local/bin/deskflow-karabiner
 .config/sketchybar/**
 .config/marcs_sketchybar/**
-{{ end }}
-
-# herdr-app keys.json is merged by a bash+jq modify_ script (no Windows equivalent
-# yet); the mod and layouts under .config/herdr-app are portable and still apply.
-{{ if eq .chezmoi.os "windows" }}
-.config/herdr-app/keys.json
-.config/herdr-app/mods/gitview
-.config/herdr-app/mods/gitview/**
-.config/herdr-app/mods/gitview-diff
-.config/herdr-app/mods/gitview-diff/**
-.config/herdr-app/mods/herdr-nvim
-.config/herdr-app/mods/herdr-nvim/**
 {{ end }}
 
 # macOS: the Linux desktop stack and Windows tools have no use here. Before

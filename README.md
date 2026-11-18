@@ -102,39 +102,11 @@ preference — if you retheme, keep the two visibly far apart. The gate uses the
 short hostname, so confirm with `chezmoi data | rg hostname` on the remote
 before assuming it matched.
 
-The desktop app's Omarchy layout uses
-[herdr-gitview](https://github.com/ChmaraX/herdr-gitview) for Changes on macOS
-and Linux. `.chezmoiexternal.toml` pins the app mods and native engine to
-v0.6.0 with per-platform SHA-256 checksums; update the version and checksums
-together. `chezmoi apply` installs them without running upstream's installer
-or changing other layouts. The separate Graph panel stays available. Windows
-keeps `omarchy-changes`, since gitview does not support Windows.
-
-In Omarchy, Changes opens the file list and selecting a file shows its diff
-beside the terminal. `cmd-shift-g` toggles Changes and `cmd-g` opens gitview
-in its own tab; on Linux use `ctrl-alt-shift-g` and `ctrl-alt-g`.
-`mods/gitview/config.json.tmpl` resolves the local engine, `herdr-app`, and
-`hc` paths on each machine.
-
-In a focused Markdown or HTML preview, `+` (or `=`) increases its font size,
-`-` decreases it, and `0` resets to 16 px. The preview starts at 16 px and
-remembers the chosen size across restarts, shared by Gitview previews; the
-range is 10–32 px. These controls also appear in the preview's `?` help.
-`run_after_patch-gitview-preview-font.sh.tmpl` reapplies the small integration
-patch after Chezmoi installs the pinned release (requires `python3`). If an
-upstream upgrade changes its anchors, apply fails and the patch must be reviewed.
-The implementation lives in `mods/gitview-diff/preview-font.js`.
-
-[herdr-nvim](https://github.com/ChmaraX/herdr-nvim) fills Omarchy's Files
-slot on macOS and Linux: a file tree in the panel and a persistent nvim beside
-the tab. It is pinned to v1.3.1 the same way, mods and runtime from one
-bundle, with `mods/herdr-nvim/bin/herdr-nvim.tmpl` standing in for the wrapper
-upstream's installer writes; that installer never runs, so it never patches
-the live layout. `cmd-e` toggles the tree and nvim, `cmd-shift-e` focuses the
-tree, `cmd-o` picks a file the agent touched; on Linux use `ctrl-alt-e`,
-`ctrl-alt-shift-e` and `ctrl-alt-o`. Omarchy keeps its own pane header, so the
-Preview button upstream adds to the stock header is not shown. Windows keeps
-`omarchy-files`.
+The Herdr desktop app's config (`~/.config/herdr-app`: mods, layouts, themes,
+the gitview and herdr-nvim bundles) is no longer managed here. It lives in
+[herdr-mods](https://github.com/Crambeary/herdr-mods); install it with
+`node install/install.mjs` from a clone of that repo. On the Omarchy laptop
+chezmoi manages nothing (`omarchy = true` ignores everything).
 
 ## tuicr
 
