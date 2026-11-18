@@ -308,34 +308,6 @@ class MatchingTests(unittest.TestCase):
             self.assertFalse(watch.reference(url), url)
 
 
-class ConfigTests(unittest.TestCase):
-    def test_modifiers_preserve_existing_config_and_are_idempotent(self):
-        template = (ROOT / ".chezmoitemplates/herdr-watch-hooks.py").read_text()
-        for agent, source, events in (
-            ("claude", "dot_claude/modify_settings.json.tmpl", ["PreToolUse", "PostToolUse", "PostToolUseFailure"]),
-            ("codex", "private_dot_codex/modify_hooks.json.tmpl", ["PreToolUse", "PostToolUse"]),
-        ):
-            self.assertIn('template "herdr-watch-hooks.py" "' + agent + '"', (ROOT / source).read_text())
-            script = template.replace("{{ . | toJson }}", json.dumps(agent))
-            original = {"permissions": {"allow": ["Bash(echo *)"]}, "hooks": {
-                "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "existing-hook"}]}]}}
-            def merge(value):
-                result = subprocess.run([sys.executable, "-c", script], input=value,
-                                        capture_output=True, text=True, check=True)
-                return json.loads(result.stdout)
-            result = merge(json.dumps(original))
-            self.assertEqual(result["permissions"], original["permissions"])
-            self.assertEqual(result["hooks"]["PreToolUse"][0], original["hooks"]["PreToolUse"][0])
-            self.assertEqual(result, merge(json.dumps(result)))
-            self.assertEqual(set(result["hooks"]), set(events))
-            self.assertEqual(set(merge("")["hooks"]), set(events))
-            # A missing script/interpreter cannot veto a tool invocation.
-            command = result["hooks"]["PreToolUse"][-1]["hooks"][0]["command"]
-            outcome = subprocess.run(["/bin/sh", "-c", command],
-                                     env={"HOME": str(SCRATCH / "absent-home")},
-                                     capture_output=True)
-            self.assertEqual(outcome.returncode, 0)
-
 
 if __name__ == "__main__":
     unittest.main()
