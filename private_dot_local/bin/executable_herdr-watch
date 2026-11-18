@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Declare one terminal-local Watch; hooks are best-effort callers of this contract.
+
+One label call publishes all seven keys atomically. Guarded completion writes
+only an ID tombstone: reading an ID then deleting the record races replacement.
+Readers ignore ended == id; new work uses the inbox's snoozed-turn predicate.
+"""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import time
+from urllib.parse import unquote, urlsplit
+import uuid
+
+
+KEYS = ("waiting", "waiting.id", "waiting.subject", "waiting.since",
+        "waiting.stamp", "waiting.ref", "waiting.ended")
+
+
+def text(value):
+    return isinstance(value, str) and bool(value.strip()) and not any(
+        ord(c) < 32 or ord(c) == 127 for c in value)
+
+
+def reference(value):
+    """Accept GitLab-shaped HTTPS URLs on any host, without credentials/query."""
+    try:
+        url = urlsplit(value)
+        return (text(value) and not any(c.isspace() for c in value)
+                and url.scheme == "https" and bool(url.hostname)
+                and url.username is None and url.password is None
+                and "@" not in unquote(url.netloc) and url.port != 0
+                and not url.query and not url.fragment and "?" not in value
+                and "#" not in value and "\\" not in value
+                and re.fullmatch(r"/(?:[^/]+/)+-/((merge_requests)|(pipelines))/[1-9][0-9]*/?",
+                                 url.path) is not None
+                and len(url.path.split("/-/")[0].strip("/").split("/")) >= 2)
+    except (ValueError, TypeError):
+        return False
+
+
+class Watch:
+    def __init__(self):
+        self.terminal = os.environ.get("HC_TERMINAL_ID", "")
+        if not text(self.terminal) or self.terminal.startswith("-"):
+            raise ValueError("HC_TERMINAL_ID is required")
+        override = os.environ.get("HC")
+        self.hc = shutil.which(override or "hc")
+        if override and not self.hc:
+            raise ValueError("HC executable is unavailable")
+        if not self.hc:
+            fallback = Path.home() / ".local/share/herdr-core/current/Contents/MacOS/herdr-core"
+            if fallback.is_file() and os.access(fallback, os.X_OK):
+                self.hc = str(fallback)
+        if not self.hc:
+            raise ValueError("hc is unavailable")
+
+    def call(self, *args):
+        return subprocess.run([self.hc, *args], check=True, capture_output=True,
+                              text=True, timeout=1).stdout
+
+    def snapshot(self):
+        data = json.loads(self.call("get", self.terminal, "--json"))
+        turn = data.get("turn")
+        if type(turn) is not int or turn < 0:
+            raise ValueError("hc returned no nonnegative terminal turn")
+        if data.get("status") is not None and not isinstance(data["status"], dict):
+            raise ValueError("hc returned a malformed terminal status")
+        return data
+
+    def start(self, subject, ref=None, watch_id=None, snapshot=None):
+        if not text(subject) or (ref is not None and not reference(ref)):
+            raise ValueError("use a nonempty subject and an HTTPS GitLab MR/pipeline URL without credentials")
+        data = snapshot if snapshot is not None else self.snapshot()
+        watch_id = watch_id or str(uuid.uuid4())
+        values = ("1", watch_id, subject, str(time.time_ns() // 1_000_000),
+                  "{}:{}".format(data["turn"], int((data.get("status") or {}).get("state") == "working")),
+                  ref or "", "")
+        self.call("label", self.terminal, *(k + "=" + v for k, v in zip(KEYS, values)))
+        return watch_id
+
+    def clear(self, watch_id=None):
+        if watch_id is not None and not text(watch_id):
+            raise ValueError("id must be nonempty")
+        labels = ["waiting.ended=" + watch_id] if watch_id is not None else [k + "=" for k in KEYS]
+        self.call("label", self.terminal, *labels)
+
+
+def live(labels):
+    return (isinstance(labels, dict) and labels.get("waiting") == "1"
+            and text(labels.get("waiting.id")) and text(labels.get("waiting.subject"))
+            and isinstance(labels.get("waiting.since"), str)
+            and isinstance(labels.get("waiting.stamp"), str)
+            and re.fullmatch(r"[0-9]+", labels.get("waiting.since", "")) is not None
+            and re.fullmatch(r"[0-9]+:[01]", labels.get("waiting.stamp", "")) is not None
+            and ("waiting.ref" not in labels or reference(labels["waiting.ref"]))
+            and labels.get("waiting.ended") != labels["waiting.id"])
+
+
+def subject_for(command):
+    """Match only a direct invocation, never execute or unwrap shell text."""
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    words = list(lexer)
+    # Unsupported shell composition, substitutions and redirection stay explicit.
+    if any(c in command for c in "\n\r;&|<>`$()"):
+        return None
+    if words[:3] == ["glab", "ci", "status"] and any(
+            w in ("--live", "--wait") for w in words[3:]):
+        return "Waiting for pipeline"
+    if (len(words) >= 3 and words[0] == "tecl"
+            and words[1] in ("fieldview", "fv", "tec360", "360", "focus", "fo")
+            and words[2] in ("download", "latest", "install", "install-latest")):
+        return "Downloading build" if words[2] in ("download", "latest") else "Installing build"
+    return None
+
+
+def background(response):
+    if isinstance(response, dict):
+        if any(response.get(k) for k in ("backgroundTaskId", "taskId", "session_id")):
+            return True
+        return any(background(v) for v in response.values())
+    if isinstance(response, list):
+        return any(background(v) for v in response)
+    return isinstance(response, str) and bool(re.search(
+        r"moved to (?:the )?background|running in (?:the )?background|"
+        r"Process running with session ID|Script running with cell ID", response, re.I))
+
+
+def hook():
+    data = json.load(sys.stdin)
+    if data.get("tool_name") != "Bash":
+        return
+    call_id, session = data.get("tool_use_id"), data.get("session_id")
+    if not text(call_id) or not text(session):
+        return
+    event = data.get("hook_event_name")
+    if event not in ("PreToolUse", "PostToolUse", "PostToolUseFailure"):
+        return
+    watch = Watch()
+    # No sidecar files or command-line copies: the tool call identifies ownership.
+    owned_id = "hook-" + str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(
+        [watch.terminal, session, call_id])))
+    if event == "PreToolUse":
+        inputs = data.get("tool_input", {})
+        if inputs.get("run_in_background"):
+            return
+        subject = subject_for(inputs.get("command", ""))
+        if subject:
+            snapshot = watch.snapshot()
+            if not live(snapshot.get("labels", {})):
+                watch.start(subject, watch_id=owned_id, snapshot=snapshot)
+    elif not background(data.get("tool_response")):
+        # Preserve any explicit Watch, even when this PreToolUse was skipped.
+        if watch.snapshot().get("labels", {}).get("waiting.id") == owned_id:
+            watch.clear(owned_id)
+
+
+def main():
+    if sys.argv[1:] == ["hook"]:
+        try:
+            hook()
+        except Exception:
+            pass  # Observability must never deny or change the tool invocation.
+        return 0
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="action", required=True)
+    start = commands.add_parser("start")
+    start.add_argument("--subject", required=True)
+    start.add_argument("--ref")
+    clear = commands.add_parser("clear")
+    clear.add_argument("--id")
+    args = parser.parse_args()
+    try:
+        watch = Watch()
+        if args.action == "start":
+            print(watch.start(args.subject, args.ref))
+        else:
+            watch.clear(args.id)
+    except (ValueError, OSError, subprocess.SubprocessError) as exc:
+        # Do not echo the command or URL: invalid input may contain credentials.
+        print("herdr-watch: " + (str(exc) if isinstance(exc, ValueError)
+                                else "hc request failed"), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

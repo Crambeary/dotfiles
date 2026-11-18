@@ -6,6 +6,7 @@ import { MOTION, planMotion, flying } from "./motion.js";
 import { stop } from "./focus.js";
 import { inboxTop } from "./filter.js";
 import { FIRST, MORE } from "./row-model.js";
+import { age, shelfSummary } from "./waiting.js";
 
 // T3's slim rows and Show more (h-9) and its shelves' headers (h-8), logical px.
 export const SLIM = 36, SHELF = 32;
@@ -13,9 +14,11 @@ export const SLIM = 36, SHELF = 32;
 export const STACK = 1, CARD_GAP = 5, LIST_TOP = 8;
 
 export function inboxList(view, t, model, actions, drag, draw, cx) {
-  const { list, every, sp, scope, kids, working, pinned, out, work, nap, put, busyRows, napRows, busy } = model;
+  const { list, every, sp, scope, kids, working, pinned, out, work, nap, put, busyRows, napRows, busy, wait, waitRows } = model;
   const { d, dragging, lifted, plan, cardH, rows, hot, aim, gap, others, placeholder, boundary, pinTo } = drag;
-  const { card, slim } = draw;
+  const { card, slim, waitRow } = draw;
+  // Waiting's header counts Watches, not cards, and names the oldest one's age (ticket 03).
+  const waitShelfInfo = shelfSummary(wait.map((a) => ({ key: a.address, roll: model.waitOf(a) })));
   const { doomed } = actions;
   const closing = doomed.reduce((n, a) => n + 1 + (model.children.get(a.address)?.length ?? 0), 0);
   const zoom = Number(settings()?.zoom) || 1;
@@ -24,7 +27,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
   const lane = (section, xs, draw, spacing) => drag.lane(section, xs, draw, spacing, fly);
   // A shelf's header, folding it: label, then count and chevron at the far edge; the chevron is an indicator, lit with its row.
   // As T3's: 2px in from the rows' edges, the count in normal weight.
-  const shelf = (id, label, count, open, toggle, extra) => stop(view, t, id, h_flex().id(id).h(SHELF).mx(2).px(8).gap(8).flex_none().items_center()
+  const shelf = (id, label, count, open, toggle, extra, shown = label) => stop(view, t, id, h_flex().id(id).h(SHELF).mx(2).px(8).gap(8).flex_none().items_center()
     .text_size(12).font_medium().text_color(t.dim)
     .role("button").accessibility_label(`${open ? "Hide" : "Show"} ${label.toLowerCase()} agents`)
     .on_hover((on, cx) => {
@@ -36,7 +39,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
       toggle();
       cx.notify();
     })
-    .child(div().flex_1().child(label))
+    .child(div().flex_1().min_w(0).truncate().child(shown))
     .when(Boolean(extra), (el) => el.child(extra))
     .child(div().font_normal().child(String(count)))
         // 12px, as T3's section chevron; -2: its middle under the top row's last button, 22px from the sidebar's edge.
@@ -46,7 +49,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
   // where it was, one that's new fades in from 40px above, one that left fades out where it was; 150ms ease-out. Not
   // while dragging (the lanes' gaps move then), and a change of more than 40 rows just shows. Herdr eases only later
   // changes to an element: a row that moves gets a new id, first drawn where it was, then let go to its place.
-  const heightOf = (kind, key) => view.rowH[`${kind}:${key}`] ?? (kind === "slim" ? SLIM + STACK : kind === "marker" ? SHELF + STACK : (view.cardH ?? 78) + CARD_GAP);
+  const heightOf = (kind, key) => view.rowH[`${kind}:${key}`] ?? (kind === "slim" || kind === "wait" ? SLIM + STACK : kind === "marker" ? SHELF + STACK : (view.cardH ?? 78) + CARD_GAP);
   // Where each row sits in the list (logical px from its top, padding included): Pinned and Active from the top, the
   // shelves from the bottom once there's room, below the rest when there isn't. While dragging, with the labels,
   // the gap and the lifted row as the lanes draw them, so a drop goes on from there. The shelves' headers, Show more
@@ -63,6 +66,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
     if (!list.length) y += mark("m:empty", y);
     const shelf = [];
     let b = 0;
+    if (wait.length) { shelf.push(["m:waiting", "marker", b]); b += SHELF + STACK; for (const a of waitRows) { shelf.push([a, "wait", b]); b += a.address === d?.from && dragging && plan ? 0 : heightOf("wait", a.address); } }
     if (work.length) { shelf.push(["m:working", "marker", b]); b += SHELF + STACK; for (const a of busyRows) { shelf.push([a, "work", b]); b += heightOf("work", a.address); } }
     if (nap.length) { shelf.push(["m:snoozed", "marker", b]); b += SHELF + STACK; for (const a of napRows) { shelf.push([a, "slim", b]); b += a.address === d?.from && dragging && plan ? 0 : heightOf("slim", a.address); } }
     if (put.length || dragging) {
@@ -87,12 +91,19 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
     if (x.kind === "marker") return null;
     let drawn;
     if (!kids.has(x.key)) kids.set(x.key, []); // Gone: drawn as it was, with no sub-agents.
-    try { drawn = x.kind === "slim" ? slim(x.a, true) : card(x.a, true); } catch { return null; } // Gone with too much of its state.
+    try { drawn = x.kind === "slim" ? slim(x.a, true) : x.kind === "wait" ? waitRow(x.a, true) : card(x.a, true); } catch { return null; } // Gone with too much of its state.
     const away = view.motion.leaving;
     return div().id(`leaving-${x.key}-${view.motion.step}`).absolute().left(8).right(8).top(x.y + (away ? x.travel ?? 0 : 0))
       .opacity(away ? 0 : 1).transition("top", MOTION).transition("opacity", MOTION).child(drawn);
   };
   view.ticking = busyRows.length > 0 || pinned.some(working);
+  // Above Working, folded by default; the row in view stays out even folded. Nothing lands on it.
+  const waitShelf = v_flex().id("waiting").gap(STACK).flex_none()
+    .child(fly("m:waiting", "marker", shelf("waiting-header", "Waiting", waitShelfInfo.count, view.waitOpen, () => {
+      view.waitOpen = !view.waitOpen;
+      localStorage.setItem("waiting-open", String(view.waitOpen));
+    }, null, waitShelfInfo.oldest != null ? `Waiting · oldest ${age(waitShelfInfo.oldest, model.now)}` : "Waiting").on_mouse_move((_e, cx) => aim(null, cx))))
+    .children(lane("waiting", waitRows, (a) => waitRow(a), 0));
   // T3 shows the undo notice in the sidebar footer's row, so it covers nothing: the layout's footer (t3-chrome) draws it
   // from shared("omarchy-inbox.notice"). Docked alone, with no footer, it goes over the first shelf's header.
   const n = view.notice;
@@ -111,6 +122,7 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
   // The first shelf takes the free space above it, so both sit at the bottom.
   const shelves = v_flex().id("shelves").relative().gap(STACK).flex_none()
     .when(Boolean(notice), (el) => el.child(notice))
+    .when(wait.length > 0, (el) => el.child(waitShelf))
     .when(work.length > 0, (el) => el
       .child(fly("m:working", "marker", shelf("working-header", "Working", work.length, view.workOpen, () => {
         view.workOpen = !view.workOpen;

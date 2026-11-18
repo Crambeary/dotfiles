@@ -17,6 +17,8 @@
 // A mod pane has a card too if its mod asks (`inbox: true` in
 // shared("<mod>.program")): it goes by what its mod reports as an agent does. It's a view whose state lives elsewhere, so
 // Settle closes it: no Settled, no Undo, no pin and no drag.
+// Waiting (waiting.js): an agent parked on a Watch, from its tree's `waiting*` labels, sits on a shelf of its own above
+// Working, folded, oldest Watch first. New work since a Watch's stamp ends it: the inbox writes `waiting.ended=<id>` then.
 // Snoozed, as T3's: `snoozed=<wake ms>` hides an agent, working or not, on a shelf of its own until then, and it wakes
 // where it was, marked Woke until looked at. It shows meanwhile while it needs the person; a failure, new work,
 // Wake, a pin or Settle ends it.
@@ -37,6 +39,7 @@ import { inboxRowView } from "./row-view.js";
 import { inboxList } from "./list-view.js";
 import { sidebarParts } from "./sidebar.js";
 import { readPins } from "./pins.js";
+import { endsNow } from "./waiting.js";
 
 // A label write render keeps asking for waits this long (ms) after failing.
 const RETRY = 60000;
@@ -57,6 +60,9 @@ export default class Inbox extends View {
     this.childChoices = JSON.parse(localStorage.getItem("children-open") ?? "{}");
     this.workOpen = localStorage.getItem("working-open") === "true";
     this.napOpen = localStorage.getItem("snoozed-open") === "true";
+    this.waitOpen = localStorage.getItem("waiting-open") === "true";
+    // Waiting cards whose members' lines are out (folded by default).
+    this.waitTrees = JSON.parse(localStorage.getItem("waiting-trees-open") ?? "{}");
     // The card whose snooze menu is open, and the row its keys are on.
     this.napMenu = null;
     this.undoRequest = shared("omarchy-inbox.undo");
@@ -64,7 +70,7 @@ export default class Inbox extends View {
     this.napKeys = cx.focus_handle();
     this.limit = FIRST;
     // Labels written but not back from the core yet: label → address → value ("" = removed).
-    this.pending = { settled: {}, snoozed: {}, "snoozed-turn": {} };
+    this.pending = { settled: {}, snoozed: {}, "snoozed-turn": {}, "waiting.ended": {} };
     this.unsettledBefore = { ...(shared("omarchy-inbox.unsettled") ?? {}) };
     // Labels with writes under way, by `key address`: how many, and whether the label can't yet be taken at its word.
     this.writing = {};
@@ -154,7 +160,7 @@ export default class Inbox extends View {
         this.refused[`${key} ${addr} ${value}`] = Date.now();
         notify({ title: "Couldn't update the agent", body: r.stderr.trim(), level: "error" });
         // A Settle or Snooze that didn't happen: the notice says one fewer, or goes. Its Undo would only rewrite what's there.
-        if (value && key !== "snoozed-turn" && this.notice?.live) { if (--this.notice.count > 0) this.publishNotice(); else this.forget(cx); }
+        if (value && key !== "snoozed-turn" && key !== "waiting.ended" && this.notice?.live) { if (--this.notice.count > 0) this.publishNotice(); else this.forget(cx); }
       }
       if (w.out === 0 && w.unsure && this.pending[key][addr] !== undefined) this.setLabel(key, addr, this.pending[key][addr], cx);
       cx.notify();
@@ -280,6 +286,14 @@ export default class Inbox extends View {
         for (const k of treeMembers(a, all)) if (napUntil(k)) this.setLabelDue("snoozed", k.address, "", cx);
       }
     }
+    // New work since a Watch's stamp ends it: the tombstone names that declaration only, so a newer one written
+    // meanwhile stays (ticket 10's race), and only `waiting.ended` is written.
+    for (const a of every) {
+      for (const k of [term.get(a.address), ...(children.get(a.address) ?? [])]) {
+        const id = k && endsNow(k, k.status, this.pending["waiting.ended"][k.address]);
+        if (id) this.setLabelDue("waiting.ended", k.address, id, cx);
+      }
+    }
     const tabs = new Map(sp.flatMap((s) => s.tabs.map((c) => [c.id, c])));
     this.track(every.map((a) => ({
       address: a.address, s: state(a) === "blocked" ? "blocked" : running(a) ? "working"
@@ -292,19 +306,20 @@ export default class Inbox extends View {
       changed: state(a) === ownStatus(a.status, a.address, all) ? tabs.get(a.tab)?.changed_at : null,
     })), all, now, cx);
     const sections = inboxSections(every.map((a) => ({ a, address: a.address, settledAt: settledAt(a), hidden: hidden(a),
-      working: working(a), viewing: viewing(a), since: since(a), begun: begun(a), napUntil: napUntil(a) })),
-      { scope, pins, workOpen: this.workOpen, napOpen: this.napOpen, open: this.open, limit: this.limit });
-    const { pinned, out, work, nap, put, busyRows, napRows, rows, next } = sections;
+      working: working(a), viewing: viewing(a), since: since(a), begun: begun(a), napUntil: napUntil(a),
+      waiting: fields.waiting(a), waitSince: fields.waitOf(a)?.oldest.w.since ?? 0 })),
+      { scope, pins, workOpen: this.workOpen, napOpen: this.napOpen, waitOpen: this.waitOpen, open: this.open, limit: this.limit });
+    const { pinned, out, wait, work, nap, put, waitRows, busyRows, napRows, rows, next } = sections;
     // A menu whose card went (snoozed, gone) or now needs the person closes, as T3's.
-    if (this.napMenu && ![...pinned, ...out, ...busyRows].some((a) => a.address === this.napMenu && state(a) !== "blocked")) this.napMenu = null;
+    if (this.napMenu && ![...pinned, ...out, ...waitRows, ...busyRows].some((a) => a.address === this.napMenu && state(a) !== "blocked")) this.napMenu = null;
     // Back on time: the next wake redraws (the minute tick would be up to a minute late).
     if (next !== this.nextWake) {
       this.wakeTimer?.cancel();
       this.nextWake = next;
       this.wakeTimer = next < Infinity ? cx.timer.after(Math.min(next - now, DAY), (cx) => { this.nextWake = null; cx.notify(); }) : null;
     }
-    if (publish) this.publishRows([...pinned, ...out, ...busyRows, ...napRows, ...rows], inView,
-      [...pinned, ...out, ...work, ...nap, ...put]);
+    if (publish) this.publishRows([...pinned, ...out, ...waitRows, ...busyRows, ...napRows, ...rows], inView,
+      [...pinned, ...out, ...wait, ...work, ...nap, ...put]);
     return { now, all, ps, sp, f, every, children, inView, scope, term, pins, wake, ...fields, ...sections };
   }
 
@@ -327,8 +342,8 @@ export default class Inbox extends View {
     const model = this.compute(cx, false);
     const actions = inboxActions(this, model);
     const drag = inboxDrag(this, t, model, actions);
-    this.publishRows([...model.pinned, ...model.out, ...model.busyRows, ...model.napRows, ...drag.rows], model.inView,
-      [...model.pinned, ...model.out, ...model.work, ...model.nap, ...model.put]);
+    this.publishRows([...model.pinned, ...model.out, ...model.waitRows, ...model.busyRows, ...model.napRows, ...drag.rows], model.inView,
+      [...model.pinned, ...model.out, ...model.wait, ...model.work, ...model.nap, ...model.put]);
     const draw = inboxRowView(this, t, model, actions, drag);
     const { top, list } = inboxList(this, t, model, actions, drag, draw, cx);
     const tree = drag.root(v_flex().id("omarchy-inbox-root").relative().size_full().min_h(0).bg(t.chrome).text_size(14)

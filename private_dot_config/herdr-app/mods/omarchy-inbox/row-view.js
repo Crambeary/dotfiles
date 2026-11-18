@@ -12,6 +12,8 @@ import { stop, within } from "./focus.js";
 import { snoozeButton } from "./snooze.js";
 import { childrenExpanded, childActivity } from "./subagents.js";
 import { SLIM } from "./list-view.js";
+import { age, isStale, waitColors } from "./waiting.js";
+import { pipelineOf, hairline, pipelineMark, pipelineCard } from "./pipeline-view.js";
 
 // Terminal-style dots, animated natively without JavaScript redraw timers.
 const WORKING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
@@ -41,9 +43,11 @@ function left(ms, now) {
 }
 
 export function inboxRowView(view, t, model, actions, drag) {
-  const { now, ps, sp, children, kids, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt } = model;
-  const { settle, unsettle, away, pick } = actions;
+  const { now, ps, sp, children, kids, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt, waitOf, recordOf } = model;
+  const wc = waitColors(t), mono = settings().font_family ?? "JetBrains Mono";
+  const { settle, unsettle, away, pick, stopWaiting } = actions;
   const { dragging, plan, verb, badge, swept, row, open, sweepFrom, justDropped } = drag;
+  const drawOpen = open;
   const zoom = Number(settings()?.zoom) || 1;
   const title = namer();
   const hover = (a) => (on, cx) => {
@@ -63,16 +67,34 @@ export function inboxRowView(view, t, model, actions, drag) {
   // a Popup hangs from its trigger's bottom left; clamped at the window's bottom the card slides up and still clears the row.
   // A control lit in the row speaks for itself instead, as T3's group lets one tooltip up at a time: the card fades, up clear until the pointer goes.
   // The whole corner holds it, so the gap between two controls doesn't flash it.
+  // A row's pipeline (ticket 08): on the Waiting shelf, its oldest Watch's, refreshed; elsewhere its own Watch's while
+  // live, or the last observation of one that ended (ticket 13). `rd` null on the shelf: a plain Watch. Null: nothing to show.
+  const pipeFor = (a) => {
+    const r = waitOf(a);
+    if (r && state(a) === "waiting") {
+      const { k, w } = r.oldest;
+      return { w, rd: pipelineOf(w, now, true), name: k.address === a.address ? title(a) : k.name || title(k), shelf: true };
+    }
+    const { w, live } = recordOf(a);
+    const rd = w?.ref ? pipelineOf(w, now, live) : null;
+    return rd && { w, rd, name: title(a), shelf: false };
+  };
   const details = (a) => {
     const machine = machineOf(a), branch = branchOf(a), pic = programIcon(a.program, 12, t.muted);
     const up = view.details === a.address || view.detailsOut === a.address;
+    if (!up) return Popup.new(`details-${a.address}`, div()).absolute().top(-1).right(-1).size(1);
+    const pipe = pipeFor(a), pc = pipe && pipelineCard(t, pipe.rd, pipe.w, pipe.name, now, mono);
+    const own = [
+      a.space_name && detailsLine(t, avatar(a.space, a.space_name, 12), a.space_name),
+      machine && detailsLine(t, svg("mods/omarchy-inbox/icons/server.svg").size(12).flex_none().text_color(t.muted), machine),
+      branch && detailsLine(t, svg("mods/omarchy-inbox/icons/git-branch.svg").size(12).flex_none().text_color(t.muted), branch),
+      pic && detailsLine(t, div().flex_none().opacity(0.6).child(pic), a.program.name),
+    ];
+    // On the shelf the card is the pipeline's, as ticket 08 has it; elsewhere the row's own card, the pipeline under it.
+    const [head, lines] = pipe?.shelf ? [pc.title, pc.lines] : [title(a), pc ? [...own, pc.title, ...pc.lines] : own];
     return Popup.new(`details-${a.address}`, div()).absolute().top(-1).right(-1).size(1)
-      .when(up && !view.napMenu && !dragging && !view.sweep?.moved, (pop) => pop.content(detailsCard(view, t, a.address, title(a), [
-        a.space_name && detailsLine(t, avatar(a.space, a.space_name, 12), a.space_name),
-        machine && detailsLine(t, svg("mods/omarchy-inbox/icons/server.svg").size(12).flex_none().text_color(t.muted), machine),
-        branch && detailsLine(t, svg("mods/omarchy-inbox/icons/git-branch.svg").size(12).flex_none().text_color(t.muted), branch),
-        pic && detailsLine(t, div().flex_none().opacity(0.6).child(pic), a.program.name),
-      ], { hide: Boolean(view.hot) || view.detailsHold === a.address }).ml(4)));
+      .when(!view.napMenu && !dragging && !view.sweep?.moved, (pop) => pop.content(detailsCard(view, t, a.address, head, lines,
+        { hide: Boolean(view.hot) || view.detailsHold === a.address }).ml(4)));
   };
 
   const expanded = a => childrenExpanded(view.childChoices, a.address, kids.get(a.address) ?? []);
@@ -127,10 +149,12 @@ export function inboxRowView(view, t, model, actions, drag) {
     const over = !dragging && !view.sweep?.moved && (menu || view.hovered === a.address || within(view, [`card-${a.address}`, `settle-${a.address}`, `snooze-${a.address}`, `woke-${a.address}`]));
     // As T3's rows: what you're on or what wants you leads; the rest recede until hovered, in color only so nothing reflows.
     const leads = on || ghost || st === "blocked" || st === "done" || woke(a);
-    const marks = machine || pic ? h_flex().gap(4).flex_none().items_center()
+    const pipe = !ghost && pipeFor(a), pmark = pipe?.rd && pipelineMark(t, pipe.rd, mono);
+    const marks = machine || pic || pmark ? h_flex().gap(4).flex_none().items_center()
       .when(Boolean(machine), (el) => el.child(div().when(!ghost, (m) => m.id(`machine-${a.address}`).accessibility_label(`On ${machine}`))
         .flex_none().child(svg("mods/omarchy-inbox/icons/server.svg").size(14).text_color(t.dim))))
-      .when(Boolean(pic), (el) => el.child(div().flex_none().opacity(0.6).child(pic))) : null;
+      .when(Boolean(pic), (el) => el.child(div().flex_none().opacity(0.6).child(pic)))
+      .when(Boolean(pmark), (el) => el.child(pmark)) : null;
     // Hovered, the corner offers Settle, but only for what's finished: a working or stuck tree stays in sight.
     const offer = over && !busy(a);
     const id = `settle-${a.address}`;
@@ -161,6 +185,9 @@ export function inboxRowView(view, t, model, actions, drag) {
           "Working", started(a) > 0 && started(a) < Infinity ? took(started(a), now) : null)
         : st === "blocked"
           ? pill(t.blocked, div().size(16).flex_none().rounded(0).bg(t.blocked + "26").text_size(11).font_bold().flex().items_center().justify_center().child("!"), "Needs you")
+          : st === "waiting" && waitOf(a)
+            ? pill(waitOf(a).stale ? wc.stale : wc.wait, svg("mods/omarchy-inbox/icons/hourglass.svg").size(14).flex_none().text_color(waitOf(a).stale ? wc.stale : wc.wait),
+              waitOf(a).stale ? "Stale" : "Waiting", age(waitOf(a).oldest.w.since, now))
           : wokeMark
             || (st === "done"
               ? pill(t.ansi2, div().w(16).flex_none().text_size(16).text_color(t.ansi2).child("✓"), "Done")
@@ -216,6 +243,7 @@ export function inboxRowView(view, t, model, actions, drag) {
         .child(div().flex_1().min_w(0).overflow_hidden().whitespace_nowrap().text_ellipsis_middle().child(meta))
         .when(Boolean(marks), (m) => m.child(marks))))
       .children(childList(a, ghost))
+      .when(Boolean(pipe?.rd), (el) => el.relative().child(hairline(t, pipe.rd, false)))
       .when(!ghost, (el) => stop(view, t, `card-${a.address}`, el));
   };
 
@@ -243,6 +271,7 @@ export function inboxRowView(view, t, model, actions, drag) {
     const time = napping
       ? h_flex().gap(4).items_center().text_color(t.accent).child(svg("mods/omarchy-inbox/icons/alarm-clock.svg").size(12).flex_none().text_color(t.accent)).child(left(napUntil(a), now))
       : !ghost && ago(settledAt(a)[0], now);
+    const pipe = !ghost && pipeFor(a);
     const base = h_flex().id(`${ghost ? "ghost-" : ""}slim-${a.address}`).h(SLIM).px(10).gap(10).flex_none().items_center().rounded(0);
     const line = (ghost ? base : row(base, a, details).role("button").accessibility_label(title(a)).on_hover(hover(a)).on_click(open(a)))
       .when(on, (el) => el.bg(t.foreground + "2e").child(div().absolute().left(0).top(0).bottom(0).w(2).bg(t.accent)))
@@ -250,6 +279,7 @@ export function inboxRowView(view, t, model, actions, drag) {
       .when(!ghost && Boolean(children.get(a.address)?.length), el => el.child(chevron(a, ghost)))
       .child(h_flex().id(`slim-mark-${a.address}`).size(16).flex_none().items_center().justify_center().opacity(bright ? 1 : 0.4).transition("opacity", MOTION).child(ghost ? mark : tipMark(view, t, `slim-space-${a.address}`, a.space_name, mark, { delay })))
       .child(div().flex_1().min_w(0).truncate().when(on, (el) => el.font_medium()).text_color(bright ? t.foreground : t.muted).child(title(a)))
+      .when(Boolean(pipe?.rd), (el) => el.relative().child(div().flex_none().opacity(bright ? 1 : 0.6).child(pipelineMark(t, pipe.rd, mono))).child(hairline(t, pipe.rd, !bright)))
       .child(ghost ? (verb ? badge(verb) : div()) : swept(a) ? badge(view.sweep.action === "unsnooze" ? "wake" : "unsettle")
         // T3's corner: the time fades out on hover as the undo arrow fades in over it.
         : h_flex().id(`slim-corner-${a.address}`).relative().h(24).min_w(32).flex_none().items_center().justify_end()
@@ -260,5 +290,79 @@ export function inboxRowView(view, t, model, actions, drag) {
   };
 
 
-  return { card, slim };
+  // A Waiting row (ticket 05, Inbox B): 36px, subject first. Chevron (trees only), the space's mark, the oldest Watch's
+  // subject over the agent's title, "+N" for its other waiting members, then the oldest Watch's age. Stale only when
+  // every Watch in it is: half opacity, a dim age. Unfolded, each member gets a line, `├ name · subject  age`.
+  // It's a row like the others (drag.js's `row`): the details card on hover, lifted by a drag (to Pinned, to Settled, or to
+  // Active, which stops waiting), opened by a click. Hovered, the age makes way for the controls a card has, Snooze and
+  // Settle (for what's finished, as a card's), and Stop waiting, which ends every live Watch in its tree.
+  const waitRow = (a, ghost) => {
+    const r = waitOf(a), on = viewing(a);
+    if (!r) return slim(a, ghost);
+    const pipe = pipeFor(a), rd = pipe?.rd;
+    const st = r.stale, treeOpen = !ghost && Boolean(view.waitTrees?.[a.address]), chevId = `wait-tree-${a.address}`;
+    const chev = !ghost && r.members.length > 0 && stop(view, t, chevId, div().id(chevId).flex_none().role("button")
+      .accessibility_label(`${treeOpen ? "Hide" : "Show"} ${r.members.length} members of ${title(a)}`)
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+      .on_click((_e, cx) => {
+        cx.stop_propagation();
+        view.waitTrees[a.address] = !treeOpen;
+        localStorage.setItem("waiting-trees-open", JSON.stringify(view.waitTrees));
+        cx.notify();
+      })
+      .child(svg(`mods/omarchy-inbox/icons/chevron-${treeOpen ? "down" : "right"}.svg`).size(12).text_color(view.hot === chevId ? t.foreground : t.dim)));
+    const unwaitId = `unwait-${a.address}`, settleId = `settle-${a.address}`;
+    const canNap = !ghost && !a.mod && state(a) !== "blocked", menu = canNap && view.napMenu === a.address;
+    const over = !ghost && !dragging && !view.sweep?.moved
+      && (menu || view.hovered === a.address || within(view, [`wait-${a.address}`, unwaitId, settleId, `snooze-${a.address}`]));
+    // A press here is the button's, not the start of a drag; a click after a drop does nothing.
+    const button = (id, label, icon, act, extra = {}) => tip(view, t, id, label, stop(view, t, id, h_flex().id(id).h(20).px(6).flex_none()
+      .items_center().justify_center().rounded(0).on_hover(glow(view, id)).role("button").accessibility_label(label)
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+      .on_click((_e, cx) => {
+        cx.stop_propagation();
+        if (justDropped()) return;
+        view.sweep = null;
+        view.hot = null; // The row goes from under the pointer before it can report leaving the button.
+        act(cx);
+        cx.notify();
+      })
+      .child(svg(icon).size(14).flex_none().text_color(lit(id, t.muted))), 6), { delay, ...extra });
+    const controls = over && h_flex().id(`wait-controls-${a.address}`).h(20).gap(0).mr(-4).flex_none().items_center()
+      .child(button(unwaitId, "Stop waiting", "mods/omarchy-inbox/icons/hourglass-off.svg", (cx) => stopWaiting(a, cx)))
+      .when(canNap, (el) => el.child(snoozeButton(view, t, a, { now, offer: true, delay }, pick)))
+      // A busy tree can't stay settled: new work brings it straight back (tree.js), so it's offered for what's finished.
+      .when(!busy(a), (el) => el.child(button(settleId, "Settle agent", "mods/omarchy-inbox/icons/check.svg", (cx) => settle([a], cx),
+        { action: on ? settleKey() : undefined })));
+    const base = h_flex().id(`${ghost ? "ghost-" : ""}wait-${a.address}`).h(SLIM).px(10).gap(8).flex_none().items_center().rounded(0).relative();
+    const line = (ghost ? base : row(base, a, details).role("button").accessibility_label(`${title(a)}: waiting on ${r.oldest.w.subject}`)
+      .on_hover(hover(a)).on_click(drawOpen(a)))
+      .when(on, (el) => el.bg(t.foreground + "2e").child(div().absolute().left(0).top(0).bottom(0).w(2).bg(t.accent)))
+      .when(!on && !ghost && !dragging && !view.sweep?.moved, (el) => el.when(menu, (m) => m.bg(t.foreground + "14"))
+        .hover((s) => s.bg(t.foreground + "14")).active((s) => s.bg(t.foreground + "2e")))
+      .child(h_flex().flex_1().min_w(0).gap(8).items_center().opacity(st ? 0.5 : 1)
+        .when(Boolean(chev), (el) => el.child(chev))
+        .child(div().flex_none().child(avatar(a.space, a.space_name, 16)))
+        .child(v_flex().flex_1().min_w(0)
+          .child(div().truncate().text_size(13).line_height("16px").text_color(t.foreground).when(on, (el) => el.font_medium()).child(r.oldest.w.subject))
+          .child(div().truncate().text_size(11).line_height("14px").text_color(t.dim).child(title(a))))
+        .when(r.more > 0, (el) => el.child(div().flex_none().text_size(11).text_color(wc.wait).child(`+${r.more}`)))
+        .when(Boolean(rd), (el) => el.child(pipelineMark(t, rd, mono)))
+        .when(!controls, (el) => el.child(ghost && verb ? badge(verb) : div().flex_none().text_size(12).font_family(mono).text_color(st ? wc.stale : wc.wait).child(age(r.oldest.w.since, now)))))
+      .when(Boolean(controls), (el) => el.child(controls))
+      .when(Boolean(rd), (el) => el.child(hairline(t, rd, st)));
+    const members = treeOpen ? r.members.map(({ k, w }, i) => {
+      const last = i === r.members.length - 1, name = k.name || title(k);
+      const word = k.status === "error" ? "needs you" : k.status === "blocked" ? "needs you" : k.status === "working" ? "working" : "idle";
+      return h_flex().id(`wait-${a.address}-${k.address}`).h(24).pl(26).pr(10).gap(6).flex_none().items_center().text_size(12)
+        .opacity(w && isStale(w, now) ? 0.5 : 1)
+        .child(div().flex_none().font_family(mono).text_color(t.input).child(last ? "└" : "├"))
+        .child(div().flex_none().max_w(110).truncate().text_color(t.muted).child(name))
+        .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(`· ${w ? w.subject : word}`))
+        .when(Boolean(w), (el) => el.child(div().flex_none().font_family(mono).text_color(isStale(w, now) ? wc.stale : wc.wait).child(age(w.since, now))));
+    }) : [];
+    return v_flex().flex_none().child(ghost ? line : stop(view, t, `wait-${a.address}`, line)).children(members);
+  };
+
+  return { card, slim, waitRow };
 }

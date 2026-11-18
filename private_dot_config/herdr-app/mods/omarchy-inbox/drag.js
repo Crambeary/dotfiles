@@ -10,8 +10,8 @@ import { SLIM, CARD_GAP, LIST_TOP } from "./list-view.js";
 import { byRecent } from "./row-model.js";
 
 export function inboxDrag(view, t, model, actions) {
-  const { list, pins, pinned, put, out, busy, hidden, settledAt, working, since, viewing, napUntil, wake, inView, busyRows, napRows } = model;
-  const { settle, unsettle, repin, go } = actions;
+  const { list, pins, pinned, put, out, busy, hidden, settledAt, working, waiting, since, viewing, napUntil, wake, inView, waitRows = [], busyRows, napRows } = model;
+  const { settle, unsettle, repin, go, stopWaiting } = actions;
   const zoom = Number(settings()?.zoom) || 1;
   // Dragging, as T3's sidebar does it (Sidebar.drag.ts, Sidebar.pointer.ts). Press a row and move 6px to lift it;
   // it follows the pointer up and down inside the list and says what letting go will do. While it's lifted, the
@@ -23,9 +23,9 @@ export function inboxDrag(view, t, model, actions) {
   if (d && !list.some((a) => a.address === d.from)) d = view.drag = null;
   const dragging = Boolean(d?.moved);
   const lifted = dragging ? list.find((a) => a.address === d.from) : null;
-  const sectionOf = (a) => hidden(a) ? "snoozed" : pins.includes(a.address) ? "pinned" : settledAt(a) ? "settled" : working(a) ? "working" : "active";
+  const sectionOf = (a) => hidden(a) ? "snoozed" : pins.includes(a.address) ? "pinned" : settledAt(a) ? "settled" : waiting?.(a) ? "waiting" : working(a) ? "working" : "active";
   const from = lifted ? sectionOf(lifted) : null;
-  const fromShelf = from === "settled" || from === "snoozed";
+  const fromShelf = from === "settled" || from === "snoozed" || from === "waiting";
   const others = (xs) => xs.filter((x) => x.address !== d?.from);
   const pinTo = (before) => ({ section: "pinned", before: before ?? null });
   const pinOrder = (before) => {
@@ -54,9 +54,10 @@ export function inboxDrag(view, t, model, actions) {
   // A section lights up as the target, as T3's labels and shelf header do.
   const hot = (s) => target === s && (Boolean(plan) || s === from);
   const verb = !plan ? null : plan.section === "pinned" ? (from === "pinned" ? null : "pin")
-    : plan.section === "settled" ? "settle" : from === "pinned" ? "unpin" : from === "settled" ? "unsettle" : from === "snoozed" ? "wake" : null;
+    : plan.section === "settled" ? "settle" : from === "pinned" ? "unpin" : from === "settled" ? "unsettle" : from === "snoozed" ? "wake" : from === "waiting" ? "unwait" : null;
   const BADGE = { pin: ["mods/omarchy-inbox/icons/pin.svg", "Pin"], unpin: ["mods/omarchy-inbox/icons/pin-off.svg", "Unpin"],
-    settle: ["mods/omarchy-inbox/icons/circle-check.svg", "Settle"], unsettle: ["mods/omarchy-inbox/icons/undo.svg", "Un-settle"], wake: ["mods/omarchy-inbox/icons/alarm-clock-off.svg", "Wake"] };
+    settle: ["mods/omarchy-inbox/icons/circle-check.svg", "Settle"], unsettle: ["mods/omarchy-inbox/icons/undo.svg", "Un-settle"], wake: ["mods/omarchy-inbox/icons/alarm-clock-off.svg", "Wake"],
+    unwait: ["mods/omarchy-inbox/icons/hourglass-off.svg", "Stop waiting"] };
   const badge = (v) => h_flex().id(`badge-${v}`).h(20).px(6).gap(4).flex_none().items_center().rounded(0)
     .border(1).border_color(t.accent + "66").bg(t.accent + "1a").text_size(11).font_medium().text_color(t.accent)
     .child(svg(BADGE[v][0]).size(12).flex_none().text_color(t.accent)).child(BADGE[v][1]);
@@ -69,7 +70,7 @@ export function inboxDrag(view, t, model, actions) {
   const rows = [...page, ...put.filter((a) => viewing(a) && !page.includes(a))];
   // What the next and previous keys walk (t3-chrome): the rows drawn, in order, and the one in view. Written only when
   // it changes: every write redraws every mod.
-  const drawn = { order: [...pinned, ...out, ...busyRows, ...napRows, ...rows].map((a) => a.address), view: inView };
+  const drawn = { order: [...pinned, ...out, ...waitRows, ...busyRows, ...napRows, ...rows].map((a) => a.address), view: inView };
 
   const aim = (to, cx) => {
     if (!view.drag?.moved || JSON.stringify(view.drag.target ?? null) === JSON.stringify(to)) return;
@@ -91,7 +92,7 @@ export function inboxDrag(view, t, model, actions) {
     .child(gap(a.address))
     .child(v_flex().id(`hold-${a.address}`).flex_none()
       .when(dragging && d.from === a.address, (el) => el.overflow_hidden().opacity(0).h(plan ? 0 : d.height + spacing).transition("height", MOTION))
-      .child(fly(a.address, section === "settled" || section === "snoozed" ? "slim" : "card", draw(a))).when(spacing > 0, (el) => el.child(div().h(spacing).flex_none())))
+      .child(fly(a.address, section === "settled" || section === "snoozed" ? "slim" : section === "waiting" ? "wait" : "card", draw(a))).when(spacing > 0, (el) => el.child(div().h(spacing).flex_none())))
     .when(i === xs.length - 1, (el) => el.child(gap(`end-${section}`))));
   // T3's boundaries: Pinned and Active labels, shown only while dragging; the list opens room for them.
   const boundary = (id, text, section, to) => h_flex().id(id).flex_none().overflow_hidden().h(dragging ? 24 : 0)
@@ -106,7 +107,8 @@ export function inboxDrag(view, t, model, actions) {
     .when(hot(section), (el) => el.bg(t.accent + "0d"))
     .on_mouse_move((_e, cx) => aim({ section }, cx))
     .child(text);
-  // Picked up anywhere on a row that can move (not Working, not one whose change is still on its way). The clock's
+  // Picked up anywhere on a row that can move (not Working, not one whose change is still on its way). Waiting moves, as
+  // Settled and Snoozed do: to Pinned, to Settled, or to Active, which stops waiting. The clock's
   // Popover hears its own press, so the row just leaves it alone.
   const row = (el, a, details) => el.relative()
     // Up from the hover on: a Popup must have measured its anchor before the frame a card starts to fade in.
@@ -121,7 +123,7 @@ export function inboxDrag(view, t, model, actions) {
       if (view.sweep?.moved) return sweepTo(a, cx);
       const s = sectionOf(a);
       // Nothing lands in Snoozed: a drop can't say when it wakes, as T3's.
-      aim(s === "pinned" ? pinNear(a, (e.local_position?.y ?? 0) < (e.bounds?.height ?? 0) / 2) : s === "working" || s === "snoozed" ? null : { section: s }, cx);
+      aim(s === "pinned" ? pinNear(a, (e.local_position?.y ?? 0) < (e.bounds?.height ?? 0) / 2) : s === "working" || s === "waiting" || s === "snoozed" ? null : { section: s }, cx);
     });
   // A drag's or sweep's release doesn't also click the row or button it ends on.
   const justDropped = () => view.drag?.moved || view.sweep?.moved || Date.now() - (view.dropped ?? 0) < 250;
@@ -137,6 +139,8 @@ export function inboxDrag(view, t, model, actions) {
     if (!plan) return false;
     const a = lifted;
     if (plan.section === "settled") return settle([a], cx);
+    // Out of Waiting into Active: Stop waiting, as the row's button.
+    if (from === "waiting" && plan.section === "active") { stopWaiting(a, cx); return false; }
     if (plan.section === "pinned") writePins(plan.order);
     // Out of Snoozed it's a Wake, which keeps the pin.
     else if (pins.includes(a.address) && from !== "snoozed") {
@@ -240,7 +244,7 @@ export function inboxDrag(view, t, model, actions) {
     return !lifted || d.y == null ? null : div().id("drag-ghost").absolute().left(8).right(8)
       .top(ghostTop())
       .rounded(0).bg(t.foreground + "2e").shadow_lg()
-      .child(fromShelf ? draw.slim(lifted, true) : draw.card(lifted, true));
+      .child(from === "waiting" ? draw.waitRow(lifted, true) : fromShelf ? draw.slim(lifted, true) : draw.card(lifted, true));
   };
 
   return { d, dragging, lifted, plan, cardH, rows, drawn, hot, verb, badge, others, pinTo, aim, gap, lane, boundary, placeholder, row, open, justDropped, sweepFrom, swept, root, ghost };

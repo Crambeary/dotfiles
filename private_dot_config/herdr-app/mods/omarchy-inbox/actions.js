@@ -5,9 +5,10 @@ import { detailsFor } from "./details.js";
 import { placeOf } from "./project.js";
 import { treeMembers } from "./subagents.js";
 import { peekTerminal } from "./peek.js";
+import { stopWrites } from "./waiting.js";
 
 export function inboxActions(view, model) {
-  const { every, all, viewing, term, napUntil, wake, state, settledAt, busy, pinned, out, busyRows, sp, ps, put } = model;
+  const { every, all, viewing, term, napUntil, wake, state, settledAt, busy, pinned, out, waitRows = [], busyRows, sp, ps, put } = model;
   // A row moving away from under the pointer reports no leave.
   const away = (a, cx) => {
     if (view.hovered !== a.address) return;
@@ -35,7 +36,7 @@ export function inboxActions(view, model) {
   // Putting away the agent in view moves on to the next card down the list, from the top past the end, as T3 does;
   // one in the background moves nothing.
   const moveOn = (xs) => {
-    const cards = [...pinned, ...out, ...busyRows], i = cards.findIndex(viewing);
+    const cards = [...pinned, ...out, ...waitRows, ...busyRows], i = cards.findIndex(viewing);
     if (i < 0 || !xs.includes(cards[i])) return false;
     const next = [...cards.slice(i + 1), ...cards.slice(0, i)].find((a) => !xs.includes(a));
     if (next) go(next);
@@ -113,6 +114,16 @@ export function inboxActions(view, model) {
     const i = answer.lastIndexOf(":"), at = Number(answer.slice(i + 1)), a = every.find((x) => x.address === answer.slice(0, i));
     if (a && state(a) !== "blocked" && at > Date.now()) snooze(a, at, cx);
   };
+  // Stop waiting, by hand: the same tombstone the new-work rule writes (main.js), on each live Watch in the card's tree. The
+  // card then reads by its own words again (Active, or Working). Undo puts back the tombstones it replaced.
+  const stopWaiting = (a, cx) => {
+    const ends = stopWrites(treeMembers(a, all).map((k) => term.get(k.address) ?? k), view.pending["waiting.ended"]);
+    if (!ends.length) return;
+    away(a, cx);
+    view.hot = null;
+    for (const e of ends) view.setLabel("waiting.ended", e.address, e.id, cx);
+    view.remember("Stopped waiting for", 1, (cx) => { for (const e of ends) view.setLabel("waiting.ended", e.address, e.was, cx); }, cx);
+  };
   // The settle key: the agent in view, as its card's Settle (finished) or its settled row's undo.
   view.settleKey = (cx) => {
     const a = every.find(viewing);
@@ -152,5 +163,5 @@ export function inboxActions(view, model) {
     if (tabNow) { run("space.select", { id: spaceNow.id }); run("tab.select", { id: tabNow }); }
   };
 
-  return { away, repin, unsettle, go, settle, pick, doomed };
+  return { away, repin, unsettle, go, settle, pick, stopWaiting, doomed };
 }

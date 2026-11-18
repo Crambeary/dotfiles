@@ -1,4 +1,5 @@
-import { kidStatus, descendants, ownStatus, treeStatus } from "./tree.js";
+import { kidStatus, descendants, ownStatus } from "./tree.js";
+import { watchOf, readWatch, overWord, waitingTreeStatus, rollup } from "./waiting.js";
 
 // The settled tail opens on this many, then grows by MORE.
 export const FIRST = 10, MORE = 25;
@@ -80,11 +81,24 @@ export function inboxFields({ every, all, term, pending, changed, now, inView })
     return v ? v.split(":").map(Number) : null;
   };
   const listed = new Map(every.map((a) => [a.address, a.status]));
-  const kids = new Map(every.map((a) => [a.address, descendants(all, a.address).map((k) => kidStatus(k, listed))]));
+  const under = new Map(every.map((a) => [a.address, descendants(all, a.address)]));
+  const kids = new Map(every.map((a) => [a.address, under.get(a.address).map((k) => kidStatus(k, listed))]));
+  // Each tree's Watches (waiting.js), read every time: the root's own and its live sub-agents'. A mod card has none.
+  const rootWatch = new Map(every.map((a) => [a.address, watchOf(term.get(a.address))]));
+  const waits = new Map(every.map((a) => [a.address, rollup([{ k: term.get(a.address) ?? a, w: rootWatch.get(a.address) },
+    ...under.get(a.address).map((k) => ({ k, w: watchOf(k) }))], now)]));
+  // Each member's word with its Watch over it: one busy on a Watch is waiting, not working.
+  const over = new Map(every.map((a) => [a.address, under.get(a.address).map((k, i) => overWord(kids.get(a.address)[i], watchOf(k)))]));
   // It, or anything under it, is working or needs the person.
   const busy = (a) => BUSY.has(ownStatus(a.status, a.address, all)) || kids.get(a.address).some((s) => BUSY.has(s));
-  // It with what's under it (tree.js).
-  const state = (a) => treeStatus(ownStatus(a.status, a.address, all), kids.get(a.address));
+  // It with what's under it (tree.js's treeStatus, with Waiting just below working: waiting.js).
+  const state = (a) => waitingTreeStatus(ownStatus(a.status, a.address, all), rootWatch.get(a.address), over.get(a.address));
+  // Its tree's Watches (rollup), and whether that's what it's on: Waiting takes it off the Working shelf.
+  const waitOf = (a) => waits.get(a.address);
+  // Its own Watch record, live or ended, and whether it is live: an ended pipeline Watch keeps its last observation on
+  // the row (ticket 13).
+  const recordOf = (a) => ({ w: readWatch(term.get(a.address)?.labels), live: Boolean(rootWatch.get(a.address)) });
+  const waiting = (a) => state(a) === "waiting";
   const running = (a) => state(a) === "working";
   // When a snooze ends (0: none). Past it, the label stays as "woke, not looked at yet".
   const napUntil = (a) => Number(pending.snoozed[a.address] ?? term.get(a.address)?.labels?.snoozed) || 0;
@@ -105,26 +119,29 @@ export function inboxFields({ every, all, term, pending, changed, now, inView })
   const started = (a) => mark(a)?.at || (a.status === "working" ? term.get(a.address)?.status_ms
     : Math.min(Infinity, ...descendants(all, a.address).filter((k) => kidStatus(k, listed) === "working").map((k) => k.status_ms).filter(Boolean)));
 
-  return { viewing, settledAt, kids, busy, state, running, napUntil, hidden, woke, since, working, begun, started };
+  return { viewing, settledAt, kids, busy, state, running, napUntil, hidden, woke, since, working, begun, started, waitOf, recordOf, waiting };
 }
 
 // Plain row facts in; ordered sections, visible pages and the next wake out. No storage, commands or timers.
 /** @returns {any} */
-export function inboxSections(every, { scope, pins, workOpen, napOpen, open, limit }) {
+export function inboxSections(every, { scope, pins, workOpen, napOpen, waitOpen = false, open, limit }) {
   const list = scope.length ? every.filter((x) => scope.includes(x.a.space)) : every;
   const pinned = pins.map((p) => list.find((x) => x.address === p)).filter((x) => x && !x.hidden);
   const rest = list.filter((x) => !pins.includes(x.address));
   // Active by when each came back to the person; Working by when its run started.
-  const out = rest.filter((x) => !x.settledAt && !x.hidden && !x.working).sort(byRecent);
-  const work = rest.filter((x) => !x.settledAt && !x.hidden && x.working).sort((x, y) => y.begun - x.begun || byAddress(x, y));
+  // Waiting: oldest Watch first. Snoozed and Settled win over it; a pin keeps its slot; needing the person isn't waiting.
+  const wait = rest.filter((x) => !x.settledAt && !x.hidden && x.waiting).sort((x, y) => x.waitSince - y.waitSince || byAddress(x, y));
+  const out = rest.filter((x) => !x.settledAt && !x.hidden && !x.working && !x.waiting).sort(byRecent);
+  const work = rest.filter((x) => !x.settledAt && !x.hidden && x.working && !x.waiting).sort((x, y) => y.begun - x.begun || byAddress(x, y));
   // Soonest back first; pinned ones too: they wake back to their pin.
   const nap = list.filter((x) => x.hidden).sort((x, y) => x.napUntil - y.napUntil || byAddress(x, y));
   const put = rest.filter((x) => x.settledAt).sort((x, y) => y.settledAt[0] - x.settledAt[0] || byAddress(x, y));
   // Shelves fold by default on this screen; the one in view stays out even folded or past the page, so it's never lost.
   const busyRows = workOpen ? work : work.filter((x) => x.viewing);
+  const waitRows = waitOpen ? wait : wait.filter((x) => x.viewing);
   const napRows = napOpen ? nap : nap.filter((x) => x.viewing);
   const page = open ? put.slice(0, limit) : [];
   const rows = [...page, ...put.filter((x) => x.viewing && !page.includes(x))];
   const next = Math.min(Infinity, ...every.filter((x) => x.hidden).map((x) => x.napUntil));
-  return { next, ...Object.fromEntries(Object.entries({ list, pinned, out, work, nap, put, busyRows, napRows, rows }).map(([key, xs]) => [key, xs.map((x) => x.a)])) };
+  return { next, ...Object.fromEntries(Object.entries({ list, pinned, out, wait, work, nap, put, waitRows, busyRows, napRows, rows }).map(([key, xs]) => [key, xs.map((x) => x.a)])) };
 }

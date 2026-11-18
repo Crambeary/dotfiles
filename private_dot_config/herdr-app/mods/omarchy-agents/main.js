@@ -5,6 +5,7 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout, home } from "herdr";
 import { peekTerminal } from "./peek.js";
+import { watchOf, overWord, waitingTreeStatus, rollup, age, waitColors } from "./waiting.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -60,8 +61,10 @@ const SORTS = [
   { id: "grouped", label: "Grouped by space", icon: "layers" },
 ];
 const sortOf = () => SORTS.find((s) => s.id === shared("agents.sort")) ?? SORTS[0];
-const SECTION = { 4: "needs you", 3: "done", 2: "working", 1: "idle" };
-const SECTION_STATUS = { 4: "blocked", 3: "done", 2: "working" };
+// Waiting (waiting.js) sits between working and idle, as in the inbox's reading of a tree.
+const WAITING = 1.5;
+const SECTION = { 4: "needs you", 3: "done", 2: "working", [WAITING]: "waiting", 1: "idle" };
+const SECTION_STATUS = { 4: "blocked", 3: "done", 2: "working", [WAITING]: "waiting" };
 
 function duration(ms) {
   const m = Math.floor(ms / 60000);
@@ -209,7 +212,18 @@ export default class Agents extends View {
         .when(l === "└" || l === "├", el => el.border_b(1.5).rounded_bl(0))))
       .when(Boolean(pic), el => el.child(div().mr(8).child(pic)))
       .child(div().flex_1().truncate().text_color(on ? t.foreground : t.muted).child(k.name || k.template || k.program?.name || k.address))
-      .child(this.status(t, { status: st }, compact));
+      // Its own Watch, unless it needs the person: that says more.
+      .child(overWord(st, this.watches?.get(k.address)) === "waiting" ? this.waitPill(t, this.watches.get(k.address)) : this.status(t, { status: st }, compact));
+  }
+
+  // A Watch's mark (ticket 05, Agents C): "Waiting 47m" styled as "Needs you", in its place and the time's; grey "Stale 3h"
+  // past two hours. `more`: the tree's other waiting members, on the root's row.
+  waitPill(t, w, more = 0, stale = w.stale) {
+    const c = waitColors(t), color = stale ? c.stale : c.wait;
+    return h_flex().flex_none().gap(4).items_center()
+      .when(more > 0, (el) => el.child(div().text_size(11).text_color(c.wait).child(`+${more}`)))
+      .child(h_flex().flex_none().px(6).h(18).gap(4).rounded(0).items_center().bg(color + "26").text_size(10.5).font_semibold().text_color(color)
+        .child(stale ? "Stale" : "Waiting").child(age(w.since, this.now)));
   }
 
   // compact: a ! for blocked where a header already says "Needs you".
@@ -237,7 +251,20 @@ export default class Agents extends View {
     this.track(list, now);
     this.hold(list);
     const byPriority = sort.id === "priority";
-    const urgency = new Map(list.map((a) => [a.address, Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
+    // Each terminal's live Watch, and each tree's: the same reading as the inbox's card (waiting.js).
+    this.now = now;
+    const byAddr = new Map(all.map((k) => [k.address, k]));
+    this.watches = new Map();
+    for (const k of all) { const w = watchOf(k); if (w) this.watches.set(k.address, { ...w, stale: now - w.since >= 2 * 3600000 }); }
+    const waitTree = new Map(list.map((a) => {
+      const subs = this.tree(all, a.address).map((s) => s.t), root = byAddr.get(a.address) ?? a;
+      const roll = rollup([{ k: root, w: this.watches.get(a.address) ?? null }, ...subs.map((k) => ({ k, w: this.watches.get(k.address) ?? null }))], now);
+      const own = root.status === "error" ? "blocked" : a.status;
+      const st = waitingTreeStatus(own, this.watches.get(a.address), subs.map((k) => overWord(kidStatus(k, this.listed), this.watches.get(k.address))));
+      return [a.address, st === "waiting" ? roll : null];
+    }));
+    const urgency = new Map(list.map((a) => [a.address, waitTree.get(a.address) ? WAITING
+      : Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
     const rankOf = (a) => urgency.get(a.address);
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
     const pinned = list.filter((a) => a.pinned);
@@ -318,7 +345,8 @@ export default class Agents extends View {
       const machine = a.address.includes("/") ? a.address.split("/")[0] : null;
       // The 44px rail: the program's icon in a square, status as a corner square ("!" when it needs you).
       if (collapsed) {
-        const corner = a.status === "blocked" ? div().absolute().top(1).right(1).size(11).bg(t.blocked).text_size(8.5).font_bold().text_color(t.background).flex().items_center().justify_center().child("!")
+        const corner = waitTree.get(a.address) ? div().absolute().top(2).right(2).size(5).bg(waitTree.get(a.address).stale ? t.dim : waitColors(t).wait)
+          : a.status === "blocked" ? div().absolute().top(1).right(1).size(11).bg(t.blocked).text_size(8.5).font_bold().text_color(t.background).flex().items_center().justify_center().child("!")
           : ["working", "done", "idle"].includes(a.status) ? div().absolute().top(2).right(2).size(5).when(a.status === "idle", (d) => d.border(1).border_color(t.idle ?? t.dim)).when(a.status !== "idle", (d) => d.bg(t[a.status] ?? t.dim))
             .when(a.status === "working", (d) => d.loop("opacity", { from: 0.35, to: 1, period: 1200 })) : null;
         return div()
@@ -341,6 +369,7 @@ export default class Agents extends View {
           .when(Boolean(corner), (el) => el.child(corner));
       }
       const when = this.since(a);
+      const waits = waitTree.get(a.address);
       const idle = a.status === "idle" && !a.focused;
       const isPinned = a.pinned;
       const pin = div()
@@ -401,8 +430,8 @@ export default class Agents extends View {
         .when(Boolean(machine), el => el.child(div().text_size(10).text_color(t.dim).child(machine)))
         .when(subs.length > 0, el => el.child(fold(a, subs)))
         .when(this.hovered === a.address, el => el.child(pin))
-        .when(this.hovered !== a.address && Boolean(when), el => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - when))))
-        .child(this.status(t, a, byPriority && !isPinned));
+        .when(this.hovered !== a.address && Boolean(when) && !waits, el => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - when))))
+        .child(waits ? this.waitPill(t, this.watches.get(a.address) ?? waits.oldest.w, waits.more, this.watches.get(a.address)?.stale ?? waits.stale) : this.status(t, a, byPriority && !isPinned));
     };
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
@@ -434,7 +463,7 @@ export default class Agents extends View {
           open ? this.folded.add(g.id) : this.folded.delete(g.id);
           cx.notify();
         })
-        .child(div().truncate().text_color(t[g.status] ?? t.dim).child((g.label ?? "").toLowerCase()))
+        .child(div().truncate().text_color(g.status === "waiting" ? waitColors(t).wait : t[g.status] ?? t.dim).child((g.label ?? "").toLowerCase()))
         .when(byPriority || !open, (el) => el.child(div().text_color(t.dim).child(String(g.members.length))))
         .child(div().flex_1())
         .when(!open, (el) => el

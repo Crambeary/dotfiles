@@ -3,7 +3,9 @@
   "type": "column",
   "floating": [
     { "id": "pane-ops", "content": { "mod": "pane-ops" }, "edge": "bottom", "align": "end" },
-    { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" }{{ if ne .chezmoi.os "windows" }},
+    { "id": "screensaver", "content": { "mod": "screensaver" }, "edge": "bottom", "align": "start" },
+    {{- /* The Waiting observer: draws nothing, polls pipeline Watches for every mod whatever the sidebar shows. */}}
+    { "id": "omarchy-watch", "content": { "mod": "omarchy-watch" }, "edge": "bottom", "align": "end" }{{ if ne .chezmoi.os "windows" }},
     { "id": "herdr-nvim-sync", "content": { "mod": "herdr-nvim", "props": { "role": "sync" } }, "edge": "bottom", "align": "end" }{{ end }}
     {{- /* herdr-chat (macOS only): run_onchange_before_install-herdr-chat installs its mods with --no-layout, and these are
            the two layout edits its installer would make. Each only once its mod is there, so a machine without it keeps a
