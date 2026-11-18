@@ -163,7 +163,7 @@ export PATH="$PATH:$HOME/.local/share/yabridge"
 # back. It also broke herdr pane classification -- pty-proxy execs itself over
 # the pane's shell, so the pane tty's foreground process reads as "atuin"
 # forever, leaving every pane unknown (empty agent view and snapshot.agents,
-# which silenced notify-watch and pick-attention-pane). That case was handled
+# which silenced pick-attention-pane). That case was handled
 # with a HERDR_ENV guard before; the terminal-query breakage applies
 # everywhere, so the whole thing is gone.
 #

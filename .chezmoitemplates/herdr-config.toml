@@ -475,14 +475,7 @@ status_indicators = "symbols"
 # "terminal" routes through the outer terminal's OSC notification support so
 # clicking the toast focuses that window; "system" toasts can't raise anything.
 # Ghostty and kitty both support it, as does Windows Terminal (OSC 9).
-{{ if eq .chezmoi.os "linux" -}}
-# Linux: off, because herdr-notify.service posts the toasts instead. Its
-# libnotify notifications carry the pane id in the action button, so a click
-# focuses the exact pane — an OSC toast has no return channel and can only
-# raise the window. Leaving delivery on double-notifies.
-# Turn this back to "system" on any machine where that unit isn't enabled.
-delivery = "off"
-{{- else -}}
+{{ if ne .chezmoi.os "linux" -}}
 delivery = "system"
 {{- end }}
 [ui.toast.herdr]

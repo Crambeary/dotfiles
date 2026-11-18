@@ -11,9 +11,6 @@
 # binary while the old server keeps running, and every CLI call fails until the
 # server restarts. Routing calls through herdr_json turns that from "alt+h does
 # nothing, for days" into a message that names the cause.
-#
-# Deliberately not in notify-watch.sh: that one is a long-running poll loop, so
-# a transient error should be logged and retried, never fatal.
 
 HERDR_SCRIPT_LOG="${HERDR_SCRIPT_LOG:-$HOME/.local/state/herdr/script-errors.log}"
 
