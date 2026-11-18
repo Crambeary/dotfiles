@@ -113,6 +113,7 @@ export default class OmarchyBar extends View {
         else if (command === "inbox-scope-menu") openScopeMenu();
         else if (command === "graph") togglePanel("graph");
         else if (command === "map") togglePanel("agenttrail");
+        else if (command === "forge-sidebar") run("layout.toggle", { id: "forge-sidebar" });
         else if (command.startsWith("inbox-scope-")) setScope(command.slice("inbox-scope-".length));
         cx.notify();
       }
@@ -196,7 +197,7 @@ export default class OmarchyBar extends View {
         if (narrow !== this.narrow) {
           this.narrow = narrow;
           const sizes = [["bar-left", { weight: 1 }], ["bar-right", { weight: 1 }],
-            ["bar-controls", { px: (narrow ? 120 : 150) + (w?.buttons ? 90 : 0) }]];
+            ["bar-controls", { px: (narrow ? 150 : 180) + (w?.buttons ? 90 : 0) }]];
           for (const [id, size] of sizes) {
             const current = find(layout(), id)?.size;
             if (current && (current.px !== size.px || current.weight !== size.weight)) run("layout.resize", { id, ...size });
@@ -271,6 +272,14 @@ export default class OmarchyBar extends View {
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg", ["mod.open:gitview-sidebar", "layout.select:panel-body:changes"])))
       .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg", "omarchy-bar.graph")))
       .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg", "omarchy-bar.map")))
+      .when(Boolean(find(layout(), "forge-sidebar")), el => el.child(own(div().id("forge-sidebar-toggle")
+        .flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
+        .tooltip(buttonTip("Merge requests and pipelines", "omarchy-bar.forge-sidebar"))
+        .text_color(find(layout(), "forge-sidebar")?.hidden ? t.muted : t.accent)
+        .bg(t.foreground + (find(layout(), "forge-sidebar")?.hidden ? "0a" : "2e"))
+        .hover(s => s.bg(t.hover).text_color(t.foreground))
+        .on_click(() => run("layout.toggle", { id: "forge-sidebar" }))
+        .child(svg("mods/omarchy-bar/forge.svg").size(14)))))
       .when(Boolean(w?.buttons), (el) => el
         .child(btn("wb-min", "Minimize window", "win-min", "window.minimize"))
         .child(btn("wb-max", w.maximized ? "Restore window" : "Maximize window", w.maximized ? "win-restore" : "win-max", "window.maximize"))
