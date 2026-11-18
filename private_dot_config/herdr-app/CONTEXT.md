@@ -30,8 +30,14 @@ An agent that has handed its next step to a **Watch** and doesn't need the perso
 _Avoid_: Blocked (that means it needs the person), busy
 
 **Watch**:
-The outside thing a waiting agent is waiting on: a long command, a monitor, a merge request's pipeline. Has a subject and a start; a pipeline Watch also carries its progress. An agent has at most one Watch at a time. Past a maximum age a Watch is **stale**: possibly forgotten, still shown.
+An agent's declared wait on an outside thing, such as a long command, a monitor, or a pipeline, with a subject and a start; each terminal has at most one Watch at a time. A pipeline Watch may follow a merge request's current-head pipeline or identify one specific pipeline run.
 _Avoid_: Job, task
+
+**Stale Watch**:
+A Watch at least two hours old: possibly forgotten, but still shown and counted as waiting. Progress updates do not make it fresh again.
+
+**Pipeline observation**:
+The last successfully fetched state of the pipeline followed by a Watch, together with when it was observed. Its freshness is separate from the age of the Watch; a failed refresh leaves an outdated observation, or no observation if none has succeeded.
 
 **Waiting tree**:
 An agent with its sub-agents counts as waiting when at least one member has a Watch and no member is working on its own. Needing the person and the root's own unread reply come first. An agent waiting on its own sub-agents has no Watch of its own: it reads as whatever they are doing.
