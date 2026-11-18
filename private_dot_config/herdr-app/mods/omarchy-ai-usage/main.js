@@ -1,6 +1,6 @@
 import { View, div, image, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { agents, exec, focused, home, panes, shared, setShared, props, openOverlay, settings, theme } from "herdr";
+import { agents, focused, panes, shared, setShared, props, openOverlay, settings, theme } from "herdr";
 
 import { PROVIDERS, sourcesFor, fetchUsage } from "./providers.js";
 import { clock, pace, resets, resetsShort } from "./time.js";
@@ -46,22 +46,7 @@ export default class AiUsage extends View {
   init(_props, cx) {
     if (props()?.overlay) return;
     this.sig = null;
-    this.claudeEnv = {};
     cx.timer.every(60e3, cx => { cx.spawn(async () => refreshAll()); cx.notify(); });
-  }
-
-  // CLAUDE_CONFIG_DIR is per process; Linux /proc ties it to the Herdr terminal (HC_TERMINAL_ID).
-  async claudeDirOf(terminal) {
-    if (!(terminal in this.claudeEnv)) {
-      const r = await exec("sh", ["-c", `for f in /proc/[0-9]*/environ; do tr '\\0' '\\n' < "$f" 2>/dev/null | awk -F= '/^HC_TERMINAL_ID=/{t=$2} /^CLAUDE_CONFIG_DIR=/{c=$2} END{if(t!="")print t" "c}'; done`]).catch(() => null);
-      for (const line of (r?.stdout ?? "").split("\n")) {
-        const i = line.indexOf(" "), t = line.slice(0, i), dir = line.slice(i + 1).trim();
-        if (i > 0 && (dir || !this.claudeEnv[t])) this.claudeEnv[t] = dir;
-      }
-      if (!(terminal in this.claudeEnv)) this.claudeEnv[terminal] = null;
-    }
-    const dir = this.claudeEnv[terminal];
-    return dir === null ? null : (dir || `${home()}/.claude`);
   }
 
   // Runs when what's visible changes; keeps the last list when no agent is in view.
@@ -73,7 +58,7 @@ export default class AiUsage extends View {
     if (!vis.length) { if (shownList().length && !shared(SHOWN)?.idle) setShared(SHOWN, { list: shownList(), idle: true }); return; }
     cx.spawn(async () => {
       const seen = new Set(), list = [];
-      for (const v of vis) for (const s of await sourcesFor(v, terminal => this.claudeDirOf(terminal))) if (!seen.has(s.id)) { seen.add(s.id); list.push(s); }
+      for (const v of vis) for (const s of await sourcesFor(v)) if (!seen.has(s.id)) { seen.add(s.id); list.push(s); }
       if (this.sig !== sig) return;
       if (JSON.stringify(shared(SHOWN)) !== JSON.stringify({ list, idle: false })) setShared(SHOWN, { list, idle: false });
       await refreshAll();
@@ -169,8 +154,6 @@ export default class AiUsage extends View {
       };
       return h_flex().gap(6).items_center().flex_none()
         .child(this.icon(s, 12, stale))
-        // The profile's name, so a work and a personal Claude tell apart.
-        .when(s.provider === "claude", el => el.child(div().whitespace_nowrap().text_color(stale ? t.dim : t.foreground).child(s.label)))
         .when(Boolean(s.note) || !first, el => el.child(div().whitespace_nowrap().text_color(t.dim).child(s.note ?? (u?.error ? "no data" : u?.fetched ? "no limits" : "…"))))
         .when(Boolean(first), el => el.child(win(first)))
         .when(Boolean(second), el => el.child(win(second)));

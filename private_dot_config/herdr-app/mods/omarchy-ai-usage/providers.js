@@ -1,4 +1,4 @@
-import { home, readTextFile, settings } from "herdr";
+import { exec, home, readTextFile } from "herdr";
 import { H, DAY } from "./time.js";
 
 const json = async path => {
@@ -22,7 +22,7 @@ export const PROVIDERS = {
       const data = await res.json();
       const span = { session: 5 * H, weekly_all: 7 * DAY, weekly_scoped: 7 * DAY };
       if (Array.isArray(data.limits)) {
-        return data.limits.filter(l => span[l.kind]).map(l => {
+        return data.limits.filter(l => l.kind === "session" || l.kind === "weekly_all").map(l => {
           const model = l.scope?.model?.display_name;
           const w = win(span[l.kind], l.percent, l.resets_at);
           return model ? { ...w, short: `7d ${model}`, long: `Weekly ${model} limit` } : w;
@@ -70,12 +70,22 @@ const HARNESS = {
 };
 const UNDER = { anthropic: "claude", "openai-codex": "codex", openai: "codex", "github-copilot": "copilot" };
 
+async function keychainClaude() {
+  try {
+    const r = await exec("security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"]);
+    if (r?.code) return null;
+    return JSON.parse(r?.stdout ?? "null")?.claudeAiOauth ?? null;
+  } catch { return null; }
+}
+
 // Rebuilt from the plain source record each fetch, so the popup copy can refresh too.
 async function creds(src) {
   const f = src.from;
   if (f.claude) {
-    const o = (await json(`${f.claude}/.credentials.json`))?.claudeAiOauth;
-    if (!o?.accessToken) throw new Error(`no Claude Code login in ${f.claude.replace(home(), "~")}`);
+    // File first (Linux); else the macOS Keychain, read here at fetch time and never stored or logged.
+    let o = (await json(".claude/.credentials.json"))?.claudeAiOauth;
+    if (!o?.accessToken) o = await keychainClaude();
+    if (!o?.accessToken) throw new Error("no Claude Code login in ~/.claude or Keychain");
     return { token: o.accessToken, expires: o.expiresAt };
   }
   if (f.codex) {
@@ -95,36 +105,15 @@ async function creds(src) {
   return { token: src.provider === "copilot" ? e.refresh : e.access, account: e.accountId, expires: e.expires };
 }
 
-const claudeDirs = [".claude", ".claude-personal"];
-const claudeLabel = dir => (dir.split("/").pop().replace(/^\.claude-?/, "") || "claude");
-
-const capital = s => s[0].toUpperCase() + s.slice(1);
-
-// settings.json's "claude_labels" ({ "~/.claude": "Work" }) names a profile outright. Otherwise its
-// organization ("Flexspring"), or "Personal" for the "<email>'s Organization" a personal account
-// gets, else the folder's name. ~/.claude keeps its state in ~/.claude.json, other folders inside.
-async function claudeName(dir) {
-  const own = settings()?.claude_labels?.[dir.replace(home(), "~")];
-  if (typeof own === "string" && own) return own;
-  const file = dir === `${home()}/.claude` ? `${home()}/.claude.json` : `${dir}/.claude.json`;
-  const text = await readTextFile(file).catch(() => null);
-  let org;
-  try { org = JSON.parse(text ?? "{}")?.oauthAccount?.organizationName; } catch { /* mid-write or broken: the folder's name */ }
-  if (!org) return capital(claudeLabel(dir));
-  return /'s Organization$/.test(org) ? "Personal" : org;
-}
-
 function labelled(v, why) {
   return { id: `none.${v.program.key}`, agent: v.program.name, label: v.program.name, icon: v.program.icon, tint: v.program.tint, note: why ?? "no usage API" };
 }
 
-export async function sourcesFor(v, claudeDirOf) {
+export async function sourcesFor(v) {
   const key = v.program.key, agent = v.program.name;
   const icon = v.program.icon, tint = v.program.tint;
   if (key === "claude" || key === "claude-code") {
-    const dir = await claudeDirOf(v.terminal);
-    const dirs = dir ? [dir] : claudeDirs.map(d => `${home()}/${d}`);
-    return Promise.all(dirs.map(async d => ({ id: `claude.${claudeLabel(d)}`, provider: "claude", agent, label: await claudeName(d), sub: d.replace(home(), "~"), icon, tint, from: { claude: d } })));
+    return [{ id: "claude", provider: "claude", agent, label: "claude", sub: "Claude Code", icon, tint, from: { claude: true } }];
   }
   if (key === "codex") return [{ id: "codex", provider: "codex", agent, label: "codex", sub: "ChatGPT plan", icon, tint, from: { codex: true } }];
   if (key === "copilot") return [{ id: "copilot", provider: "copilot", agent, label: "copilot", sub: "GitHub Copilot", icon, tint, from: { copilot: true } }];
