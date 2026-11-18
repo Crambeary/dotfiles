@@ -129,7 +129,7 @@ assert.equal(s.count, 3); assert.equal(s.oldest, NOW - 9000);
 assert.deepEqual(shelfSummary([]), { cards: [], count: 0, oldest: null });
 
 // --- The inbox: sections, precedence and the tombstone it writes on new work.
-let all = [], runs = [], sp = [], focus = {}, writes = [], storage = new Map(), shared = new Map();
+let calls = [], all = [], runs = [], sp = [], focus = {}, writes = [], storage = new Map(), shared = new Map();
 const theme = new Proxy({}, { get: (_, k) => `#${String(k)}` });
 class Element {
   constructor() {
@@ -148,7 +148,7 @@ const kit = { View: class {}, div: el, svg: el, image: el };
 const base = { v_flex: el, h_flex: el, Popup: { new: (id, trigger) => { const e = el(); e.key = id; return trigger ? e.child(trigger) : e; } }, Popover: { new: (id) => { const e = el(); e.key = id; return e; } }, Input: { new: el }, NumberInput: { new: el }, Select: { new: el }, InputState: { new: () => ({ on() {}, text: () => '' }) } };
 const herdr = {
   terminals: () => all, agents: () => runs, panes: () => runs, spaces: () => sp, focused: () => focus,
-  shared: (k) => shared.get(k), setShared: (k, v) => shared.set(k, v), run() {}, props: () => ({}), theme: () => theme,
+  shared: (k) => shared.get(k), setShared: (k, v) => shared.set(k, v), run: (name, args) => calls.push({ name, args }), props: () => ({}), theme: () => theme,
   keys: () => ({}), machines: () => [], closeOverlay() {}, exec: async () => ({}), readTextFile: async () => null, appHome: () => '',
   settings: () => ({ zoom: 1 }), layout: () => null, window: () => ({}), setAgentOrder() {}, notify() {}, openOverlay() {},
   nextCommand: () => new Promise(() => {}),
@@ -245,6 +245,10 @@ row = draw(model).waitRow(model.every[0]);
 assert.ok(find(row, 'wait-r-k3'), 'a member without a Watch gets a line');
 assert.ok(JSON.stringify(find(row, 'wait-r-k3')).includes('· idle'));
 assert.ok(JSON.stringify(find(row, 'wait-r-k3')).includes('└'));
+// Clicking a member views it, as a card's sub-agent rows do.
+calls.length = 0;
+find(row, 'wait-r-k1').handlers.click({}, cx);
+assert.deepEqual(calls.at(-1), { name: 'terminal.peek', args: { terminal: 'k1' } });
 // A sub-agent working on its own makes the tree Working.
 all.find((k) => k.address === 'k3').status = 'working';
 model = v.compute(cx, false);

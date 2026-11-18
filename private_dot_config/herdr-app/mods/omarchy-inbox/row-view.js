@@ -354,7 +354,11 @@ export function inboxRowView(view, t, model, actions, drag) {
     const members = treeOpen ? r.members.map(({ k, w }, i) => {
       const last = i === r.members.length - 1, name = k.name || title(k);
       const word = k.status === "error" ? "needs you" : k.status === "blocked" ? "needs you" : k.status === "working" ? "working" : "idle";
+      // A click views the member, as a card's sub-agent rows do (childList): the same peek.
       return h_flex().id(`wait-${a.address}-${k.address}`).h(24).pl(26).pr(10).gap(6).flex_none().items_center().text_size(12)
+        .hover((s) => s.bg(t.foreground + "14")).role("button").accessibility_label(`${name}: ${w ? w.subject : word}`)
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_click((_e, cx) => { cx.stop_propagation(); peekTerminal(k.address); cx.notify(); })
         .opacity(w && isStale(w, now) ? 0.5 : 1)
         .child(div().flex_none().font_family(mono).text_color(t.input).child(last ? "└" : "├"))
         .child(div().flex_none().max_w(110).truncate().text_color(t.muted).child(name))
