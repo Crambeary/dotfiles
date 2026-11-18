@@ -1,0 +1,30 @@
+#!/bin/bash
+# Restart the hc core with Marc's login-shell PATH, and only PATH.
+#
+# The core is started by Herdr.app, so it inherits the GUI session's PATH
+# (/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin) and every `hc run -- cmd`
+# program gets that. Agent hooks (deny-secrets-env, deny-tmp-usage,
+# prefer-modern-tools) then fail with exit 127. `hc server restart --fresh`
+# makes the core take the calling shell's environment, so call it from a
+# scrubbed environment that carries nothing but the login PATH. Programs
+# already running are kept. Run at login by com.marctotaro.hc-fresh-path.
+set -euo pipefail
+
+hc="$HOME/.local/bin/hc"
+[[ -x $hc ]] || exit 0
+
+login_shell="${SHELL:-/bin/zsh}"
+login_path="$("$login_shell" -lc 'printf %s "$PATH"')"
+[[ -n $login_path ]] || { echo "hc-fresh-path: empty login PATH" >&2; exit 1; }
+
+# Wait for the core: Herdr.app may still be starting it at login.
+for _ in $(seq 1 30); do
+	env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" PATH="$login_path" "$hc" server status >/dev/null 2>&1 && break
+	sleep 1
+done
+
+# SHELL is kept too: the core picks the shell for new interactive panes from
+# it, and without it every new Herdr pane falls back to `/bin/sh -l`, which
+# reads none of the zsh config (no prompt, no tools). PATH alone is what the
+# agent hooks need; SHELL only changes which shell an interactive pane starts.
+exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$login_shell" PATH="$login_path" "$hc" server restart --fresh

@@ -1,0 +1,13 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Registers the hc-fresh-path LaunchAgent. bootstrap runs it once (RunAtLoad),
+# which restarts the hc core with the login PATH; programs keep running.
+# script hash: {{ include "Library/LaunchAgents/com.marctotaro.hc-fresh-path.plist.tmpl" | sha256sum }} {{ include "private_dot_local/bin/executable_hc-fresh-path" | sha256sum }}
+set -euo pipefail
+
+plist="$HOME/Library/LaunchAgents/com.marctotaro.hc-fresh-path.plist"
+uid="$(id -u)"
+
+/bin/launchctl bootout "gui/$uid" "$plist" >/dev/null 2>&1 || true
+/bin/launchctl bootstrap "gui/$uid" "$plist"
+{{ end -}}

@@ -154,6 +154,7 @@ install-powershell7.cmd
 {{ if ne .chezmoi.os "darwin" }}
 .aerospace.toml
 .local/bin/deskflow-karabiner
+.local/bin/hc-fresh-path
 .config/sketchybar/**
 .config/marcs_sketchybar/**
 {{ end }}
