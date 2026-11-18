@@ -7,7 +7,7 @@ export const G = {
   logo: "", sidebar: "", search: "", plus: "+", monitor: "", server: "",
   branch: "", down: "", right: "", clock: "", settings: "", keyboard: "",
   mods: "", close: "", file: "", folder: "", spinner: "", comment: "",
-  map: "", changes: "", pin: "", layers: "", command: "⌘", inbox: "",
+  changes: "", pin: "", layers: "", command: "⌘", inbox: "",
   home: "", bolt: "",
 };
 const PROGRAM = { claude: "✻", codex: "◎", pi: "π", shell: "", opencode: "◇", gemini: "✦" };

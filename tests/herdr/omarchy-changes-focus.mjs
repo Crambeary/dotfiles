@@ -19,7 +19,7 @@ const el = () => new Element();
 const colors = new Proxy({}, { get: () => '#112233' });
 let space, ps;
 const tree = { id: 'panel', hidden: false, children: [{ id: 'panel-body', active: 'changes', children: [
-  { id: 'files' }, { id: 'changes', content: { mod: 'gitview' } }, { id: 'graph' }, { id: 'agenttrail' },
+  { id: 'files' }, { id: 'changes', content: { mod: 'gitview' } }, { id: 'graph' },
 ] }] };
 const api = {
   spaces: () => [space], panes: () => ps, terminals: () => [], theme: () => colors,

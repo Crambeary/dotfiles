@@ -112,7 +112,6 @@ export default class OmarchyBar extends View {
         else if (command === "inbox") toggleInbox();
         else if (command === "inbox-scope-menu") openScopeMenu();
         else if (command === "graph") togglePanel("graph");
-        else if (command === "map") togglePanel("agenttrail");
         else if (command === "forge-sidebar") run("layout.toggle", { id: "forge-sidebar" });
         else if (command.startsWith("inbox-scope-")) setScope(command.slice("inbox-scope-".length));
         cx.notify();
@@ -251,7 +250,7 @@ export default class OmarchyBar extends View {
     const hasRepo = space?.branch != null || panes().some(p => p.terminal && p.branch != null && space?.tabs.some(tab => tab.id === p.tab));
     // Match the tab mod's per-space restore eligibility; only the controls move.
     const enabled = panel && body
-      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail"].filter(id => Boolean(find(body, id)))
+      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph"].filter(id => Boolean(find(body, id)))
         .filter(id => id !== "changes" || hasRepo)
       : [];
     const panelButton = (id, label, icon, actions = []) => {
@@ -271,7 +270,6 @@ export default class OmarchyBar extends View {
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg", ["herdr-nvim.toggle", "mod.open:herdr-nvim", "layout.select:panel-body:files"])))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg", ["mod.open:gitview-sidebar", "layout.select:panel-body:changes"])))
       .when(enabled.includes("graph"), el => el.child(panelButton("graph", "Graph", "mods/omarchy-tabs/icons/graph.svg", "omarchy-bar.graph")))
-      .when(enabled.includes("agenttrail"), el => el.child(panelButton("agenttrail", "Map", "mods/omarchy-tabs/icons/map.svg", "omarchy-bar.map")))
       .when(Boolean(find(layout(), "forge-sidebar")), el => el.child(own(div().id("forge-sidebar-toggle")
         .flex_none().w(30).h_full().flex().items_center().justify_center().cursor_pointer()
         .tooltip(buttonTip("Merge requests and pipelines", "omarchy-bar.forge-sidebar"))

@@ -226,7 +226,7 @@ export default class Tabs extends View {
     // Match the toolbar even when Gitview, rather than a terminal, has focus.
     const hasRepo = space?.branch != null || allPanes.some(p => p.terminal && p.branch != null && space?.tabs.some(tab => tab.id === p.tab));
     const enabled = panel && body
-      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail"].filter(id => Boolean(find(body, id)))
+      ? [...(shared("workspace.panels") ?? ["files", "changes"]), "graph"].filter(id => Boolean(find(body, id)))
         .filter(id => id !== "changes" || hasRepo)
       : [];
     this.syncPanel(space, panel, body, enabled);

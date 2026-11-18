@@ -235,9 +235,9 @@ function drawTabs(g, a, { t, cw, z, root }) {
   for (let yy = a.y; yy < a.y + a.h; yy++) g.put(x + plusW, yy, "│", t.border);
   const panel = find(root, "panel"), body = find(root, "panel-body");
   if (!panel || !body) return;
-  const enabled = [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "agenttrail", "reviewer"]
+  const enabled = [...(shared("workspace.panels") ?? ["files", "changes"]), "graph", "reviewer"]
     .filter((id) => Boolean(find(body, id))).filter((id) => (id !== "changes" && id !== "reviewer") || space?.branch != null);
-  const buttons = [["files", G.file, "Files"], ["changes", G.changes, "Changes"], ["graph", G.branch, "Graph"], ["reviewer", G.comment, "Review"], ["agenttrail", G.map, "Map"]]
+  const buttons = [["files", G.file, "Files"], ["changes", G.changes, "Changes"], ["graph", G.branch, "Graph"], ["reviewer", G.comment, "Review"]]
     .filter(([id]) => enabled.includes(id));
   let rx = a.x + a.w + 1;
   for (const [id, icon, label] of buttons.reverse()) {
@@ -300,7 +300,7 @@ function drawPanel(g, a, { t, props, data, snap }, mod) {
     }
     return;
   }
-  head({ agenttrail: "map", reviewer: "review", "omarchy-notes": "notes" }[mod] ?? String(mod ?? "").replace(/^omarchy-/, ""));
+  head({ reviewer: "review", "omarchy-notes": "notes" }[mod] ?? String(mod ?? "").replace(/^omarchy-/, ""));
 }
 
 // omarchy-pane's header: the program, what it works on, the folder, the status.
@@ -333,7 +333,6 @@ export const mods = {
   "omarchy-changes": panel("omarchy-changes"),
   "omarchy-notes": panel("omarchy-notes"),
   "git-graph": panel("git-graph"),
-  agenttrail: panel("agenttrail"),
   reviewer: panel("reviewer"),
 };
 export const headers = { "omarchy-pane": paneHeader };
