@@ -24,11 +24,11 @@ class Element {
 const el = () => new Element();
 const kit = { View: class {}, div: el, svg: el, image: el };
 const base = { v_flex: el, h_flex: el, Popup: { new: el }, Popover: { new: el },
-  Input: {new:el}, NumberInput:{new:el}, Select:{new:el}, InputState: { new: () => ({ on() {}, text: () => '' }) } };
+  ScrollHandle: { new: () => ({ scroll_to_item: i => calls.push({scroll:i}), release() {} }) }, Input: {new:el}, NumberInput:{new:el}, Select:{new:el}, InputState: { new: () => ({ on() {}, text: () => '' }) } };
 const herdr = {
   terminals: () => all, agents: () => runs, panes: () => ps, spaces: () => sp, focused: () => focus,
   shared: k => shared.get(k), setShared: (k,v) => shared.set(k,v),
-  run: (name,args) => calls.push({name,args}), props: () => modProps, theme: () => theme,
+  run: (name,args) => { calls.push({name,args}); if (name==='terminal.pin') { const k=all.find(k=>k.address===args.terminal); if (k) k.labels={...k.labels,'herdr.pinned':args.pinned?'1':''}; } }, props: () => modProps, theme: () => theme,
   keys: () => ({}), machines: () => [], closeOverlay: id => calls.push({close:id}), exec: async () => ({}), readTextFile: async () => null, appHome: () => "", settings: () => ({zoom:1}), layout: () => null, window: () => ({}), setAgentOrder() {},
   notify() {}, openOverlay: spec => calls.push({overlay:spec}), nextCommand: () => new Promise(() => {}),
   hc: async ([cmd, address, label]) => {
@@ -56,9 +56,10 @@ async function load(path) {
 const main = await load(resolve(root,'main.js')); await main.evaluate();
 const Inbox = main.namespace.default;
 const { inboxActions } = cache.get(resolve(root,'actions.js')).namespace;
+const { inboxDrag } = cache.get(resolve(root,'drag.js')).namespace;
 const { inboxRowView } = cache.get(resolve(root,'row-view.js')).namespace;
 const { inboxRoots, childActivity } = cache.get(resolve(root,'subagents.js')).namespace;
-const cx = {notify(){}, stop_propagation(){}, focus_handle:()=>({is_focused:()=>false}),
+const cx = {notify(){}, stop_propagation(){}, focus_handle:()=>({is_focused:()=>false,focus(){}}),
   timer:{every:()=>({cancel(){}}),after:()=>({cancel(){}})}, spawn: fn => {fn(cx);} };
 const term = (address,parent,status='idle',extra={}) => ({address,parent,status,state:'live',turn:2,labels:{},...extra});
 const agent = address => ({...all.find(k=>k.address===address),pane:`p-${address}`,tab:'test-tab',space:'test-space',space_name:'Test',program:{name:'Test'},title:address});
@@ -73,7 +74,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 const find = (node, id) => node?.key===id ? node : node?.nodes?.map(n=>find(n,id)).find(Boolean);
 function draw(view,model) {
   const actions=inboxActions(view,model);
-  const drag={row:x=>x,open:()=>()=>{},swept:()=>false,justDropped:()=>false};
+  const drag={row:x=>x,open:()=>()=>{},swept:()=>false,justDropped:()=>false,sweepFrom:()=>()=>{},kidLift:()=>()=>{}};
   return inboxRowView(view,theme,model,actions,drag);
 }
 
@@ -184,6 +185,122 @@ all[3].status='idle'; v.clearSettled();
 assert.ok(calls.some(c=>c.name==='terminal.kill'&&c.args.terminal==='deep'));
 assert.ok(calls.some(c=>c.name==='terminal.kill'&&c.args.terminal==='child'));
 assert.ok(calls.some(c=>c.name==='pane.close'&&c.args.pane==='p-root'));
+// Pinned sub-agents: a pinned child is promoted to a Pinned row and stays in its parent's card (decisions 1-3, 9).
+const setStatus = (a,st) => { all.find(k=>k.address===a).status=st; const r=runs.find(k=>k.address===a); if (r) r.status=st; };
+const pinCalls = () => calls.filter(c=>c.name==='terminal.pin');
+v=setup(); all[2].labels['herdr.pinned']='1'; // as `hc run --label herdr.pinned=1` spawns it
+m=v.compute(cx,false);
+assert.deepEqual(ids(m.pinned),['child']); assert.deepEqual(ids(m.out),['root']);
+assert.deepEqual(ids(m.children.get('root')),['child','deep']);
+// Pinning the child alone leaves its parent in its own section; a working parent stays on the Working shelf.
+setStatus('root','working'); m=v.compute(cx,false);
+assert.deepEqual(ids(m.pinned),['child']); assert.deepEqual(ids(m.work),['root']); setStatus('root','idle');
+// The child's own state shows on its top row, and still counts toward the parent's tree (decision 9).
+setStatus('child','blocked'); m=v.compute(cx,false);
+assert.equal(m.state(m.pinned[0]),'blocked'); assert.equal(m.state(m.every.find(a=>a.address==='root')),'blocked');
+setStatus('child','idle');
+// Its row names the parent, with an up arrow; the parent's own top row has neither.
+m=v.compute(cx,false);
+let top=draw(v,m).card(m.pinned[0]);
+assert.ok(find(top,'parent-child')); assert.ok(find(top,'up-child'));
+assert.equal(find(draw(v,m).card(m.out[0]),'parent-root'),undefined); assert.equal(find(draw(v,m).card(m.out[0]),'up-root'),undefined);
+assert.equal(m.parentOf(m.pinned[0]).address,'root'); assert.equal(m.parentOf(m.out[0]),null);
+// The pinned state is visible in both places: pin button on the top row and on the child's row inside the parent's card.
+v.childChoices.root=true; card=draw(v,m).card(m.out[0]);
+assert.ok(find(card,'pin-root')); assert.ok(find(card,'pin-child-root-child')); assert.ok(find(card,'pin-child-root-deep'));
+assert.equal(find(card,'pin-child-root-child').attrs.opacity[0],1); assert.equal(find(card,'pin-child-root-deep').attrs.opacity[0],0);
+// The up arrow expands the parent's children, and marks the child's row to highlight; the parent stays where it is.
+v=setup(); all[2].labels['herdr.pinned']='1'; m=v.compute(cx,false); delete v.childChoices.root;
+find(draw(v,m).card(m.pinned[0]),'up-child').handlers.click({},cx);
+assert.equal(v.childChoices.root,true); assert.equal(JSON.parse(storage.get('children-open')).root,true);
+assert.equal(v.flash.address,'child'); assert.ok(v.flash.until>Date.now()); assert.equal(v.reveal,'root');
+// A parent in Settled opens that shelf.
+v=setup(); all[2].labels['herdr.pinned']='1'; all[0].labels.settled=`${Date.now()}:2`; m=v.compute(cx,false);
+assert.deepEqual(ids(m.put),['root']); assert.deepEqual(ids(m.pinned),['child']);
+find(draw(v,m).card(m.pinned[0]),'up-child').handlers.click({},cx); assert.equal(v.open,true);
+// Its terminal ends: the pin row goes.
+v=setup(); all[2].labels['herdr.pinned']='1'; all[2].state='finished'; runs=runs.filter(a=>a.address!=='child');
+assert.deepEqual(ids(v.compute(cx,false).pinned),[]);
+// Settling the child clears its pin; settling the parent clears its descendants' pins; Undo restores them.
+v=setup(); all[2].labels['herdr.pinned']='1'; m=v.compute(cx,false); calls=[];
+inboxActions(v,m).settle([m.pinned[0]],cx); await flush();
+assert.ok(pinCalls().some(c=>c.args.terminal==='child'&&!c.args.pinned));
+v=setup(); all[3].labels['herdr.pinned']='1'; m=v.compute(cx,false); calls=[];
+inboxActions(v,m).settle([m.out[0]],cx); await flush();
+assert.ok(pinCalls().some(c=>c.args.terminal==='deep'&&!c.args.pinned));
+calls=[]; v.undo(cx); await flush();
+assert.ok(pinCalls().some(c=>c.args.terminal==='deep'&&c.args.pinned));
+// Earlier pins were echoed to a snapshot setup() has since replaced; let pins.js's 10s patience for them run out.
+const realNow=Date.now; Date.now=()=>realNow()+11000;
+v=setup(); all[2].labels['herdr.pinned']='1'; m=v.compute(cx,false); v.childChoices.root=true; card=draw(v,m).card(m.out[0]);
+// Click toggles: unpin the child, pin the other.
+calls=[]; find(card,'pin-child-root-child').handlers.click({},cx);
+assert.deepEqual(pinCalls().map(c=>c.args),[{terminal:'child',pinned:false}]);
+// Hidden, the button is no button: a press or click there is the row's (peek, drag). Visible while the pointer is on the row.
+assert.equal(find(card,'pin-child-root-deep').handlers.click,undefined); assert.equal(find(card,'pin-child-root-deep').handlers.down,undefined);
+v.hoverKid='deep'; card=draw(v,m).card(m.out[0]);
+assert.equal(find(card,'pin-child-root-deep').attrs.opacity[0],1);
+// The row's hover alone shows it; the button's own hover only lights it, and leaving the button doesn't hide it.
+globalThis.window={};
+v.hoverKid=null; card=draw(v,m).card(m.out[0]); assert.equal(find(card,'pin-child-root-deep').attrs.opacity[0],0);
+find(card,'child-root-deep').attrs.on_hover[0](true,cx); assert.equal(v.hoverKid,'deep'); assert.ok(!v.hot);
+card=draw(v,m).card(m.out[0]); assert.equal(find(card,'pin-child-root-deep').attrs.opacity[0],1);
+find(card,'pin-child-root-deep').attrs.on_hover[0](true,cx); assert.equal(v.hot,'pin-child-root-deep'); assert.equal(v.hoverKid,'deep');
+find(card,'pin-child-root-deep').attrs.on_hover[0](false,cx); assert.equal(v.hot,null); assert.equal(v.hoverKid,'deep');
+card=draw(v,m).card(m.out[0]); assert.equal(find(card,'pin-child-root-deep').attrs.opacity[0],1);
+find(card,'child-root-deep').attrs.on_hover[0](false,cx); assert.equal(v.hoverKid,null);
+v.hoverKid='deep'; card=draw(v,m).card(m.out[0]);
+calls=[]; find(card,'pin-child-root-deep').handlers.click({},cx);
+assert.deepEqual(pinCalls().map(c=>c.args),[{terminal:'deep',pinned:true}]);
+// The row keeps its own click with the button there, and clicking the button doesn't reach it.
+calls=[]; find(card,'child-root-deep').handlers.click({},cx); assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'deep'}});
+v.hoverKid=null; v.hot=null;
+// The top row's button toggles its own agent.
+// A top row's hidden button takes neither press (drag) nor click (open); the row's own handlers are untouched.
+v.hovered=null; v.hot=null; top=draw(v,m).card(m.out[0]);
+assert.equal(find(top,'pin-root').attrs.opacity[0],0); assert.equal(find(top,'pin-root').handlers.down,undefined); assert.equal(find(top,'pin-root').handlers.click,undefined);
+assert.equal(typeof find(top,'card-root').handlers.click,'function');
+v.hovered='root'; calls=[]; find(draw(v,m).card(m.out[0]),'pin-root').handlers.click({},cx);
+assert.deepEqual(pinCalls().map(c=>c.args),[{terminal:'root',pinned:true}]);
+assert.ok(find(draw(v,m).card(m.pinned[0]),'pin-child'));
+Date.now=realNow;
+// A working pinned child: the parent settles anyway, the child keeps its state and its pin is gone.
+v=setup(); all[2].labels['herdr.pinned']='1'; setStatus('child','working'); m=v.compute(cx,false);
+assert.ok(find(draw(v,m).card(m.pinned[0]),'state-child'));
+// Dragging, through the real drag.js: a sub-agent's row in its parent's card lifts to Pinned, and a pinned one drags out.
+{
+  const later=Date.now; Date.now=()=>later()+30000; globalThis.window={};
+  const down={position:{x:0,y:0},local_position:{y:5},bounds:{height:30}};
+  const real=(view)=>{ const model=view.compute(cx,false); const actions=inboxActions(view,model); const dr=inboxDrag(view,theme,model,actions);
+    return {model,actions,dr,views:inboxRowView(view,theme,model,actions,dr)}; };
+  const moveBy=(view,dr,y)=>find(dr.root(el()),'x'),
+    pointer=(dr,y)=>dr.root(el()).attrs.on_mouse_move[0]({position:{x:0,y},local_position:{x:1,y},bounds:{}},cx),
+    release=(dr)=>dr.root(el()).attrs.on_mouse_up[1]({},cx);
+  // A press on the child row alone lifts nothing: a click still peeks.
+  v=setup(); v.childChoices.root=true; let r=real(v); card=r.views.card(r.model.out[0]);
+  find(card,'child-root-deep').handlers.down(down,cx);
+  assert.equal(v.drag.from,'deep'); assert.equal(v.drag.moved,false);
+  calls=[]; find(card,'child-root-deep').handlers.click({},cx); assert.deepEqual(calls.at(-1),{name:'terminal.peek',args:{terminal:'deep'}});
+  // Movement past 6px lifts it; over Pinned it says Pin, and letting go pins it.
+  r=real(v); pointer(r.dr,3); assert.equal(v.drag.moved,false); pointer(r.dr,20); assert.equal(v.drag.moved,true);
+  r=real(v); assert.equal(r.dr.lifted.address,'deep'); r.dr.aim(r.dr.pinTo(null),cx);
+  r=real(v); assert.equal(r.dr.verb,'pin'); assert.equal(r.dr.plan.section,'pinned');
+  calls=[]; release(r.dr);
+  assert.deepEqual(pinCalls().map(c=>c.args),[{terminal:'deep',pinned:true}]);
+  // The click that ends a drag doesn't also peek.
+  calls=[]; find(card,'child-root-deep').handlers.click({},cx); assert.equal(calls.filter(c=>c.name==='terminal.peek').length,0);
+  // Not into Active or Settled: no plan there.
+  v=setup(); v.childChoices.root=true; r=real(v); find(r.views.card(r.model.out[0]),'child-root-deep').handlers.down(down,cx);
+  r=real(v); pointer(r.dr,20); r=real(v); r.dr.aim({section:'settled'},cx); r=real(v); assert.equal(r.dr.plan,null);
+  // A promoted pinned sub-agent's top row drags out to Unpin, like a root's.
+  v=setup(); all[2].labels['herdr.pinned']='1'; r=real(v);
+  find(r.dr.row(el(),r.model.pinned[0],()=>el()),'x'); 
+  r.dr.row(el(),r.model.pinned[0],()=>el()).handlers.down(down,cx); assert.equal(v.drag.from,'child');
+  r=real(v); pointer(r.dr,20); r=real(v); r.dr.aim({section:'active'},cx); r=real(v);
+  assert.equal(r.dr.verb,'unpin'); calls=[]; release(r.dr);
+  assert.ok(pinCalls().some(c=>c.args.terminal==='child'&&c.args.pinned===false));
+  Date.now=later;
+}
 // The themed header closes only its overlay; keep/go-to retain the native actions.
 const header = await load(resolve(root,'../omarchy-peek/main.js')); await header.evaluate();
 const peek = new header.namespace.default();

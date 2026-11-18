@@ -73,6 +73,25 @@ export function inboxActions(view, model) {
     for (const a of panes) run("pane.close", { pane: a.pane });
     return moved;
   };
+  // The pin button: pins or unpins one agent, wherever its row is.
+  const togglePin = (address) => {
+    const current = readPins();
+    writePins(current.includes(address) ? current.filter((p) => p !== address) : [...current, address]);
+  };
+  // A pinned sub-agent's up arrow: its parent's card scrolled to, opened if that's Settled, its children listed, and the
+  // sub-agent's own row there flashed for a moment. Which card is the root's: the one whose tree holds it.
+  const showInParent = (a, cx) => {
+    const root = (model.roots ?? every).find((r) => r.address !== a.address && treeMembers(r, all).some((k) => k.address === a.address));
+    if (!root) return;
+    if (settledAt(root) && !view.open) { view.open = true; localStorage.setItem("open", "true"); }
+    if (napUntil(root) > Date.now() && !view.napOpen) { view.napOpen = true; localStorage.setItem("snoozed-open", "true"); }
+    view.childChoices[root.address] = true;
+    localStorage.setItem("children-open", JSON.stringify(view.childChoices));
+    view.flash = { address: a.address, until: Date.now() + 1500 };
+    view.reveal = root.address;
+    cx.timer.after(1600, (cx) => cx.notify());
+    cx.notify();
+  };
   const snooze = (a, wakeAt, cx) => {
     const members = treeMembers(a, all), wakesBefore = new Map(members.map(k => [k.address, napUntil(k)]));
     const turnLabel = (k) => view.pending["snoozed-turn"][k.address] ?? term.get(k.address)?.labels?.["snoozed-turn"] ?? "";
@@ -163,5 +182,5 @@ export function inboxActions(view, model) {
     if (tabNow) { run("space.select", { id: spaceNow.id }); run("tab.select", { id: tabNow }); }
   };
 
-  return { away, repin, unsettle, go, settle, pick, stopWaiting, doomed };
+  return { togglePin, showInParent, away, repin, unsettle, go, settle, pick, stopWaiting, doomed };
 }

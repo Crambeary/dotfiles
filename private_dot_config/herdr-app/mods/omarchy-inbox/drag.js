@@ -10,7 +10,7 @@ import { SLIM, CARD_GAP, LIST_TOP } from "./list-view.js";
 import { byRecent } from "./row-model.js";
 
 export function inboxDrag(view, t, model, actions) {
-  const { list, pins, pinned, put, out, busy, hidden, settledAt, working, waiting, since, viewing, napUntil, wake, inView, waitRows = [], busyRows, napRows } = model;
+  const { list, candidates = list, pins, pinned, put, out, busy, hidden, settledAt, working, waiting, since, viewing, napUntil, wake, inView, waitRows = [], busyRows, napRows } = model;
   const { settle, unsettle, repin, go, stopWaiting } = actions;
   const zoom = Number(settings()?.zoom) || 1;
   // Dragging, as T3's sidebar does it (Sidebar.drag.ts, Sidebar.pointer.ts). Press a row and move 6px to lift it;
@@ -20,10 +20,12 @@ export function inboxDrag(view, t, model, actions) {
   let d = view.drag;
   // A row that leaves the list (its agent ended, a filter) can't be dropped. Render can't run commands, so
   // `view.back` stays and the release (or Esc, or leaving) hands the keyboard back.
-  if (d && !list.some((a) => a.address === d.from)) d = view.drag = null;
+  // A sub-agent in its parent's card has no row of its own; it can be lifted (only to Pinned) from there.
+  const source = (address) => list.find((a) => a.address === address) ?? candidates.find((a) => a.address === address);
+  if (d && !source(d.from)) d = view.drag = null;
   const dragging = Boolean(d?.moved);
-  const lifted = dragging ? list.find((a) => a.address === d.from) : null;
-  const sectionOf = (a) => hidden(a) ? "snoozed" : pins.includes(a.address) ? "pinned" : settledAt(a) ? "settled" : waiting?.(a) ? "waiting" : working(a) ? "working" : "active";
+  const lifted = dragging ? source(d.from) : null;
+  const sectionOf = (a) => !list.includes(a) ? "kid" : hidden(a) ? "snoozed" : pins.includes(a.address) ? "pinned" : settledAt(a) ? "settled" : waiting?.(a) ? "waiting" : working(a) ? "working" : "active";
   const from = lifted ? sectionOf(lifted) : null;
   const fromShelf = from === "settled" || from === "snoozed" || from === "waiting";
   const others = (xs) => xs.filter((x) => x.address !== d?.from);
@@ -38,6 +40,7 @@ export function inboxDrag(view, t, model, actions) {
   const plan = (() => {
     const to = lifted && d.target;
     if (!to || (to.section === from && from !== "pinned")) return null;
+    if (from === "kid" && to.section !== "pinned") return null;
     if (to.section === "pinned") {
       const order = pinOrder(to.before);
       if (from === "pinned" && order.join("\n") === pins.join("\n")) return null;
@@ -110,13 +113,17 @@ export function inboxDrag(view, t, model, actions) {
   // Picked up anywhere on a row that can move (not Working, not one whose change is still on its way). Waiting moves, as
   // Settled and Snoozed do: to Pinned, to Settled, or to Active, which stops waiting. The clock's
   // Popover hears its own press, so the row just leaves it alone.
+  // A press that may become a drag: it lifts only after the root has seen the pointer move past 6px, so a click stays a click.
+  const lift = (a) => (e) => {
+    if (a.mod || sectionOf(a) === "working" || view.pending.settled[a.address] !== undefined || view.pending.snoozed[a.address] !== undefined || view.hot === `snooze-${a.address}`) return;
+    view.drag = { from: a.address, at: e.position, grab: (e.local_position?.y ?? 0) / zoom, height: (e.bounds?.height ?? 0) / zoom, moved: false, target: null };
+  };
+  // A sub-agent's row in its parent's card: its press is its own, not the card's, and may lift it toward Pinned.
+  const kidLift = (k) => (e, cx) => { cx.stop_propagation(); lift(k)(e); };
   const row = (el, a, details) => el.relative()
     // Up from the hover on: a Popup must have measured its anchor before the frame a card starts to fade in.
     .when([view.hovered, view.details, view.detailsOut].includes(a.address), (r) => r.child(details(a)))
-    .on_mouse_down("left", (e) => {
-      if (a.mod || sectionOf(a) === "working" || view.pending.settled[a.address] !== undefined || view.pending.snoozed[a.address] !== undefined || view.hot === `snooze-${a.address}`) return;
-      view.drag = { from: a.address, at: e.position, grab: (e.local_position?.y ?? 0) / zoom, height: (e.bounds?.height ?? 0) / zoom, moved: false, target: null };
-    })
+    .on_mouse_down("left", lift(a))
     .on_mouse_move((e, cx) => {
       // Lifted, the root tracks the pointer: a second report of one place would read as having stopped.
       if (!view.drag?.moved && !view.sweep?.moved) detailsAt(view, a.address, e);
@@ -247,5 +254,5 @@ export function inboxDrag(view, t, model, actions) {
       .child(from === "waiting" ? draw.waitRow(lifted, true) : fromShelf ? draw.slim(lifted, true) : draw.card(lifted, true));
   };
 
-  return { d, dragging, lifted, plan, cardH, rows, drawn, hot, verb, badge, others, pinTo, aim, gap, lane, boundary, placeholder, row, open, justDropped, sweepFrom, swept, root, ghost };
+  return { d, dragging, lifted, plan, cardH, rows, drawn, hot, verb, badge, others, pinTo, aim, gap, lane, boundary, placeholder, row, open, justDropped, kidLift, sweepFrom, swept, root, ghost };
 }

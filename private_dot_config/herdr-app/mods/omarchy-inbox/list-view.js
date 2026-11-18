@@ -178,10 +178,24 @@ export function inboxList(view, t, model, actions, drag, draw, cx) {
       .child(`Show ${Math.min(MORE, put.length - view.limit)} more`)))));
 
   const top = inboxTop(view, t, model);
+  // "Show in parent" (actions.js showInParent): scroll to the parent's card, by its place among the list's direct children:
+  // Pinned and Active's cards are one each, the shelves a single one after them.
+  const exits = view.motion?.exits.map(leaving).filter(Boolean) ?? [];
+  if (view.reveal && view.scroll) {
+    const at = view.reveal, p = pinned.findIndex((a) => a.address === at), o = out.findIndex((a) => a.address === at);
+    const emptyActive = dragging && others(out).length === 0 && !(out.length > 0 && !plan);
+    const first = exits.length + 2;
+    const index = p >= 0 ? first + p
+      : o >= 0 ? first + pinned.length + 1 + (emptyActive ? 1 : 0) + o
+      : first + pinned.length + 1 + (emptyActive ? 1 : 0) + out.length + (list.length === 0 ? 1 : 0) + 1;
+    view.scroll.scroll_to_item(index);
+    view.reveal = null;
+  }
   const body = v_flex().id("inbox-list").relative().flex_1().min_h(0).px(8).pt(LIST_TOP).pb(8).overflow_y_scroll()
+      .when(Boolean(view.scroll), (el) => el.track_scroll(view.scroll))
       .on_size_change((size) => { view.listH = size.height / zoom; })
       // Rows leaving fade out where they were, as T3's clones.
-      .children(view.motion?.exits.map(leaving).filter(Boolean) ?? [])
+      .children(exits)
       .child(boundary("pinned", "Pinned", "pinned", pinTo(others(pinned)[0]?.address)))
       .child(gap("head-pinned"))
       .children(lane("pinned", pinned, (a) => card(a), CARD_GAP))

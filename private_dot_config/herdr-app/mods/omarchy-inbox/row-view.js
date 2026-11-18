@@ -4,7 +4,7 @@ import { settings } from "herdr";
 import { peekTerminal } from "./peek.js";
 import { namer } from "./name.js";
 import { projectMark } from "./project.js";
-import { glow, tip, tipMark, keyOf } from "./tip.js";
+import { glow, tip, tipMark, keyOf, hoverKept } from "./tip.js";
 import { MOTION } from "./motion.js";
 import { detailsLive, detailsFor, detailsLine, detailsCard } from "./details.js";
 import { programIcon } from "./program.js";
@@ -43,10 +43,10 @@ function left(ms, now) {
 }
 
 export function inboxRowView(view, t, model, actions, drag) {
-  const { now, ps, sp, children, kids, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt, waitOf, recordOf } = model;
+  const { now, ps, sp, parentOf, children, kids, state, viewing, running, woke, busy, pins, started, since, wake, hidden, napUntil, settledAt, waitOf, recordOf } = model;
   const wc = waitColors(t), mono = settings().font_family ?? "JetBrains Mono";
-  const { settle, unsettle, away, pick, stopWaiting } = actions;
-  const { dragging, plan, verb, badge, swept, row, open, sweepFrom, justDropped } = drag;
+  const { settle, unsettle, away, pick, stopWaiting, togglePin, showInParent } = actions;
+  const { dragging, plan, verb, badge, swept, row, open, sweepFrom, justDropped, kidLift } = drag;
   const drawOpen = open;
   const zoom = Number(settings()?.zoom) || 1;
   const title = namer();
@@ -113,6 +113,22 @@ export function inboxRowView(view, t, model, actions, drag) {
       .child(svg(`mods/omarchy-inbox/icons/chevron-${up ? "down" : "right"}.svg`).size(12).flex_none())
       .child(div().text_size(11).child(String(count))));
   };
+  // The pin button, on every row that can be pinned (a top row, a sub-agent's row in its parent's card): out of sight until
+  // the pointer is on the row, glowing while the agent is pinned, so a pin shows in both places an agent can be. A click toggles.
+  const pinButton = (address, id, name, near) => {
+    const on = pins.includes(address), hot = view.hot === id, show = on || near || hot;
+    // The row's hover (hoverKept on the row container) is what shows it; the button's own hover only lights it.
+    // Faded out it's no button: a press or click there is the row's (open, drag), as Settle's is.
+    return stop(view, t, id, h_flex().id(id).h(20).px(4).flex_none().items_center().justify_center().rounded(0)
+      .opacity(show ? 1 : 0).transition("opacity", MOTION)
+      .when(show, (el) => el.role("button").accessibility_label(`${on ? "Unpin" : "Pin"} ${name}`)
+        .on_hover(glow(view, id))
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_click((_e, cx) => { cx.stop_propagation(); if (justDropped()) return; togglePin(address); cx.notify(); }))
+      .child(svg("mods/omarchy-inbox/icons/pin.svg").size(12).flex_none().text_color(on ? t.accent : lit(id, t.muted))), 4);
+  };
+  // A sub-agent's row flashes for a moment after "show in parent" brought the eye here.
+  const flashing = (k) => view.flash?.address === k.address && view.flash.until > now;
   // All depths share one flat list. Peek at children as Agents does, including ones without panes.
   const childList = (a, ghost) => {
     const xs = children.get(a.address) ?? [];
@@ -121,16 +137,19 @@ export function inboxRowView(view, t, model, actions, drag) {
       const word = k.status === "error" ? "blocked" : k.status ?? "idle";
       const name = k.name || title(k), activity = childActivity(k), id = `child-${a.address}-${k.address}`;
       const pic = programIcon(k.program, 12, t.muted);
-      return stop(view, t, id, h_flex().id(id).px(6).py(4).gap(6).items_center().flex_none()
+      const near = view.hoverKid === k.address;
+      return stop(view, t, id, hoverKept(view, "hoverKid", k.address, h_flex().id(id).px(6).py(4).gap(6).items_center().flex_none())
+        .when(flashing(k), el => el.bg(t.accent + "33"))
         .hover(s => s.bg(t.foreground + "14")).role("button").accessibility_label(`${name}: ${activity}`)
-        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-        .on_click((_e, cx) => { cx.stop_propagation(); peekTerminal(k.address); cx.notify(); })
+        .on_mouse_down("left", kidLift(k))
+        .on_click((_e, cx) => { cx.stop_propagation(); if (justDropped()) return; peekTerminal(k.address); cx.notify(); })
         .child(div().size(6).flex_none().rounded_full().bg(t[word] ?? t.dim))
         .child(v_flex().flex_1().min_w(0)
           .child(h_flex().gap(4).items_center()
             .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.foreground).child(name))
             .when(Boolean(pic), el => el.child(div().flex_none().opacity(0.6).child(pic))))
-          .child(div().truncate().text_size(11).text_color(t.muted).child(activity))));
+          .child(div().truncate().text_size(11).text_color(t.muted).child(activity)))
+        .child(pinButton(k.address, `pin-${id}`, name, near)));
     }))];
   };
 
@@ -140,6 +159,7 @@ export function inboxRowView(view, t, model, actions, drag) {
     const machine = machineOf(a), branch = branchOf(a);
     // The card keeps the existing tree status; the chevron reveals its descendants.
     const meta = branch ?? "";
+    const owner = parentOf(a);
     const pic = programIcon(a.program, 14, t.muted);
     // Snooze is offered for anything not needing the person, working too, as T3's. A failed turn counts as needing them
     // here, and a mod pane has no terminal to hold the label.
@@ -229,7 +249,7 @@ export function inboxRowView(view, t, model, actions, drag) {
       .child(h_flex().h(20).gap(6).items_center().text_size(12).text_color(t.dim)
         .child(avatar(a.space, a.space_name, 16))
         // Lifted, a pin keeps its glyph only while it stays among the pins.
-        .when(pins.includes(a.address) && (!ghost || plan?.section === "pinned" || !plan), (el) => el.child(svg("mods/omarchy-inbox/icons/pin.svg").size(12).flex_none().text_color(t.dim)))
+        .when(ghost && pins.includes(a.address) && (plan?.section === "pinned" || !plan), (el) => el.child(svg("mods/omarchy-inbox/icons/pin.svg").size(12).flex_none().text_color(t.dim)))
         .child(div().flex_1().min_w(0).truncate().child(a.space_name ?? ""))
         .child(corner))
       .child(h_flex().h(20).mt(4).gap(6).items_center()
@@ -237,7 +257,17 @@ export function inboxRowView(view, t, model, actions, drag) {
         .child(div().flex_1().min_w(0).truncate().text_size(14).when(leads, (el) => el.font_medium())
           .text_color(leads || over || swept(a) ? t.foreground : t.muted).child(title(a)))
         // Marks go on the third line when there is one, as in T3, so the title keeps its whole line.
-        .when(Boolean(marks) && !meta, (el) => el.child(marks)))
+        .when(Boolean(marks) && !meta, (el) => el.child(marks))
+        .when(!ghost && !a.mod, (el) => el.child(pinButton(a.address, `pin-${a.address}`, title(a), over))))
+      // A pinned sub-agent says whose it is, and the arrow goes to that card (actions.js showInParent).
+      .when(Boolean(owner), (el) => el.child(h_flex().id(`parent-${ghost ? "ghost-" : ""}${a.address}`).h(16).mt(2).gap(6).items_center().text_size(12).text_color(t.dim)
+        .child(div().flex_1().min_w(0).truncate().child(`↳ ${owner.name || title(owner)}`))
+        .when(!ghost, (r) => r.child(stop(view, t, `up-${a.address}`, h_flex().id(`up-${a.address}`).h(16).px(4).flex_none().items_center().justify_center().rounded(0)
+          .role("button").accessibility_label(`Show in ${owner.name || title(owner)}`)
+          .on_hover(glow(view, `up-${a.address}`))
+          .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+          .on_click((_e, cx) => { cx.stop_propagation(); showInParent(a, cx); cx.notify(); })
+          .child(svg("mods/omarchy-inbox/icons/arrow-up.svg").size(12).flex_none().text_color(lit(`up-${a.address}`, t.muted))), 4)))))
       .when(Boolean(meta), (el) => el.child(h_flex().h(16).mt(2).gap(6).items_center().text_size(12).text_color(t.dim)
         // T3's MiddleTruncate: a branch's start and end tell it apart.
         .child(div().flex_1().min_w(0).overflow_hidden().whitespace_nowrap().text_ellipsis_middle().child(meta))

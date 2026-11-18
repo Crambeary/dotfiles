@@ -71,7 +71,7 @@ export function inboxInView(every, all, f) {
 }
 
 // All fields read the same snapshot; labels, focus and run records stay live for handlers drawn from it.
-export function inboxFields({ every, all, term, pending, changed, now, inView }) {
+export function inboxFields({ every, all, term, pending, changed, now, inView, known = every }) {
   // Read live on the agent itself, so a key or click right after focus moves goes by where it is now.
   const cardInView = every.some(a => a.mod && a.address === inView);
   const stoodIn = inView !== null && !every.some(a => a.focused);
@@ -81,14 +81,14 @@ export function inboxFields({ every, all, term, pending, changed, now, inView })
     return v ? v.split(":").map(Number) : null;
   };
   const listed = new Map(every.map((a) => [a.address, a.status]));
-  const under = new Map(every.map((a) => [a.address, descendants(all, a.address)]));
-  const kids = new Map(every.map((a) => [a.address, under.get(a.address).map((k) => kidStatus(k, listed))]));
+  const under = new Map(known.map((a) => [a.address, descendants(all, a.address)]));
+  const kids = new Map(known.map((a) => [a.address, under.get(a.address).map((k) => kidStatus(k, listed))]));
   // Each tree's Watches (waiting.js), read every time: the root's own and its live sub-agents'. A mod card has none.
-  const rootWatch = new Map(every.map((a) => [a.address, watchOf(term.get(a.address))]));
-  const waits = new Map(every.map((a) => [a.address, rollup([{ k: term.get(a.address) ?? a, w: rootWatch.get(a.address) },
+  const rootWatch = new Map(known.map((a) => [a.address, watchOf(term.get(a.address))]));
+  const waits = new Map(known.map((a) => [a.address, rollup([{ k: term.get(a.address) ?? a, w: rootWatch.get(a.address) },
     ...under.get(a.address).map((k) => ({ k, w: watchOf(k) }))], now)]));
   // Each member's word with its Watch over it: one busy on a Watch is waiting, not working.
-  const over = new Map(every.map((a) => [a.address, under.get(a.address).map((k, i) => overWord(kids.get(a.address)[i], watchOf(k)))]));
+  const over = new Map(known.map((a) => [a.address, under.get(a.address).map((k, i) => overWord(kids.get(a.address)[i], watchOf(k)))]));
   // It, or anything under it, is working or needs the person.
   const busy = (a) => BUSY.has(ownStatus(a.status, a.address, all)) || kids.get(a.address).some((s) => BUSY.has(s));
   // It with what's under it (tree.js's treeStatus, with Waiting just below working: waiting.js).

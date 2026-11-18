@@ -25,6 +25,13 @@ Opening a terminal in an existing space.
 **Agent status**:
 What the core says an agent is doing: working, blocked (needs the person), idle or done. A fixed set; nothing here adds to it.
 
+**Pin**:
+An agent kept in the inbox's Pinned section, in the order the person chose, whatever its state. The person pins by dragging, with the pin button, or a parent pins at spawn with the `herdr.pinned` label. Settling ends a pin.
+_Avoid_: Star, favourite. Not the forge sidebar's pins of merge requests and pipelines, which are a separate feature.
+
+**Pinned sub-agent**:
+A pin whose agent has a parent. It shows in the Pinned section and still in its parent's card, with its parent's name and a way to jump to that card.
+
 **Waiting**:
 An agent that has handed its next step to a **Watch** and doesn't need the person until it reports back. Not a status: it lies over whatever the status is (working through a long foreground command, idle with its turn parked on a monitor).
 _Avoid_: Blocked (that means it needs the person), busy

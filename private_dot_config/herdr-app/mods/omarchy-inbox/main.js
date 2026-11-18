@@ -24,10 +24,10 @@
 // Wake, a pin or Settle ends it.
 
 import { View } from "gpui-kit";
-import { v_flex, InputState } from "gpui-base";
+import { v_flex, InputState, ScrollHandle } from "gpui-base";
 import { agents, terminals, panes, spaces, focused, hc, notify, theme, shared, setShared, setAgentOrder, props, nextCommand, settings, layout, window } from "herdr";
 import { modStatus, programOf } from "./name.js";
-import { descendants, ownStatus, stillSettled } from "./tree.js";
+import { descendants, ownStatus, stillSettled, isAgent } from "./tree.js";
 import { inboxAgents, inboxRoots, treeMembers, childrenExpanded } from "./subagents.js";
 import { stopsInit, stopsEnd, focusRoot, enter } from "./focus.js";
 import { FIRST, trackInboxRows, inboxInView, inboxFields, inboxSections } from "./row-model.js";
@@ -45,7 +45,7 @@ import { endsNow } from "./waiting.js";
 const RETRY = 60000;
 
 export default class Inbox extends View {
-  async close() { stopsEnd(this); }
+  async close() { stopsEnd(this); this.scroll?.release(); }
 
   init(_props, cx) {
     if (props()?.customSnooze) return initCustom(this, cx);
@@ -77,6 +77,11 @@ export default class Inbox extends View {
     // Writes that failed, and when.
     this.refused = {};
     this.hovered = null;
+    // The list's scroll position, so "show in parent" can bring a card into view.
+    this.scroll = ScrollHandle.new();
+    // The sub-agent whose row flashes after it, and the card to scroll to.
+    this.flash = null;
+    this.reveal = null;
     // Each row's drawn height (logical px, by `kind:address`), for where rows sit when the list moves.
     this.rowH = {};
     // The spaces shown, as T3 scopes threads to projects; none: all of them.
@@ -234,14 +239,19 @@ export default class Inbox extends View {
         space: s.id, space_name: s.name, program: { name: p.title, ...programOf(p) } }));
     }))];
     const children = new Map(candidates.map(a => [a.address, descendants(all, a.address)]));
-    const every = inboxRoots(candidates, all);
-    const inView = inboxInView(every, all, f);
+    const roots = inboxRoots(candidates, all);
+    // Pins are the core's, as omarchy-agents keeps them (pins.js), with the order the inbox's own: pinned agents stay up top in pin order, whatever their state.
+    const pins = readPins();
+    // A pinned sub-agent is promoted to a Pinned row of its own and still shows in its parent's card. Only the sections see it
+    // (`every`); what acts on a tree by its root (snooze, watches, labels) keeps to the roots.
+    const every = [...roots, ...candidates.filter((a) => pins.includes(a.address) && !roots.includes(a))];
+    const inView = inboxInView(roots, all, f);
     // As T3's route reveal: an agent brought into view from elsewhere (a key, the picker, its pane) that the space
     // filter hides widens the filter to every space, kept. Not on the first draw, and a filter you pick isn't undone.
     // Only while the Inbox is the mode (or docked alone): moving about in Lists isn't bringing a card into view.
     const { stack } = sidebarParts(layout());
     if ((!stack || stack.active === "inbox") && this.inView !== undefined && inView && inView !== this.inView && this.scope.length) {
-      const a = every.find((x) => x.address === inView);
+      const a = roots.find((x) => x.address === inView);
       if (a && !this.scope.includes(a.space)) { this.scope = []; localStorage.setItem("scope", "[]"); this.limit = FIRST; }
     }
     this.inView = inView;
@@ -256,15 +266,13 @@ export default class Inbox extends View {
     for (const [key, of] of Object.entries(this.pending)) {
       for (const [k, v] of Object.entries(of)) if (!term.has(k) || (!this.writing[`${key} ${k}`]?.unsure && (term.get(k).labels?.[key] ?? "") === v)) delete of[k];
     }
-    const fields = inboxFields({ every, all, term, pending: this.pending, changed: this.changed, now, inView });
+    const fields = inboxFields({ every, all, term, pending: this.pending, changed: this.changed, now, inView, known: candidates });
     const { viewing, settledAt, kids, state, running, napUntil, hidden, since, working, begun } = fields;
     // New work brings a settled agent back (tree.js). Hidden ones too.
-    for (const a of every) {
+    for (const a of roots) {
       const label = this.pending.settled[a.address] ?? term.get(a.address)?.labels?.settled;
       if (label && !stillSettled({ labels: { settled: label }, turn: term.get(a.address)?.turn }, ownStatus(a.status, a.address, all), kids.get(a.address))) this.setLabelDue("settled", a.address, "", cx);
     }
-    // Pins are the core's, as omarchy-agents keeps them (pins.js), with the order the inbox's own: pinned agents stay up top in pin order, whatever their state.
-    const pins = readPins();
     const wake = (a, cx) => { for (const k of treeMembers(a, all)) this.setLabel("snoozed", k.address, "", cx); };
     // A snooze ends on a failure in its tree (a program's error doesn't stay said), a new turn in view (the person gave
     // it work), or being looked at once it has woken. A pin ends it too, as the pinning writes the label.
@@ -278,7 +286,7 @@ export default class Inbox extends View {
       const [then, was] = mark.split(":").map(Number), turn = k.turn ?? 0;
       return (k.status === "working" && (!was || turn > then)) || turn > then + (was ? 1 : 0);
     };
-    for (const a of every) {
+    for (const a of roots) {
       const until = napUntil(a);
       if (!until) continue;
       const turned = window().active && viewing(a) && running(a) && ["idle", "done"].includes(this.changed[a.address]?.s);
@@ -288,12 +296,19 @@ export default class Inbox extends View {
     }
     // New work since a Watch's stamp ends it: the tombstone names that declaration only, so a newer one written
     // meanwhile stays (ticket 10's race), and only `waiting.ended` is written.
-    for (const a of every) {
+    for (const a of roots) {
       for (const k of [term.get(a.address), ...(children.get(a.address) ?? [])]) {
         const id = k && endsNow(k, k.status, this.pending["waiting.ended"][k.address]);
         if (id) this.setLabelDue("waiting.ended", k.address, id, cx);
       }
     }
+    // The agent a sub-agent reports to: its nearest agent ancestor (a shell between isn't one). Null for a root.
+    const parentOf = (a) => {
+      const seen = new Set([a.address]);
+      let k = term.get(term.get(a.address)?.parent);
+      while (k && !seen.has(k.address) && !isAgent(k)) { seen.add(k.address); k = term.get(k.parent); }
+      return k && !seen.has(k.address) && isAgent(k) ? k : null;
+    };
     const tabs = new Map(sp.flatMap((s) => s.tabs.map((c) => [c.id, c])));
     this.track(every.map((a) => ({
       address: a.address, s: state(a) === "blocked" ? "blocked" : running(a) ? "working"
@@ -320,7 +335,7 @@ export default class Inbox extends View {
     }
     if (publish) this.publishRows([...pinned, ...out, ...waitRows, ...busyRows, ...napRows, ...rows], inView,
       [...pinned, ...out, ...wait, ...work, ...nap, ...put]);
-    return { now, all, ps, sp, f, every, children, inView, scope, term, pins, wake, ...fields, ...sections };
+    return { now, all, ps, sp, f, every, candidates, roots, parentOf, children, inView, scope, term, pins, wake, ...fields, ...sections };
   }
 
   publishRows(rows, view, ordered = rows) {

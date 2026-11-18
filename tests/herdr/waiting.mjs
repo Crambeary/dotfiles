@@ -145,7 +145,7 @@ class Element {
 }
 const el = () => new Element();
 const kit = { View: class {}, div: el, svg: el, image: el };
-const base = { v_flex: el, h_flex: el, Popup: { new: (id, trigger) => { const e = el(); e.key = id; return trigger ? e.child(trigger) : e; } }, Popover: { new: (id) => { const e = el(); e.key = id; return e; } }, Input: { new: el }, NumberInput: { new: el }, Select: { new: el }, InputState: { new: () => ({ on() {}, text: () => '' }) } };
+const base = { v_flex: el, h_flex: el, Popup: { new: (id, trigger) => { const e = el(); e.key = id; return trigger ? e.child(trigger) : e; } }, Popover: { new: (id) => { const e = el(); e.key = id; return e; } }, Input: { new: el }, NumberInput: { new: el }, Select: { new: el }, InputState: { new: () => ({ on() {}, text: () => '' }) }, ScrollHandle: { new: () => ({ scroll_to_item() {}, release() {} }) } };
 const herdr = {
   terminals: () => all, agents: () => runs, panes: () => runs, spaces: () => sp, focused: () => focus,
   shared: (k) => shared.get(k), setShared: (k, v) => shared.set(k, v), run: (name, args) => calls.push({ name, args }), props: () => ({}), theme: () => theme,
