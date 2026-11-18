@@ -71,37 +71,17 @@
           }
         },
         {
-          "id": "bar-right",
-          "type": "row",
+          "id": "bar-controls",
+          "type": "block",
           "size": {
             "weight": 3
           },
-          "resizable": false,
-          "children": [
-            {
-              "id": "ai-usage",
-              "type": "block",
-              "content": {
-                "mod": "omarchy-ai-usage",
-                "props": {
-                  "compact": true
-                }
-              }
-            },
-            {
-              "id": "bar-controls",
-              "type": "block",
-              "size": {
-                "px": 180
-              },
-              "content": {
-                "mod": "omarchy-bar",
-                "props": {
-                  "part": "right"
-                }
-              }
+          "content": {
+            "mod": "omarchy-bar",
+            "props": {
+              "part": "right"
             }
-          ]
+          }
         }
       ]
     },
@@ -329,6 +309,21 @@
           "content": { "mod": "omarchy-forge-sidebar" }
         }
       ]
+    },
+    {
+      "id": "footer",
+      "type": "block",
+      "size": {
+        "px": 30
+      },
+      "resizable": false,
+      "background": "chrome",
+      "content": {
+        "mod": "omarchy-ai-usage",
+        "props": {
+          "footer": true
+        }
+      }
     }
   ]
 }

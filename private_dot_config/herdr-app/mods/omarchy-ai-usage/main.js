@@ -1,17 +1,23 @@
 import { View, div, image, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { agents, focused, panes, shared, setShared, props, openOverlay, settings, theme } from "herdr";
+import { agents, focused, panes, shared, setShared, props, openOverlay, settings, theme, exec, layout, run } from "herdr";
 
 import { PROVIDERS, sourcesFor, fetchUsage } from "./providers.js";
 import { clock, pace, resets, resetsShort } from "./time.js";
+import { SCRIPT, parseStats } from "./stats.js";
+import { HEIGHT, densityOf, nextDensity, footerModel } from "./footer.js";
 
 const MOD = "omarchy-ai-usage";
 const keyOf = id => `${MOD}.${id}`;
 const SHOWN = keyOf("shown");
+const STATS = keyOf("sysstats");
+const DENSITY = keyOf("density");
+const STATS_EVERY = 4e3;
 const EVERY = 5 * 60e3;
 // One missed cycle plus slack, so a slow fetch doesn't flash the bar grey.
 const STALE = 12 * 60e3;
 const AMBER = "#ffb347", RED = "#ff5d6c";
+const PINNED = [["claude", "Claude Code"], ["codex", "Codex"]];
 const POPUP_W = 320, GAP = 6;
 
 async function refreshOne(src) {
@@ -47,12 +53,27 @@ export default class AiUsage extends View {
     if (props()?.overlay) return;
     this.sig = null;
     cx.timer.every(60e3, cx => { cx.spawn(async () => refreshAll()); cx.notify(); });
+    // The footer is the one place that shows system stats, so it is the one that polls them.
+    if (props()?.footer) cx.timer.every(STATS_EVERY, cx => {
+      if (this.polling) return;
+      this.polling = true;
+      cx.spawn(async () => {
+        try {
+          const r = await exec("sh", ["-c", SCRIPT]);
+          const next = r.code === 0 ? parseStats(r.stdout, shared(STATS)) : null;
+          if (next) setShared(STATS, next);
+        } catch { /* keep the last reading */ } finally { this.polling = false; }
+      });
+    });
   }
 
   // Runs when what's visible changes; keeps the last list when no agent is in view.
   sync(cx) {
-    const vis = visible();
-    const sig = vis.map(v => `${v.terminal}:${v.program.key}`).join(",");
+    // The footer is not about what is in view: Claude and Codex always show, with the icons of any such agent seen.
+    const vis = props()?.footer
+      ? PINNED.map(([key, name]) => ({ terminal: key, program: agents().find(a => a.program?.key === key)?.program ?? { key, name, icon: null, tint: null } }))
+      : visible();
+    const sig = vis.map(v => `${v.terminal}:${v.program.key}:${v.program.icon ?? ""}`).join(",");
     if (sig === this.sig) return;
     this.sig = sig;
     if (!vis.length) { if (shownList().length && !shared(SHOWN)?.idle) setShared(SHOWN, { list: shownList(), idle: true }); return; }
@@ -68,6 +89,7 @@ export default class AiUsage extends View {
   render(cx) {
     if (props()?.overlay) return this.details();
     this.sync(cx);
+    if (props()?.footer) return this.footer(cx);
     return props()?.compact ? this.compact() : this.bar();
   }
 
@@ -80,7 +102,8 @@ export default class AiUsage extends View {
     const want = 90 + list.length * 100 + rows * 75;
     const below = b && b.y / z < 200;
     const height = !b || below ? want : Math.min(want, b.y / z - GAP);
-    const x = b ? Math.max(0, b.x + b.width - (POPUP_W + GAP) * z) : 0;
+    // The footer's segments sit at the left: the popup opens over the segment, not toward its right edge.
+    const x = !b ? 0 : props()?.footer ? Math.max(0, b.x) : Math.max(0, b.x + b.width - (POPUP_W + GAP) * z);
     const at = !b ? undefined : below ? { x, y: b.y + b.height + GAP * z } : { x, y: b.y - (height + GAP) * z };
     openOverlay({ mod: MOD, kind: "popup", frame: "none", width: POPUP_W, height, at, props: { details: true, height, below } });
   }
@@ -112,6 +135,75 @@ export default class AiUsage extends View {
       .on_mouse_down("left", (e, cx) => { this.anchor = e.bounds; cx.stop_propagation(); })
       .on_click(() => this.open())
       .tooltip(shownList().map(s => this.tip(s)).join("\n") || "No agent in view");
+  }
+
+  // Orca-style status bar: a segment per provider (click: the usage popup), system stats at the right (click: density).
+  footer(cx) {
+    const t = theme(), idle = shared(SHOWN)?.idle;
+    const narrow = this.narrow ?? globalThis.window.viewport_size().width < 1024;
+    const list = shownList();
+    const m = footerModel({
+      density: shared(DENSITY), narrow, stats: shared(STATS),
+      rows: list.map(s => { const u = shared(keyOf(s.id)); return { s, u, stale: idle || isStale(u) }; }),
+    });
+    this.fit(cx, m.height);
+    const expanded = m.density === "expanded", row = expanded ? 24 : m.height;
+    const win = (w, p, s) => {
+      const c = color(w.w, p.stale, t, s);
+      return h_flex().gap(5).items_center().flex_none()
+        .child(div().whitespace_nowrap().text_color(t.dim).child(w.short))
+        .when(w.bar > 0, el => el.child(div().relative().w(w.bar).h(expanded ? 6 : 5).bg(t.border).child(div().absolute().left(0).top(0).h_full().w(`${w.used}%`).bg(c))))
+        .child(div().whitespace_nowrap().text_color(p.stale || w.used >= 80 ? c : t.muted).child(`${w.used}%`))
+        .when(Boolean(w.reset), el => el.child(div().whitespace_nowrap().text_size(10.5).text_color(!p.stale && w.used >= 80 ? c : t.dim).child(`↻ ${w.reset}`)));
+    };
+    const seg = (p, i) => {
+      const s = list[i];
+      return h_flex().id(`usage-seg-${p.id}`).h(row).gap(6).items_center().flex_none().cursor_pointer()
+        .hover(e => e.bg(t.hover)).px(6)
+        .tooltip(this.tip(s))
+        .on_mouse_down("left", (e, cx) => { this.anchor = e.bounds; cx.stop_propagation(); })
+        .on_click(() => this.open())
+        .child(this.icon(s, 12, p.stale))
+        .child(div().whitespace_nowrap().font_semibold().text_color(p.stale ? t.dim : t.foreground).child(p.label))
+        .when(Boolean(p.note), el => el.child(div().whitespace_nowrap().text_color(t.dim).child(p.note)))
+        .children(p.windows.map(w => win(w, p, s)));
+    };
+    const sep = i => div().id(`usage-sep-${i}`).flex_none().text_color(t.border).child("│");
+    const providers = m.providers.flatMap((p, i) => (i && !expanded ? [sep(i), seg(p, i)] : [seg(p, i)]));
+    const item = it => {
+      const hot = it.battery ? it.pct <= 20 && !it.label.startsWith("⚡") : it.pct >= 80;
+      return h_flex().gap(4).items_center().flex_none().whitespace_nowrap()
+        .child(div().text_color(t.dim).child(it.label))
+        .when(Boolean(it.spark), el => el.child(div().text_color(t.dim).child(it.spark)))
+        .child(div().text_color(hot ? (it.pct >= 95 || it.battery ? RED : AMBER) : t.muted).child(it.text))
+        .when(Boolean(it.detail), el => el.child(div().text_size(10.5).text_color(t.dim).child(it.detail)));
+    };
+    const rows = expanded ? [m.sys.slice(0, 2), m.sys.slice(2)] : [m.sys];
+    const cycle = () => setShared(DENSITY, nextDensity(m.density));
+    return h_flex().id("root").size_full().items_center().bg(t.chrome).overflow_hidden().text_size(11).px(6)
+      .border_t(1).border_color(t.border)
+      .on_size_change((_size, cx) => {
+        const n = globalThis.window.viewport_size().width < 1024;
+        if (n !== this.narrow) { this.narrow = n; cx.notify(); }
+      })
+      .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); cycle(); })
+      .child(expanded ? v_flex().flex_none().children(providers) : h_flex().gap(8).items_center().flex_none().children(providers))
+      .child(div().flex_1())
+      .child(v_flex().id("sysstats").flex_none().cursor_pointer().px(6).py(expanded ? 4 : 0)
+        .tooltip(`System stats. Click or right-click: density (${m.density})`)
+        .on_click(cycle)
+        .children(rows.map((r, i) => h_flex().id(`sys-row-${i}`).h(expanded ? 24 : m.height).gap(narrow ? 10 : 14).items_center().justify_end().children(r.map(item)))));
+  }
+
+  // The footer's height follows its density. Commands can't run in render, so a moment later.
+  fit(cx, px) {
+    const cur = find(layout(), "footer")?.size?.px;
+    if (cur === undefined || cur === px || this.fitting) return;
+    this.fitting = true;
+    cx.timer.after(200, () => {
+      this.fitting = false;
+      run("layout.resize", { id: "footer", px: HEIGHT[densityOf(shared(DENSITY))] });
+    });
   }
 
   bar() {
@@ -193,6 +285,15 @@ export default class AiUsage extends View {
       .when(!list.length, el => el.child(div().text_color(t.dim).child("No agent in view")))
       .children(list.map(section)));
   }
+}
+
+function find(node, id) {
+  if (node?.id === id) return node;
+  for (const child of node?.children ?? []) {
+    const found = find(child, id);
+    if (found) return found;
+  }
+  return null;
 }
 
 const clamp = v => Math.min(100, Math.max(0, v ?? 0));

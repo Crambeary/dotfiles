@@ -187,6 +187,7 @@ export default class OmarchyBar extends View {
     const space = list.find((s) => s.active);
     const cwd = focused()?.cwd;
     const here = cwd ? (cwd === home() ? "~" : cwd.split("/").filter(Boolean).pop()) : null;
+    const where = [here && here !== space?.name ? here : null, space?.machine ? `@${space.machine}` : null].filter(Boolean).join(" ");
     const sep = () => div().flex_none().mx(10).text_color(t.border).child("│");
     // macOS draws its window buttons over this corner; leave them room.
     const w = window();
@@ -195,8 +196,7 @@ export default class OmarchyBar extends View {
         const narrow = globalThis.window.viewport_size().width < 1024;
         if (narrow !== this.narrow) {
           this.narrow = narrow;
-          const sizes = [["bar-left", { weight: 1 }], ["bar-right", { weight: 1 }],
-            ["bar-controls", { px: (narrow ? 150 : 180) + (w?.buttons ? 90 : 0) }]];
+          const sizes = [["bar-left", { weight: 1 }], ["bar-controls", { weight: 1 }]];
           for (const [id, size] of sizes) {
             const current = find(layout(), id)?.size;
             if (current && (current.px !== size.px || current.weight !== size.weight)) run("layout.resize", { id, ...size });
@@ -217,12 +217,10 @@ export default class OmarchyBar extends View {
         .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(() => run("mod.open", { name: "picker" }))
         .child(svg("mods/omarchy-chrome/search.svg").size(14))))
       .when(Boolean(find(layout(), "sidebar-lists")), (el) => el.child(this.inboxButton(t)))
+      // Space and branch only; the focused folder and machine, when they differ, are in the space name's tooltip.
       .when(Boolean(space), (el) => el.child(sep())
-        .child(div().flex_none().text_color(t.foreground).child(space.name))
-        // The focused terminal may have moved away from the folder its space was named after.
-        .when(Boolean(here) && here !== space.name, (e) => e.child(div().flex_none().ml(8).text_color(t.muted).child(here)))
-        .when(Boolean(space.branch), (e) => e.child(div().flex_none().ml(8).text_color(t.dim).child(space.branch)))
-        .when(Boolean(space.machine), (e) => e.child(div().flex_none().ml(8).text_color(t.dim).child(`@${space.machine}`))));
+        .child(div().id("space-name").flex_none().text_color(t.foreground).tooltip(where || space.name).child(space.name))
+        .when(Boolean(space.branch), (e) => e.child(div().flex_none().ml(8).text_color(t.dim).child(space.branch))));
   }
 
   // Left-click: Agents <-> Inbox in the current scope. Right-click: the scope. The count: agents that need you.
