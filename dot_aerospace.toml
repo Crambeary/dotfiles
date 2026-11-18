@@ -67,6 +67,13 @@ key-mapping.preset = 'qwerty'
 # on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 # on-focus-changed = "move-mouse window-lazy-center"
 
+# FieldView (every installed version shares this bundle id): never tile or resize.
+# AeroSpace has no true "ignore"; floating is the closest.
+[[on-window-detected]]
+if.app-id = 'FieldView_app'
+check-further-callbacks = false
+run = 'layout floating'
+
 # Windows that need to float by default
 [[on-window-detected]]
 if.app-id = 'com.raycast.macos'
