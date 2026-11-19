@@ -201,6 +201,12 @@ install-powershell7.cmd
 .config/karabiner/**
 {{ end }}
 
+# oh-my-pi (mise tool) is wanted on bagend only.
+{{ if ne .chezmoi.hostname "bagend" }}
+.config/mise/conf.d
+.config/mise/conf.d/**
+{{ end }}
+
 # mpv stream listener: runs only on marc-fedora (the SSH host side of the
 # RemoteForward tunnel, playing audio streamed back from marc-mac-fedora)
 {{ if ne .chezmoi.hostname "marc-fedora" }}

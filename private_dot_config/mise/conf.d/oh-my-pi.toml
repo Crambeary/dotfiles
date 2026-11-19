@@ -1,0 +1,5 @@
+# oh-my-pi is only installed on bagend. The Omarchy laptop doesn't manage mise
+# through chezmoi at all, and the other machines don't want it. mise merges
+# conf.d/*.toml into the global config; see .chezmoiignore for the host gate.
+[tools]
+"github:can1357/oh-my-pi" = "latest"
