@@ -144,6 +144,10 @@ hl.bind("SUPER + CTRL + I", hl.dsp.exec_cmd("dms ipc call inhibit toggle"), { de
 -- bin/omarchy-capture-text (installed to ~/.local/bin/capture-text.sh).
 hl.bind("SUPER + CTRL + PRINT", hl.dsp.exec_cmd("/home/marc/.local/bin/capture-text.sh"), { description = "Extract text (OCR) from screenshot region" })
 
+-- Decode a QR code from a screenshot region, ported from Omarchy's
+-- bin/omarchy-capture-qr (installed to ~/.local/bin/capture-qr.sh).
+hl.bind("SUPER + SHIFT + PRINT", hl.dsp.exec_cmd("/home/marc/.local/bin/capture-qr.sh"), { description = "Decode QR code from screenshot region" })
+
 -- Pop window out: toggle floating + center with side padding (percentage of
 -- screen). Moved here from SUPER+C, which is now universal copy — this is
 -- Marc's fuller version of Omarchy's SUPER+O "pop window out (float & pin)".
