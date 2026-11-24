@@ -240,3 +240,17 @@ hl.bind("SUPER + Backspace", hl.dsp.exec_cmd([[
 
 -- Toggle Wallpaper Carousel
 hl.bind("SUPER + ALT + W", hl.dsp.exec_cmd("dms ipc call wallpaperCarousel toggle"))
+
+-- Dictation toggle from the Mac's MX Master 3 thumb button. The Mac sends a
+-- bare F18 (set in its settings.db; Spokenly's hotkey on the Mac is F18 too),
+-- mapped to KEY_F18 in waynergy's [raw-keymap] (80 = 196). It has to be a bare
+-- key: Options+ sends chords as one software event with modifier flags, and
+-- waynergy drops the flags, so a Hyper+G arrived here as a plain "g".
+-- Superwhisper has no toggle command, so pick record/stop from its phase
+-- (wtype-typed Ctrl+Alt+Shift+D never triggered its own shortcut).
+-- Bound by keycode (196 = KEY_F18): the "F18" keysym name never matched.
+hl.bind(
+  "code:196",
+  hl.dsp.exec_cmd([[sh -c 'if /home/marc/.local/bin/superwhisper status | rg -q "\"phase\":\"idle\""; then /home/marc/.local/bin/superwhisper record; else /home/marc/.local/bin/superwhisper stop; fi']]),
+  { description = "Toggle Superwhisper dictation (Mac thumb button)" }
+)
